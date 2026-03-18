@@ -25,7 +25,7 @@ PiBar gives you all the tools you need to manage your [Pi-hole](https://pi-hole.
 
 ## Download Beta (Pi-hole 6)
 
-- Latest prerelease: [PiBar macOS v1.2 Beta 2](https://github.com/foosmith/pibar-enhanced/releases/tag/macOS-v1.2-beta2)
+- Latest prerelease: [Download PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.zip)
 - Current beta build: `683`
 - Provide feedback via [GitHub Issues](https://github.com/foosmith/pibar-enhanced/issues), [Reddit](https://www.reddit.com/r/PiBar/comments/1jdzue6/macos_12_beta_pihole_6_support/), or [Email](mailto:bradroot@me.com?subject=PiBar%201.2%20Beta%202%20Feedback).
 
