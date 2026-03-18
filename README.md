@@ -1,67 +1,81 @@
-# PiBar for macOS
+# PiBar Enhanced for macOS
 
-PiBar gives you all the tools you need to manage your [Pi-hole](https://pi-hole.net)(s) right from your macOS menu bar.
+PiBar Enhanced is my macOS menu bar companion for Pi-hole. It keeps the important controls one click away, adds a practical Primary → Secondary sync workflow for Pi-hole v6, and smooths out the day-to-day usability details that make the app easier to live with.
 
-## Features
+This fork builds on the original PiBar idea and pushes it toward modern Pi-hole setups, especially homes and labs running multiple Pi-hole instances that need to stay aligned.
 
-- Display DNS query stats in your macOS menu bar
-- Supports multiple Pi-holes (inc. quadruple failover setups!)
-- Toggle your Pi-hole(s) on/off from the menu or anywhere via ⌘⌥⇧P
-- Displays warnings if any or all of your Pi-holes are inaccessible or disabled
-- No capital "h" in the word "hole" in the app or in the code
-- Beautiful app icon
-- Totally FOSS
-- Supports macOS 10.12 (Sierra) and later
+## What PiBar Enhanced Does
 
-## Screenshots
+- Shows Pi-hole status and DNS activity from the macOS menu bar
+- Supports multiple Pi-hole connections
+- Works with Pi-hole v5 and older, plus Pi-hole v6
+- Lets you enable or disable blocking without opening the web UI
+- Includes optional Primary → Secondary sync for Pi-hole v6 environments
+- Supports launch at login and a global keyboard shortcut for quick control
+- Lets you tune refresh behavior with a configurable polling interval
 
-![PiBar Screenshots](/.github/screenshots.jpg?raw=true)
+## Sync Features
 
-## Download (Pi-hole 5 and older)
+PiBar Enhanced now includes a built-in Primary → Secondary sync flow for Pi-hole v6.
 
-- [Download PiBar v1.1.2 for macOS 10.12 and later](https://s3.amazonaws.com/amiantos/PiBar-1.1.2.zip)
-- Or, [Purchase PiBar on the App Store](https://apps.apple.com/us/app/pibar-for-pi-hole/id1514292645?ls=1) for automatic updates.
-- Or, `brew install pibar` to install using Homebrew.
+- Choose a primary Pi-hole and a secondary Pi-hole
+- Run sync on demand or on an interval
+- Sync groups, adlists, and domains
+- Preview changes with dry run mode before writing anything
+- Optionally wipe secondary adlists before rebuilding from the primary
+- Review recent sync status and activity from the app
 
-## Download Beta (Pi-hole 6)
+This is aimed at real-world failover and mirrored DNS setups where keeping two Pi-hole v6 nodes in sync matters more than manually clicking through the web UI.
 
-- Latest prerelease: [Download PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.dmg)
+## Usability Improvements
+
+- Pi-hole v6 connections now persist using the proper app password flow instead of an expired session token
+- Launch at login is wired directly into preferences
+- Keyboard shortcut preferences load and save correctly
+- Polling preferences are easier to manage
+- Current beta releases are packaged as direct macOS `.dmg` downloads
+
+## Download
+
+- Latest prerelease: [PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.dmg)
 - Current beta build: `683`
-- Provide feedback via [GitHub Issues](https://github.com/foosmith/pibar-enhanced/issues), [Reddit](https://www.reddit.com/r/PiBar/comments/1jdzue6/macos_12_beta_pihole_6_support/), or [Email](mailto:bradroot@me.com?subject=PiBar%201.2%20Beta%202%20Feedback).
-
-## Release Packaging
-
-- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS`
-- The script writes the finished installer to `build/release/`
-- Use `--sign-identity 'Developer ID Application: Your Name (TEAMID)'` for public-distribution signing
-- Use `--notary-profile PROFILE_NAME` after configuring `xcrun notarytool store-credentials PROFILE_NAME ...` to notarize and staple the DMG
-- `Apple Development` signing is suitable for testing only; public releases should use `Developer ID Application` plus notarization
+- Release page: [macOS v1.2 Beta 2](https://github.com/foosmith/pibar-enhanced/releases/tag/macOS-v1.2-beta2)
 
 ## Quick Start
 
-1. Launch PiBar
-2. Click on the PiBar icon in your menu bar and go to Preferences
-3. Click Add to add your Pi-hole details
-4. Click Test, if the test is successful, click Save & Close
-5. Add more Pi-holes if you have them :)
-6. Adjust your menu bar display preferences
-7. Close the Preferences window and enjoy!
+1. Launch PiBar Enhanced.
+2. Open the menu bar icon and choose Preferences.
+3. Add your Pi-hole connection details.
+4. Validate the connection and save it.
+5. Add additional Pi-holes if you want failover visibility or sync.
+6. Adjust display, shortcut, startup, polling, and sync settings to fit your setup.
 
-## Like PiBar a lot?
+## Release Process
 
-- [Purchase PiBar on the App Store](https://apps.apple.com/us/app/pibar-for-pi-hole/id1514292645?ls=1)
-- [Sponsor amiantos on GitHub](https://github.com/sponsors/amiantos)
-- [Become a patron on Patreon](https://www.patreon.com/amiantos)
+- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS`
+- The script writes the installer to `build/release/`
+- `Apple Development` signing is suitable for testing and private sharing
+- `Developer ID Application` signing and notarization are supported by the script when available
 
-## Get Help
+## About This Fork
 
-- Feel free to [post an issue](https://github.com/amiantos/pibar/issues/new) if you need help or have a feature suggestion. Dream big!
-- There's a subreddit over at [/r/PiBar](https://www.reddit.com/r/PiBar) if you want to talk about PiBar with the community. I'll also be posting news about updates and possible beta tests over there, so you should join if that sounds up your alley!
-- You can also write to me on Mastodon @[brad@mstdn.amiantos.net](https://mstdn.amiantos.net/brad)
+PiBar Enhanced reflects the work I have been doing to make PiBar more useful for current Pi-hole deployments. The focus of this fork is straightforward:
+
+- better Pi-hole v6 support
+- practical sync tools for paired Pi-hole instances
+- fewer setup annoyances
+- cleaner release packaging for macOS users
+
+If you are running multiple Pi-holes and want a lightweight native macOS control point, that is exactly what this project is being shaped for.
+
+## Feedback
+
+- Issues and feature requests: [GitHub Issues](https://github.com/foosmith/pibar-enhanced/issues)
+- Release downloads and notes: [GitHub Releases](https://github.com/foosmith/pibar-enhanced/releases)
 
 ## Credits
 
-- PiBar was built by [Brad Root](https://github.com/amiantos)
-- PiBar's wonderful icon was designed by [Jozef Bañuelos](https://jozef.design)
-- Pi-hole® is a registered trademark of Pi-hole LLC.
-- PiBar is an independent project and is not directly affiliated with Pi-hole LLC or the Pi-hole community.
+- Original PiBar created by [Brad Root](https://github.com/amiantos)
+- PiBar Enhanced maintained in this repository by [foosmith](https://github.com/foosmith)
+- Pi-hole is a registered trademark of Pi-hole LLC
+- This project is independent and is not affiliated with Pi-hole LLC
