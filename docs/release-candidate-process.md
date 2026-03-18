@@ -8,18 +8,6 @@ This document captures the maintainer workflow for cutting a signed and notarize
 - A `notarytool` keychain profile configured for the Apple team
 - Working `gh` authentication for publishing the GitHub prerelease
 
-## Set Up notarytool
-
-1. Create an app-specific password for your Apple ID at `https://appleid.apple.com/`.
-2. Store the notary credentials in your login keychain:
-
-```bash
-xcrun notarytool store-credentials pibar-notary \
-  --apple-id "you@example.com" \
-  --team-id "GB7Z2TZ8LT" \
-  --password "app-specific-password"
-```
-
 ## Build The Release Candidate
 
 1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `PiBar.xcodeproj/project.pbxproj`.
