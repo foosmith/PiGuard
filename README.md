@@ -41,15 +41,6 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Signed and notarized DMG packaging is the intended public release path
 - Unsigned ZIP packaging is still available for local testing when needed
 
-## Installing The DMG Build On macOS
-
-1. Download the latest PiBar DMG from GitHub Releases.
-2. Open the DMG.
-3. Drag `PiBar.app` to `/Applications`.
-4. Launch PiBar from `/Applications`.
-
-If you are testing an unsigned ZIP instead of the notarized DMG, macOS may still require a one-time manual approval in `Privacy & Security`.
-
 ## Quick Start
 
 1. Launch PiBar Enhanced.
