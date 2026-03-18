@@ -25,9 +25,15 @@ PiBar gives you all the tools you need to manage your [Pi-hole](https://pi-hole.
 
 ## Download Beta (Pi-hole 6)
 
-- Latest prerelease: [Download PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.zip)
+- Latest prerelease: [Download PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.dmg)
 - Current beta build: `683`
 - Provide feedback via [GitHub Issues](https://github.com/foosmith/pibar-enhanced/issues), [Reddit](https://www.reddit.com/r/PiBar/comments/1jdzue6/macos_12_beta_pihole_6_support/), or [Email](mailto:bradroot@me.com?subject=PiBar%201.2%20Beta%202%20Feedback).
+
+## Release Packaging
+
+- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS`
+- The script writes the finished installer to `build/release/`
+- Add `--codesign` if you want Xcode signing enabled for that build
 
 ## Quick Start
 
