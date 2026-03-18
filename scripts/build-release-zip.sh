@@ -11,32 +11,25 @@ DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
 
 function usage() {
     cat <<'EOF'
-Usage: scripts/build-release-dmg.sh [options]
+Usage: scripts/build-release-zip.sh [options]
 
 Options:
-  --artifact-name NAME     Override the output file name without the .dmg suffix.
-  --output-dir PATH        Directory where the DMG should be written.
+  --artifact-name NAME     Override the output file name without the .zip suffix.
+  --output-dir PATH        Directory where the ZIP should be written.
   --derived-data PATH      DerivedData path to use for the build.
   --configuration NAME     Xcode build configuration. Default: Release
   --codesign               Allow Xcode code signing during the build.
-  --sign-identity NAME     Build the app with this identity and sign the DMG.
-  --notary-profile NAME    Submit the DMG for notarization with this notarytool keychain profile.
-  --bundle-id ID           Bundle identifier used for notarization metadata. Default: project setting.
+  --sign-identity NAME     Build the app with this identity before zipping it.
   --help                   Show this help text.
 
 Example:
-  scripts/build-release-dmg.sh \
-    --artifact-name PiBar-2.0-rc1-macOS \
-    --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
-    --notary-profile pibar-notary
+  scripts/build-release-zip.sh --artifact-name PiBar-2.0-rc1-macOS
 EOF
 }
 
 ARTIFACT_NAME=""
 CODE_SIGNING_ALLOWED="NO"
 SIGN_IDENTITY=""
-NOTARY_PROFILE=""
-BUNDLE_ID=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -64,14 +57,6 @@ while [[ $# -gt 0 ]]; do
             SIGN_IDENTITY="${2:-}"
             shift 2
             ;;
-        --notary-profile)
-            NOTARY_PROFILE="${2:-}"
-            shift 2
-            ;;
-        --bundle-id)
-            BUNDLE_ID="${2:-}"
-            shift 2
-            ;;
         --help)
             usage
             exit 0
@@ -97,16 +82,9 @@ function run_codesign_verify() {
     codesign --verify --deep --strict --verbose=2 "$path"
 }
 
-function run_gatekeeper_assess_open() {
-    local path="$1"
-    echo "Assessing with Gatekeeper: $path"
-    spctl --assess --type open --context context:primary-signature --verbose=4 "$path"
-}
-
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
 APP_NAME="PiBar"
-BUNDLE_ID="${BUNDLE_ID:-$(read_project_setting PRODUCT_BUNDLE_IDENTIFIER)}"
 DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
@@ -117,21 +95,18 @@ if [[ -z "$ARTIFACT_NAME" ]]; then
     ARTIFACT_NAME="${APP_NAME}-${MARKETING_VERSION}-${BUILD_NUMBER}-macOS"
 fi
 
-VOLUME_NAME="${APP_NAME} ${MARKETING_VERSION} (${BUILD_NUMBER})"
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/${APP_NAME}.app"
-DMG_PATH="$OUTPUT_DIR/${ARTIFACT_NAME}.dmg"
-STAGING_DIR="$OUTPUT_DIR/dmg-staging"
+ZIP_PATH="$OUTPUT_DIR/${ARTIFACT_NAME}.zip"
 
-rm -rf "$STAGING_DIR"
-mkdir -p "$OUTPUT_DIR" "$STAGING_DIR"
+mkdir -p "$OUTPUT_DIR"
 
 echo "Building ${APP_NAME}.app..."
 xcodebuild_args=(
-    -project "$PROJECT_PATH" \
-    -scheme "$SCHEME" \
-    -configuration "$CONFIGURATION" \
-    -sdk macosx \
-    -derivedDataPath "$DERIVED_DATA_PATH" \
+    -project "$PROJECT_PATH"
+    -scheme "$SCHEME"
+    -configuration "$CONFIGURATION"
+    -sdk macosx
+    -derivedDataPath "$DERIVED_DATA_PATH"
     "CODE_SIGNING_ALLOWED=${CODE_SIGNING_ALLOWED}"
 )
 
@@ -151,50 +126,12 @@ if [[ ! -d "$APP_PATH" ]]; then
     exit 1
 fi
 
-echo "Preparing DMG staging directory..."
-ditto "$APP_PATH" "$STAGING_DIR/${APP_NAME}.app"
-ln -s /Applications "$STAGING_DIR/Applications"
-
 if [[ -n "$SIGN_IDENTITY" ]]; then
-    run_codesign_verify "$STAGING_DIR/${APP_NAME}.app"
+    run_codesign_verify "$APP_PATH"
 fi
 
-echo "Creating ${DMG_PATH}..."
-rm -f "$DMG_PATH"
-hdiutil create \
-    -volname "$VOLUME_NAME" \
-    -srcfolder "$STAGING_DIR" \
-    -ov \
-    -format UDZO \
-    "$DMG_PATH" >/dev/null
+echo "Creating ${ZIP_PATH}..."
+rm -f "$ZIP_PATH"
+ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
 
-if [[ -n "$SIGN_IDENTITY" ]]; then
-    echo "Signing DMG with ${SIGN_IDENTITY}..."
-    codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG_PATH"
-    run_codesign_verify "$DMG_PATH"
-fi
-
-if [[ -n "$NOTARY_PROFILE" ]]; then
-    if [[ -z "$SIGN_IDENTITY" ]]; then
-        echo "Notarization requires --sign-identity." >&2
-        exit 1
-    fi
-
-    echo "Submitting DMG for notarization with profile ${NOTARY_PROFILE}..."
-    xcrun notarytool submit "$DMG_PATH" \
-        --keychain-profile "$NOTARY_PROFILE" \
-        --output-format json \
-        --wait
-
-    echo "Stapling notarization ticket to DMG..."
-    xcrun stapler staple "$DMG_PATH"
-
-    echo "Validating stapled ticket..."
-    xcrun stapler validate "$DMG_PATH"
-
-    run_gatekeeper_assess_open "$DMG_PATH"
-fi
-
-rm -rf "$STAGING_DIR"
-
-echo "DMG created: $DMG_PATH"
+echo "ZIP created: $ZIP_PATH"
