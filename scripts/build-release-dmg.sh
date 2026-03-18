@@ -19,14 +19,14 @@ Options:
   --derived-data PATH      DerivedData path to use for the build.
   --configuration NAME     Xcode build configuration. Default: Release
   --codesign               Allow Xcode code signing during the build.
-  --sign-identity NAME     Manually codesign the app and DMG with this identity.
+  --sign-identity NAME     Build the app with this identity and sign the DMG.
   --notary-profile NAME    Submit the DMG for notarization with this notarytool keychain profile.
   --bundle-id ID           Bundle identifier used for notarization metadata. Default: project setting.
   --help                   Show this help text.
 
 Example:
   scripts/build-release-dmg.sh \
-    --artifact-name PiBar-1.2-beta2-macOS \
+    --artifact-name PiBar-1.2-rc1-macOS \
     --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
     --notary-profile pibar-notary
 EOF
@@ -91,10 +91,27 @@ function read_project_setting() {
         | sed -E "s/^[[:space:]]*${key} = ([^;]+);$/\1/"
 }
 
+function run_codesign_verify() {
+    local path="$1"
+    echo "Verifying code signature: $path"
+    codesign --verify --deep --strict --verbose=2 "$path"
+}
+
+function run_gatekeeper_assess_open() {
+    local path="$1"
+    echo "Assessing with Gatekeeper: $path"
+    spctl --assess --type open --context context:primary-signature --verbose=4 "$path"
+}
+
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
 APP_NAME="PiBar"
 BUNDLE_ID="${BUNDLE_ID:-$(read_project_setting PRODUCT_BUNDLE_IDENTIFIER)}"
+DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
+
+if [[ -n "$SIGN_IDENTITY" ]]; then
+    CODE_SIGNING_ALLOWED="YES"
+fi
 
 if [[ -z "$ARTIFACT_NAME" ]]; then
     ARTIFACT_NAME="${APP_NAME}-${MARKETING_VERSION}-${BUILD_NUMBER}-macOS"
@@ -109,14 +126,25 @@ rm -rf "$STAGING_DIR"
 mkdir -p "$OUTPUT_DIR" "$STAGING_DIR"
 
 echo "Building ${APP_NAME}.app..."
-xcodebuild \
+xcodebuild_args=(
     -project "$PROJECT_PATH" \
     -scheme "$SCHEME" \
     -configuration "$CONFIGURATION" \
     -sdk macosx \
     -derivedDataPath "$DERIVED_DATA_PATH" \
-    "CODE_SIGNING_ALLOWED=${CODE_SIGNING_ALLOWED}" \
-    build
+    "CODE_SIGNING_ALLOWED=${CODE_SIGNING_ALLOWED}"
+)
+
+if [[ -n "$SIGN_IDENTITY" ]]; then
+    xcodebuild_args+=(
+        "CODE_SIGN_STYLE=Manual"
+        "CODE_SIGN_IDENTITY=${SIGN_IDENTITY}"
+        "DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM}"
+        "OTHER_CODE_SIGN_FLAGS=--timestamp"
+    )
+fi
+
+xcodebuild "${xcodebuild_args[@]}" build
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "Build succeeded but ${APP_PATH} was not found." >&2
@@ -124,12 +152,11 @@ if [[ ! -d "$APP_PATH" ]]; then
 fi
 
 echo "Preparing DMG staging directory..."
-cp -R "$APP_PATH" "$STAGING_DIR/"
+ditto "$APP_PATH" "$STAGING_DIR/${APP_NAME}.app"
 ln -s /Applications "$STAGING_DIR/Applications"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
-    echo "Signing ${APP_NAME}.app with ${SIGN_IDENTITY}..."
-    codesign --force --deep --sign "$SIGN_IDENTITY" --timestamp=none "$STAGING_DIR/${APP_NAME}.app"
+    run_codesign_verify "$STAGING_DIR/${APP_NAME}.app"
 fi
 
 echo "Creating ${DMG_PATH}..."
@@ -143,7 +170,8 @@ hdiutil create \
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
     echo "Signing DMG with ${SIGN_IDENTITY}..."
-    codesign --force --sign "$SIGN_IDENTITY" --timestamp=none "$DMG_PATH"
+    codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG_PATH"
+    run_codesign_verify "$DMG_PATH"
 fi
 
 if [[ -n "$NOTARY_PROFILE" ]]; then
@@ -155,6 +183,7 @@ if [[ -n "$NOTARY_PROFILE" ]]; then
     echo "Submitting DMG for notarization with profile ${NOTARY_PROFILE}..."
     xcrun notarytool submit "$DMG_PATH" \
         --keychain-profile "$NOTARY_PROFILE" \
+        --output-format json \
         --wait
 
     echo "Stapling notarization ticket to DMG..."
@@ -162,6 +191,8 @@ if [[ -n "$NOTARY_PROFILE" ]]; then
 
     echo "Validating stapled ticket..."
     xcrun stapler validate "$DMG_PATH"
+
+    run_gatekeeper_assess_open "$DMG_PATH"
 fi
 
 rm -rf "$STAGING_DIR"

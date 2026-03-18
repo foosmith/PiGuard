@@ -33,13 +33,15 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Launch at login is wired directly into preferences
 - Keyboard shortcut preferences load and save correctly
 - Polling preferences are easier to manage
-- Current beta releases are packaged as direct macOS `.dmg` downloads
+- Current prerelease builds are packaged as direct macOS `.dmg` downloads
 
 ## Download
 
-- Latest prerelease: [PiBar 1.2 Beta 2 for macOS](https://github.com/foosmith/pibar-enhanced/releases/download/macOS-v1.2-beta2/PiBar-1.2-beta2-macOS.dmg)
-- Current beta build: `683`
-- Release page: [macOS v1.2 Beta 2](https://github.com/foosmith/pibar-enhanced/releases/tag/macOS-v1.2-beta2)
+- Next release candidate: `PiBar-1.2-rc1-macOS.dmg`
+- Current release candidate build: `684`
+- Planned release tag: `macOS-v1.2-rc1`
+
+Release candidates should be signed with `Developer ID Application` and notarized before distribution so users can open the DMG without Finder workarounds.
 
 ## Quick Start
 
@@ -52,10 +54,36 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ## Release Process
 
-- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS`
+- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-rc1-macOS`
 - The script writes the installer to `build/release/`
 - `Apple Development` signing is suitable for testing and private sharing
-- `Developer ID Application` signing and notarization are supported by the script when available
+- `Developer ID Application` signing and notarization are supported for public distribution
+
+### Proper Developer ID Signing And Notarization
+
+For a public macOS release, use a `Developer ID Application` certificate and notarize the DMG before uploading it.
+
+1. In Apple Developer, create or confirm you have a `Developer ID Application` certificate for your team.
+2. Install that certificate in the login keychain on the build machine.
+3. Store `notarytool` credentials once:
+
+```bash
+xcrun notarytool store-credentials pibar-notary \
+  --apple-id "you@example.com" \
+  --team-id "2Y9M69QJKZ" \
+  --password "app-specific-password"
+```
+
+4. Build, sign, notarize, and staple the DMG:
+
+```bash
+scripts/build-release-dmg.sh \
+  --artifact-name PiBar-1.2-rc1-macOS \
+  --sign-identity 'Developer ID Application: Your Name (2Y9M69QJKZ)' \
+  --notary-profile pibar-notary
+```
+
+The script now expects Xcode to produce the signed `.app`, verifies the app signature with `codesign` and `spctl`, signs the DMG with a secure timestamp, submits the DMG with `notarytool`, and staples the notarization ticket back onto the DMG.
 
 ## About This Fork
 
