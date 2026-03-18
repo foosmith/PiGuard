@@ -33,19 +33,17 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Launch at login is wired directly into preferences
 - Keyboard shortcut preferences load and save correctly
 - Polling preferences are easier to manage
-- Current prerelease builds are packaged as signed and notarized macOS `.dmg` downloads when Developer ID and notary credentials are available
+- Public macOS builds are packaged as signed and notarized `.dmg` downloads when Developer ID and notary credentials are available
 
 ## Download
 
-- Next release candidate: `PiBar-2.0-rc1-macOS.dmg`
-- Current release candidate build: `684`
-- Planned release tag: `macOS-v2.0-rc1`
-
-Unsigned ZIP packaging is still available for local testing, but the intended public release path is a signed and notarized DMG.
+- Download the latest macOS DMG from [GitHub Releases](https://github.com/foosmith/pibar-enhanced/releases)
+- Signed and notarized DMG packaging is the intended public release path
+- Unsigned ZIP packaging is still available for local testing when needed
 
 ## Installing The DMG Build On macOS
 
-1. Download `PiBar-2.0-rc1-macOS.dmg`.
+1. Download the latest PiBar DMG from GitHub Releases.
 2. Open the DMG.
 3. Drag `PiBar.app` to `/Applications`.
 4. Launch PiBar from `/Applications`.
@@ -61,69 +59,9 @@ If you are testing an unsigned ZIP instead of the notarized DMG, macOS may still
 5. Add additional Pi-holes if you want failover visibility or sync.
 6. Adjust display, shortcut, startup, polling, and sync settings to fit your setup.
 
-## Release Process
+## Maintainer Notes
 
-- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-2.0-rc1-macOS`
-- The script writes the installer to `build/release/`
-- The DMG contains `PiBar.app` plus an `/Applications` shortcut
-- The DMG workflow builds a signed app ZIP first, notarizes and staples the app, then signs and notarizes the DMG
-- `scripts/build-release-zip.sh` remains available for local testing and intermediate notarization work
-
-### Create A Release Candidate
-
-Use this workflow when cutting a new RC:
-
-1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in the Xcode project.
-2. Build the signed and notarized DMG artifact:
-
-```bash
-scripts/build-release-dmg.sh \
-  --artifact-name PiBar-2.0-rc1-macOS \
-  --sign-identity 'Developer ID Application: Matthew Smith (GB7Z2TZ8LT)' \
-  --notary-profile pibar-notary
-```
-
-3. Mount the DMG and test the installed app locally.
-4. Commit the release-candidate version changes.
-5. Tag the release candidate:
-
-```bash
-git tag -a macOS-v2.0-rc1 -m "macOS v2.0 RC 1"
-```
-
-6. Push the commit and tag.
-7. Create a GitHub prerelease and upload `build/release/PiBar-2.0-rc1-macOS.dmg`.
-
-### Set Up notarytool
-
-1. Create an app-specific password for your Apple ID:
-   https://appleid.apple.com/
-2. Store notary credentials in your login keychain:
-
-```bash
-xcrun notarytool store-credentials pibar-notary \
-  --apple-id "you@example.com" \
-  --team-id "GB7Z2TZ8LT" \
-  --password "app-specific-password"
-```
-
-3. Build, sign, notarize, staple, and repack the ZIP:
-
-```bash
-scripts/build-release-zip.sh \
-  --artifact-name PiBar-2.0-rc1-macOS \
-  --sign-identity 'Developer ID Application: Matthew Smith (GB7Z2TZ8LT)' \
-  --notary-profile pibar-notary
-```
-
-4. Build the final signed and notarized DMG:
-
-```bash
-scripts/build-release-dmg.sh \
-  --artifact-name PiBar-2.0-rc1-macOS \
-  --sign-identity 'Developer ID Application: Matthew Smith (GB7Z2TZ8LT)' \
-  --notary-profile pibar-notary
-```
+- Release instructions are kept in `docs/release-candidate-process.md`
 
 ## About This Fork
 

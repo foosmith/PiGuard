@@ -25,7 +25,7 @@ Options:
 
 Example:
   scripts/build-release-zip.sh \
-    --artifact-name PiBar-2.0-rc1-macOS \
+    --artifact-name PiBar-<version>-macOS \
     --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
     --notary-profile pibar-notary
 EOF
