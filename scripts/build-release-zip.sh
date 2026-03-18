@@ -79,7 +79,7 @@ function read_project_setting() {
 function run_codesign_verify() {
     local path="$1"
     echo "Verifying code signature: $path"
-    codesign --verify --deep --strict --verbose=2 "$path"
+    /usr/bin/codesign --verify --deep --strict --verbose=2 "$path"
 }
 
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
@@ -128,10 +128,14 @@ fi
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
     run_codesign_verify "$APP_PATH"
+else
+    echo "Applying ad hoc signature to ${APP_NAME}.app..."
+    /usr/bin/codesign --force --deep --sign - --timestamp=none "$APP_PATH"
+    run_codesign_verify "$APP_PATH"
 fi
 
 echo "Creating ${ZIP_PATH}..."
 rm -f "$ZIP_PATH"
-ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
+/usr/bin/ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$ZIP_PATH"
 
 echo "ZIP created: $ZIP_PATH"
