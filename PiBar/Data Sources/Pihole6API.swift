@@ -112,11 +112,6 @@ struct Gravity: Decodable {
 
 enum APIError: Error {
     case invalidURL
-    case encodingFailed
-    case unauthorized
-    case forbidden
-    case unreachableHost
-    case notConnectedToInternet
     case requestFailed(Error)
     case invalidResponse(statusCode: Int, content: String)
     case decodingFailed
@@ -158,22 +153,17 @@ struct PiholeV6BlockingRequest: Encodable {
     let timer: Int?
 }
 
-private struct PiholeV6DomainCreateRequest: Encodable {
-    let domain: String
-    let enabled: Bool?
-    let comment: String?
-    let groups: [Int]?
-}
-
 class Pihole6API: NSObject {
     let connection: PiholeConnectionV3
+    private var sessionID: String?
+    private var sessionExpiry: Date?
 
     var identifier: String {
-        return connection.identifier
+        return "\(connection.hostname)"
     }
 
     private let path: String = "/api"
-    private let requestTimeout: TimeInterval = 5
+    private let timeout: Int = 2
 
     override init() {
         connection = PiholeConnectionV3(
@@ -194,87 +184,48 @@ class Pihole6API: NSObject {
     }
 
     // MARK: - URLs
-    private func makeURL(for endpointPath: String, queryItems: [URLQueryItem] = []) throws -> URL {
-        var components = URLComponents()
-        components.scheme = connection.useSSL ? "https" : "http"
-        components.host = connection.hostname
-        components.port = connection.port
 
-        let normalizedEndpointPath = endpointPath.hasPrefix("/") ? endpointPath : "/\(endpointPath)"
-        components.path = "\(path)\(normalizedEndpointPath)"
-        if !queryItems.isEmpty {
-            components.queryItems = queryItems
-        }
-
-        guard let url = components.url else {
-            throw APIError.invalidURL
-        }
-        return url
+    private var baseURL: String {
+        let prefix = connection.useSSL ? "https" : "http"
+        return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
     }
     
     var userAgent: String = "PiBar:1.2:https://github.com/amiantos/pibar"
 
     var admin: URL {
-        var components = URLComponents()
-        components.scheme = connection.useSSL ? "https" : "http"
-        components.host = connection.hostname
-        components.port = connection.port
-        components.path = "/admin"
-        return components.url!
+        return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!
     }
     
     func checkPassword(password: String, totp: Int?) async throws -> PiholeV6PasswordResponse {
-        return try await post("/auth", responseType: PiholeV6PasswordResponse.self, body: PiholeV6PasswordRequest(password: password, totp: totp))
+        do {
+            return try await post("/auth", responseType: PiholeV6PasswordResponse.self, body: PiholeV6PasswordRequest(password: password, totp: totp))
+        } catch URLError.timedOut {
+            throw APIError.requestTimedOut
+        }
     }
     
     func fetchSummary() async throws -> Pihole6APISummary {
         do {
-            return try await get("/stats/summary", responseType: Pihole6APISummary.self, apiKey: connection.token)
+            return try await get("/stats/summary", responseType: Pihole6APISummary.self, apiKey: try await sessionToken())
         }
     }
     
     func fetchBlockingStatus() async throws -> Pihole6APIBlockingStatus {
         do {
-            return try await get("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: connection.token)
+            return try await get("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken())
         }
     }
     
     func disable(seconds: Int?) async throws -> Pihole6APIBlockingStatus {
         do {
-            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: connection.token, body: PiholeV6BlockingRequest(blocking: false, timer: seconds))
+            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: false, timer: seconds))
         }
     }
     
     func enable() async throws -> Pihole6APIBlockingStatus {
         do {
-            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: connection.token, body: PiholeV6BlockingRequest(blocking: true, timer: nil))
+            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: true, timer: nil))
         }
-    }
-
-    func fetchTopDomains() async throws -> [TopListEntry] {
-        let data = try await getData("/stats/top_domains", apiKey: connection.token, queryItems: [URLQueryItem(name: "count", value: "10")])
-        return parseTopEntries(from: data, preferredKeys: ["domains", "top_domains", "queries"])
-    }
-
-    func fetchTopClients() async throws -> [TopListEntry] {
-        let data = try await getData("/stats/top_clients", apiKey: connection.token, queryItems: [URLQueryItem(name: "count", value: "10")])
-        return parseTopEntries(from: data, preferredKeys: ["clients", "top_clients"])
-    }
-
-    func updateGravity() async throws {
-        _ = try await postData(
-            "/action/gravity",
-            apiKey: connection.token,
-            queryItems: [URLQueryItem(name: "app_sudo", value: "true")]
-        )
-    }
-
-    func allow(domain: String) async throws {
-        try await add(domain: domain, to: "/domains/allow/exact")
-    }
-
-    func block(domain: String) async throws {
-        try await add(domain: domain, to: "/domains/deny/exact")
     }
     
     // Ugly Innards
@@ -282,42 +233,19 @@ class Pihole6API: NSObject {
     private func request(
         for url: URL, method: String = "GET", apiKey: String? = nil,
         body: Encodable? = nil
-    ) throws -> URLRequest {
+    ) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method
-        request.timeoutInterval = requestTimeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         if let apiKey {
             request.setValue(apiKey, forHTTPHeaderField: "sid")
         }
         if let body {
-            do {
-                request.httpBody = try JSONEncoder().encode(body)
-            } catch {
-                throw APIError.encodingFailed
-            }
+            request.httpBody = try? JSONEncoder().encode(body)
+            request.timeoutInterval = 5
         }
         return request
-    }
-
-    private func mapError(_ error: Error) -> APIError {
-        if let apiError = error as? APIError {
-            return apiError
-        }
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .timedOut:
-                return .requestTimedOut
-            case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
-                return .unreachableHost
-            case .notConnectedToInternet:
-                return .notConnectedToInternet
-            default:
-                return .requestFailed(urlError)
-            }
-        }
-        return .requestFailed(error)
     }
 
     private func perform<T: Decodable>(
@@ -329,15 +257,10 @@ class Pihole6API: NSObject {
             if let response = response as? HTTPURLResponse,
                 !((200..<300) ~= response.statusCode)
             {
-                if response.statusCode == 401 {
-                    throw APIError.unauthorized
-                }
-                if response.statusCode == 403 {
-                    throw APIError.forbidden
-                }
                 throw APIError.invalidResponse(
                     statusCode: response.statusCode,
-                    content: String(data: data, encoding: .utf8) ?? "<non-utf8 response>")
+                    content: String(
+                        describing: String(data: data, encoding: .utf8)))
             }
             do {
 //                Log.debug(String(data: data, encoding: .utf8) ?? "No data")
@@ -348,152 +271,66 @@ class Pihole6API: NSObject {
                 throw APIError.decodingFailed
             }
         } catch {
-            throw mapError(error)
-        }
-    }
-
-    private func performData(_ request: URLRequest) async throws -> Data {
-        do {
-            let (data, response) = try await URLSession.shared.data(for: request)
-            if let response = response as? HTTPURLResponse,
-               !((200..<300) ~= response.statusCode)
-            {
-                if response.statusCode == 401 {
-                    throw APIError.unauthorized
-                }
-                if response.statusCode == 403 {
-                    throw APIError.forbidden
-                }
-                throw APIError.invalidResponse(
-                    statusCode: response.statusCode,
-                    content: String(data: data, encoding: .utf8) ?? "<non-utf8 response>")
-            }
-            return data
-        } catch {
-            throw mapError(error)
+            throw APIError.requestFailed(error)
         }
     }
 
     private func get<T: Decodable>(
         _ path: String, responseType: T.Type, apiKey: String? = nil
     ) async throws -> T {
-        let url = try makeURL(for: path)
-        let request = try request(for: url, apiKey: apiKey)
-        return try await perform(request, responseType: T.self)
-    }
-
-    func getData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem] = []) async throws -> Data {
-        let url = try makeURL(for: path, queryItems: queryItems)
-        let request = try request(for: url, apiKey: apiKey)
-        return try await performData(request)
+        do {
+            let request = request(
+                for: URL(string: "\(baseURL)\(path)")!, apiKey: apiKey)
+            return try await perform(request, responseType: T.self)
+        } catch {
+            throw APIError.requestFailed(error)
+        }
     }
 
     private func post<T: Decodable>(
         _ path: String, responseType: T.Type, apiKey: String? = nil,
         body: Encodable? = nil
     ) async throws -> T {
-        let url = try makeURL(for: path)
-        let request = try request(for: url, method: "POST", apiKey: apiKey, body: body)
-        return try await perform(request, responseType: T.self)
-    }
-
-    func putData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem] = [], body: Encodable? = nil) async throws -> Data {
-        let url = try makeURL(for: path, queryItems: queryItems)
-        let request = try request(for: url, method: "PUT", apiKey: apiKey, body: body)
-        return try await performData(request)
-    }
-
-    func postData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem] = [], body: Encodable? = nil) async throws -> Data {
-        let url = try makeURL(for: path, queryItems: queryItems)
-        let request = try request(for: url, method: "POST", apiKey: apiKey, body: body)
-        return try await performData(request)
-    }
-
-    func deleteData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem] = []) async throws -> Data {
-        let url = try makeURL(for: path, queryItems: queryItems)
-        let request = try request(for: url, method: "DELETE", apiKey: apiKey)
-        return try await performData(request)
-    }
-
-    private func add(domain: String, to path: String) async throws {
-        _ = try await postData(
-            path,
-            apiKey: connection.token,
-            queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
-            body: PiholeV6DomainCreateRequest(domain: domain, enabled: true, comment: "Added via PiBar", groups: nil)
-        )
-    }
-
-    private func parseTopEntries(from data: Data, preferredKeys: [String]) -> [TopListEntry] {
-        guard let object = try? JSONSerialization.jsonObject(with: data) else {
-            return []
-        }
-
-        let root = object as? [String: Any] ?? [:]
-        for key in preferredKeys {
-            if let entries = root[key] {
-                let parsed = parseTopEntries(from: entries)
-                if !parsed.isEmpty {
-                    return parsed
-                }
-            }
-        }
-
-        return parseTopEntries(from: object)
-    }
-
-    private func parseTopEntries(from object: Any) -> [TopListEntry] {
-        if let dictionary = object as? [String: Any] {
-            let entries = dictionary.compactMap { key, value -> TopListEntry? in
-                if let count = value as? Int {
-                    return TopListEntry(name: key, count: count)
-                }
-                if let countString = value as? String, let count = Int(countString) {
-                    return TopListEntry(name: key, count: count)
-                }
-                if let nested = value as? [String: Any] {
-                    let label = (nested["name"] ?? nested["domain"] ?? nested["client"] ?? key) as? String ?? key
-                    let count = nested["count"] as? Int
-                        ?? nested["queries"] as? Int
-                        ?? nested["blocked"] as? Int
-                    if let count {
-                        return TopListEntry(name: label, count: count)
-                    }
-                }
-                return nil
-            }
-            return sortTopEntries(entries)
-        }
-
-        if let array = object as? [[String: Any]] {
-            let entries = array.compactMap { item -> TopListEntry? in
-                let name = item["name"] as? String
-                    ?? item["domain"] as? String
-                    ?? item["client"] as? String
-                let count = item["count"] as? Int
-                    ?? item["queries"] as? Int
-                    ?? item["blocked"] as? Int
-                guard let name, let count else { return nil }
-                return TopListEntry(name: name, count: count)
-            }
-            return sortTopEntries(entries)
-        }
-
-        return []
-    }
-
-    private func sortTopEntries(_ entries: [TopListEntry]) -> [TopListEntry] {
-        entries.sorted { lhs, rhs in
-            if lhs.count == rhs.count {
-                return lhs.name < rhs.name
-            }
-            return lhs.count > rhs.count
+        do {
+            let request = request(
+                for: URL(string: "\(baseURL)\(path)")!, method: "POST",
+                apiKey: apiKey, body: body)
+            return try await perform(request, responseType: T.self)
+        } catch {
+            throw APIError.requestFailed(error)
         }
     }
 
-    static func encodePathComponent(_ raw: String) -> String {
-        let allowed = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))
-        return raw.addingPercentEncoding(withAllowedCharacters: allowed) ?? raw
+    private func sessionToken() async throws -> String? {
+        if !connection.passwordProtected {
+            return nil
+        }
+
+        if let sessionID, let sessionExpiry, sessionExpiry > Date() {
+            return sessionID
+        }
+
+        guard !connection.token.isEmpty else {
+            throw APIError.invalidResponse(statusCode: 401, content: "Missing Pi-hole v6 app password")
+        }
+
+        let response = try await checkPassword(password: connection.token, totp: nil)
+
+        guard response.session.valid else {
+            throw APIError.invalidResponse(
+                statusCode: 401,
+                content: response.session.message ?? "Invalid Pi-hole v6 app password"
+            )
+        }
+
+        sessionID = response.session.sid
+        if response.session.validity > 0 {
+            sessionExpiry = Date().addingTimeInterval(TimeInterval(max(response.session.validity - 5, 0)))
+        } else {
+            sessionExpiry = nil
+        }
+
+        return sessionID
     }
 
 }

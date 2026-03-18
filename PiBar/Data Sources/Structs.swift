@@ -13,13 +13,20 @@ import Foundation
 
 // MARK: - Pi-hole Connections
 
-protocol PBConnectionCodable: Codable {}
+// PiBar v1.0 format
+struct PiholeConnectionV1: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+}
 
-extension PBConnectionCodable {
+extension PiholeConnectionV1 {
     init?(data: Data) {
         let jsonDecoder = JSONDecoder()
         do {
-            self = try jsonDecoder.decode(Self.self, from: data)
+            let object = try jsonDecoder.decode(PiholeConnectionV1.self, from: data)
+            self = object
         } catch {
             Log.debug("Couldn't decode connection: \(error.localizedDescription)")
             return nil
@@ -28,20 +35,16 @@ extension PBConnectionCodable {
 
     func encode() -> Data? {
         let jsonEncoder = JSONEncoder()
-        return try? jsonEncoder.encode(self)
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
     }
 }
 
-// PiBar v1.0 format
-struct PiholeConnectionV1: PBConnectionCodable {
-    let hostname: String
-    let port: Int
-    let useSSL: Bool
-    let token: String
-}
-
 // PiBar v1.1 format
-struct PiholeConnectionV2: PBConnectionCodable {
+struct PiholeConnectionV2: Codable {
     let hostname: String
     let port: Int
     let useSSL: Bool
@@ -51,6 +54,26 @@ struct PiholeConnectionV2: PBConnectionCodable {
 }
 
 extension PiholeConnectionV2 {
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV2.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
     static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool) -> String {
         let prefix: String = useSSL ? "https" : "http"
         return "\(prefix)://\(hostname):\(port)/admin/"
@@ -58,7 +81,7 @@ extension PiholeConnectionV2 {
 }
 
 // PiBar v1.2 format
-struct PiholeConnectionV3: PBConnectionCodable {
+struct PiholeConnectionV3: Codable {
     let hostname: String
     let port: Int
     let useSSL: Bool
@@ -69,27 +92,29 @@ struct PiholeConnectionV3: PBConnectionCodable {
 }
 
 extension PiholeConnectionV3 {
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV3.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
     static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool) -> String {
         let prefix: String = useSSL ? "https" : "http"
         return "\(prefix)://\(hostname):\(port)/admin/"
-    }
-
-    var identifier: String {
-        let prefix: String = useSSL ? "https" : "http"
-        let version = isV6 ? "v6" : "legacy"
-        return "\(prefix)://\(hostname):\(port) [\(version)]"
-    }
-
-    func replacingToken(_ token: String) -> PiholeConnectionV3 {
-        PiholeConnectionV3(
-            hostname: hostname,
-            port: port,
-            useSSL: useSSL,
-            token: token,
-            passwordProtected: passwordProtected,
-            adminPanelURL: adminPanelURL,
-            isV6: isV6
-        )
     }
 }
 
@@ -123,40 +148,6 @@ struct PiholeAPIStatus: Decodable {
     let status: String
 }
 
-struct TopListEntry {
-    let name: String
-    let count: Int
-}
-
-enum QuickDomainAction {
-    case allow
-    case block
-
-    var buttonTitle: String {
-        switch self {
-        case .allow: return "Allow"
-        case .block: return "Block"
-        }
-    }
-
-    var pastTenseTitle: String {
-        switch self {
-        case .allow: return "Allowed"
-        case .block: return "Blocked"
-        }
-    }
-}
-
-struct PiBarActionResult {
-    let actionTitle: String
-    let successfulIdentifiers: [String]
-    let failedIdentifiers: [String]
-
-    var succeededEverywhere: Bool {
-        !successfulIdentifiers.isEmpty && failedIdentifiers.isEmpty
-    }
-}
-
 // MARK: - Pi-hole Network
 
 enum PiholeNetworkStatus: String {
@@ -178,8 +169,6 @@ struct Pihole {
     let canBeManaged: Bool?
     let enabled: Bool?
     let isV6: Bool
-    let topDomains: [TopListEntry]
-    let topClients: [TopListEntry]
 
     var status: PiholeNetworkStatus {
         if !online {

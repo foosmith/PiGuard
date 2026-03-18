@@ -15,11 +15,11 @@ class PiholeAPI: NSObject {
     let connection: PiholeConnectionV3
 
     var identifier: String {
-        return connection.identifier
+        return "\(connection.hostname)"
     }
 
     private let path: String = "/admin/api.php"
-    private let requestTimeout: TimeInterval = 5
+    private let timeout: Int = 2
 
     private enum Endpoints {
         static let summary = PiholeAPIEndpoint(queryParameter: "summaryRaw", authorizationRequired: true)
@@ -28,7 +28,6 @@ class PiholeAPI: NSObject {
         static let topClients = PiholeAPIEndpoint(queryParameter: "topClients", authorizationRequired: true)
         static let enable = PiholeAPIEndpoint(queryParameter: "enable", authorizationRequired: true)
         static let disable = PiholeAPIEndpoint(queryParameter: "disable", authorizationRequired: true)
-        static let updateGravity = PiholeAPIEndpoint(queryParameter: "updateGravity", authorizationRequired: true)
         static let recentBlocked = PiholeAPIEndpoint(queryParameter: "recentBlocked", authorizationRequired: true)
     }
 
@@ -50,47 +49,26 @@ class PiholeAPI: NSObject {
         super.init()
     }
 
-    private func makeURL(for endpoint: PiholeAPIEndpoint, argument: String?) -> URL? {
-        var components = URLComponents()
-        components.scheme = connection.useSSL ? "https" : "http"
-        components.host = connection.hostname
-        components.port = connection.port
-        components.path = path
-
-        var items: [URLQueryItem] = []
-        if endpoint.authorizationRequired {
-            items.append(URLQueryItem(name: "auth", value: connection.token))
-        }
-        items.append(URLQueryItem(name: endpoint.queryParameter, value: argument))
-        components.queryItems = items
-
-        return components.url
-    }
-
-    private func makeURL(queryItems: [URLQueryItem]) -> URL? {
-        var components = URLComponents()
-        components.scheme = connection.useSSL ? "https" : "http"
-        components.host = connection.hostname
-        components.port = connection.port
-        components.path = path
-        components.queryItems = queryItems
-        return components.url
-    }
-
     private func get(_ endpoint: PiholeAPIEndpoint, argument: String? = nil, completion: @escaping (String?) -> Void) {
-        guard let builtURL = makeURL(for: endpoint, argument: argument) else { return completion(nil) }
-        executeRequest(url: builtURL, completion: completion)
-    }
+        var builtURLString = baseURL
 
-    private func get(queryItems: [URLQueryItem], completion: @escaping (String?) -> Void) {
-        guard let builtURL = makeURL(queryItems: queryItems) else { return completion(nil) }
-        executeRequest(url: builtURL, completion: completion)
-    }
+        if endpoint.authorizationRequired {
+            builtURLString.append(contentsOf: "?auth=\(connection.token)&\(endpoint.queryParameter)")
+        } else {
+            builtURLString.append(contentsOf: "?\(endpoint.queryParameter)")
+        }
 
-    private func executeRequest(url: URL, completion: @escaping (String?) -> Void) {
-        var urlRequest = URLRequest(url: url)
+        if let argument = argument {
+            builtURLString.append(contentsOf: "=\(argument)")
+        }
+
+        Log.debug("Built API String: \(builtURLString)")
+
+        guard let builtURL = URL(string: builtURLString) else { return completion(nil) }
+
+        var urlRequest = URLRequest(url: builtURL)
         urlRequest.httpMethod = "GET"
-        urlRequest.timeoutInterval = requestTimeout
+        urlRequest.timeoutInterval = 3
         let session = URLSession(configuration: .default)
         let dataTask = session.dataTask(with: urlRequest) { data, response, error in
             if error != nil {
@@ -113,35 +91,6 @@ class PiholeAPI: NSObject {
         dataTask.resume()
     }
 
-    private func topEntries(from string: String, preferredKeys: [String]) -> [TopListEntry] {
-        guard let data = string.data(using: .utf8),
-              let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            return []
-        }
-
-        for key in preferredKeys {
-            guard let values = object[key] as? [String: Any] else { continue }
-
-            return values.compactMap { name, rawCount in
-                if let count = rawCount as? Int {
-                    return TopListEntry(name: name, count: count)
-                }
-                if let countString = rawCount as? String, let count = Int(countString) {
-                    return TopListEntry(name: name, count: count)
-                }
-                return nil
-            }
-            .sorted { lhs, rhs in
-                if lhs.count == rhs.count {
-                    return lhs.name < rhs.name
-                }
-                return lhs.count > rhs.count
-            }
-        }
-
-        return []
-    }
-
     private func decodeJSON<T>(_ string: String) -> T? where T: Decodable {
         do {
             let jsonDecoder = JSONDecoder()
@@ -156,13 +105,13 @@ class PiholeAPI: NSObject {
 
     // MARK: - URLs
 
+    private var baseURL: String {
+        let prefix = connection.useSSL ? "https" : "http"
+        return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
+    }
+
     var admin: URL {
-        var components = URLComponents()
-        components.scheme = connection.useSSL ? "https" : "http"
-        components.host = connection.hostname
-        components.port = connection.port
-        components.path = "/admin"
-        return components.url!
+        return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!
     }
 
     // MARK: - Testing
@@ -205,24 +154,6 @@ class PiholeAPI: NSObject {
         }
     }
 
-    func fetchTopDomains(completion: @escaping ([TopListEntry]) -> Void) {
-        DispatchQueue.global(qos: .background).async {
-            self.get(Endpoints.topItems, argument: "10") { string in
-                guard let string else { return completion([]) }
-                completion(self.topEntries(from: string, preferredKeys: ["top_queries", "top_ads"]))
-            }
-        }
-    }
-
-    func fetchTopClients(completion: @escaping ([TopListEntry]) -> Void) {
-        DispatchQueue.global(qos: .background).async {
-            self.get(Endpoints.topClients, argument: "10") { string in
-                guard let string else { return completion([]) }
-                completion(self.topEntries(from: string, preferredKeys: ["top_sources", "top_clients"]))
-            }
-        }
-    }
-
     func disable(seconds: Int? = nil, completion: @escaping (Bool) -> Void) {
         DispatchQueue.global(qos: .background).async {
             var secondsString: String?
@@ -243,38 +174,6 @@ class PiholeAPI: NSObject {
                 guard let jsonString = string,
                     let _: PiholeAPIStatus = self.decodeJSON(jsonString) else { return completion(false) }
                 completion(true)
-            }
-        }
-    }
-
-    func updateGravity(completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .background).async {
-            self.get(Endpoints.updateGravity) { string in
-                completion(string != nil)
-            }
-        }
-    }
-
-    func allow(domain: String, completion: @escaping (Bool) -> Void) {
-        updateDomainList(named: "white", domain: domain, completion: completion)
-    }
-
-    func block(domain: String, completion: @escaping (Bool) -> Void) {
-        updateDomainList(named: "black", domain: domain, completion: completion)
-    }
-
-    private func updateDomainList(named listName: String, domain: String, completion: @escaping (Bool) -> Void) {
-        DispatchQueue.global(qos: .background).async {
-            var queryItems = [
-                URLQueryItem(name: "list", value: listName),
-                URLQueryItem(name: "add", value: domain),
-            ]
-            if !self.connection.token.isEmpty {
-                queryItems.insert(URLQueryItem(name: "auth", value: self.connection.token), at: 0)
-            }
-
-            self.get(queryItems: queryItems) { string in
-                completion(string != nil && string != "[]")
             }
         }
     }

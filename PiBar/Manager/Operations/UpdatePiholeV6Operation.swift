@@ -20,87 +20,96 @@ final class UpdatePiholeV6Operation: AsyncOperation, @unchecked Sendable {
 
     override func main() {
         Log.debug("Updating Pi-hole: \(pihole.identifier)")
-        guard let api6 = pihole.api6 else {
-            pihole = Pihole(
-                api: nil,
-                api6: nil,
-                identifier: pihole.identifier,
-                online: false,
-                summary: nil,
-                canBeManaged: false,
-                enabled: nil,
-                isV6: true,
-                topDomains: [],
-                topClients: []
-            )
-            state = .isFinished
-            return
-        }
-
-        Task { [weak self] in
-            guard let self else { return }
+        Task {
             var enabled: Bool? = true
             var online = true
-            var canBeManaged = !api6.connection.token.isEmpty || !api6.connection.passwordProtected
-
+            var canBeManaged: Bool = true
+            
             do {
-                async let summaryResult = api6.fetchSummary()
-                async let blockingStatusResult = api6.fetchBlockingStatus()
-                async let topDomainsResult = api6.fetchTopDomains()
-                async let topClientsResult = api6.fetchTopClients()
-                let result = try await summaryResult
-                let blockingResult = try await blockingStatusResult
-                let topDomains = try await topDomainsResult
-                let topClients = try await topClientsResult
-
+                let result = try await pihole.api6!.fetchSummary()
+                let blockingResult = try await pihole.api6!.fetchBlockingStatus()
+                
+                Log.debug("Blocking result \(blockingResult)")
+                
                 if blockingResult.blocking != "enabled" {
                     enabled = false
                 }
-
-                let newSummary = PiholeAPISummary(
-                    domainsBeingBlocked: result.gravity.domainsBeingBlocked,
-                    dnsQueriesToday: result.queries.total,
-                    adsBlockedToday: result.queries.blocked,
-                    adsPercentageToday: result.queries.percentBlocked,
-                    uniqueDomains: result.queries.uniqueDomains,
-                    queriesForwarded: result.queries.forwarded,
-                    queriesCached: result.queries.cached,
-                    uniqueClients: result.clients.active,
-                    dnsQueriesAllTypes: 0,
-                    status: blockingResult.blocking
-                )
-
-                self.pihole = Pihole(
+                
+                let newSummary = PiholeAPISummary(domainsBeingBlocked: result.gravity.domainsBeingBlocked, dnsQueriesToday: result.queries.total, adsBlockedToday: result.queries.blocked, adsPercentageToday: result.queries.percentBlocked, uniqueDomains: result.queries.uniqueDomains, queriesForwarded: result.queries.forwarded, queriesCached: result.queries.cached, uniqueClients: result.clients.active, dnsQueriesAllTypes: 0, status: blockingResult.blocking)
+                
+                let updatedPihole: Pihole = Pihole(
                     api: nil,
-                    api6: api6,
-                    identifier: api6.identifier,
+                    api6: self.pihole.api6!,
+                    identifier: self.pihole.identifier,
                     online: online,
                     summary: newSummary,
                     canBeManaged: canBeManaged,
                     enabled: enabled,
-                    isV6: true,
-                    topDomains: topDomains,
-                    topClients: topClients
+                    isV6: true
                 )
+                self.pihole = updatedPihole
             } catch {
                 Log.error(error)
-                online = false
-                enabled = nil
-                canBeManaged = false
-                self.pihole = Pihole(
+                let updatedPihole: Pihole = Pihole(
                     api: nil,
-                    api6: api6,
-                    identifier: api6.identifier,
-                    online: online,
+                    api6: self.pihole.api6!,
+                    identifier: self.pihole.identifier,
+                    online: false,
                     summary: nil,
-                    canBeManaged: canBeManaged,
-                    enabled: enabled,
-                    isV6: true,
-                    topDomains: [],
-                    topClients: []
+                    canBeManaged: false,
+                    enabled: nil,
+                    isV6: true
                 )
+                self.pihole = updatedPihole
             }
             self.state = .isFinished
         }
+            
+//            let updatedPihole: Pihole = Pihole(
+//                api: self.pihole.api!,
+//                api6: nil,
+//                identifier: self.pihole.api!.identifier,
+//                online: online,
+//                summary: summary,
+//                canBeManaged: canBeManaged,
+//                enabled: enabled, isV6: false
+//            )
+//
+//            self.pihole = updatedPihole
+//
+//            self.state = .isFinished
+//        pihole.api!.fetchSummary { summary in
+//            Log.debug("Received Summary for \(self.pihole.identifier)")
+//            var enabled: Bool? = true
+//            var online = true
+//            var canBeManaged: Bool = false
+//
+//            if let summary = summary {
+//                if summary.status != "enabled" {
+//                    enabled = false
+//                }
+//                if !self.pihole.api!.connection.token.isEmpty || !self.pihole.api!.connection.passwordProtected {
+//                    canBeManaged = true
+//                }
+//            } else {
+//                enabled = nil
+//                online = false
+//                canBeManaged = false
+//            }
+//
+//            let updatedPihole: Pihole = Pihole(
+//                api: self.pihole.api!,
+//                api6: nil,
+//                identifier: self.pihole.api!.identifier,
+//                online: online,
+//                summary: summary,
+//                canBeManaged: canBeManaged,
+//                enabled: enabled, isV6: false
+//            )
+//
+//            self.pihole = updatedPihole
+//
+//            self.state = .isFinished
+//        }
     }
 }

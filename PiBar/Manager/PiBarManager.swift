@@ -17,16 +17,6 @@ protocol PiBarManagerDelegate: AnyObject {
 
 class PiBarManager: NSObject {
     private var piholes: [String: Pihole] = [:]
-    private let piholesLock = NSLock()
-    private let updateStateLock = NSLock()
-    private var isUpdateInFlight = false
-    private var refreshRequested = false
-
-    private let syncStateLock = NSLock()
-    private var isSyncInFlight = false
-    private var syncRequested = false
-    private var syncTimer: Timer?
-    private var syncInterval: TimeInterval = 15 * 60
 
     private var networkOverview: PiholeNetworkOverview {
         didSet {
@@ -39,13 +29,8 @@ class PiBarManager: NSObject {
     private let operationQueue: OperationQueue = OperationQueue()
 
     override init() {
-        #if DEBUG
         Log.logLevel = .debug
         Log.useEmoji = true
-        #else
-        Log.logLevel = .off
-        Log.useEmoji = false
-        #endif
 
         operationQueue.maxConcurrentOperationCount = 1
 
@@ -84,47 +69,12 @@ class PiBarManager: NSObject {
         }
     }
 
-    func configureSyncFromPreferences() {
-        stopSyncTimer()
-
-        let enabled = Preferences.standard.syncEnabled
-        let minutes = Preferences.standard.syncIntervalMinutes
-        let interval = TimeInterval(minutes) * 60
-        syncInterval = interval
-
-        guard enabled else {
-            return
-        }
-
-        // Don't bother scheduling if Primary/Secondary aren't configured.
-        let primaryId = Preferences.standard.syncPrimaryIdentifier
-        let secondaryId = Preferences.standard.syncSecondaryIdentifier
-        guard !primaryId.isEmpty, !secondaryId.isEmpty, primaryId != secondaryId else {
-            return
-        }
-
-        let newTimer = Timer(timeInterval: syncInterval, target: self, selector: #selector(syncFromTimer), userInfo: nil, repeats: true)
-        newTimer.tolerance = 10
-        RunLoop.main.add(newTimer, forMode: .common)
-        syncTimer = newTimer
-        Log.debug("Manager: Sync Timer Started")
-    }
-
-    func syncNow() {
-        enqueueFullSync()
-    }
-
     // Enable / Disable Pi-hole(s)
 
     func toggleNetwork() {
-        piholesLock.lock()
-        let snapshot = piholes
-        piholesLock.unlock()
-        let status = networkStatus(in: snapshot)
-
-        if status == .enabled || status == .partiallyEnabled {
+        if networkStatus() == .enabled || networkStatus() == .partiallyEnabled {
             disableNetwork()
-        } else if status == .disabled {
+        } else if networkStatus() == .disabled {
             enableNetwork()
         }
     }
@@ -136,10 +86,7 @@ class PiBarManager: NSObject {
             self.updatePiholes()
             self.startTimer()
         }
-        piholesLock.lock()
-        let snapshot = Array(piholes.values)
-        piholesLock.unlock()
-        snapshot.forEach { pihole in
+        piholes.values.forEach { pihole in
             let operation = ChangePiholeStatusOperation(pihole: pihole, status: .disable, seconds: seconds)
             completionOperation.addDependency(operation)
             operationQueue.addOperation(operation)
@@ -154,65 +101,12 @@ class PiBarManager: NSObject {
             self.updatePiholes()
             self.startTimer()
         }
-        piholesLock.lock()
-        let snapshot = Array(piholes.values)
-        piholesLock.unlock()
-        snapshot.forEach { pihole in
+        piholes.values.forEach { pihole in
             let operation = ChangePiholeStatusOperation(pihole: pihole, status: .enable)
             completionOperation.addDependency(operation)
             operationQueue.addOperation(operation)
         }
         operationQueue.addOperation(completionOperation)
-    }
-
-    func updateGravity(completion: @escaping (PiBarActionResult) -> Void) {
-        performManagedAction(actionTitle: "Update Gravity", completion: completion) { pihole, done in
-            if let api6 = pihole.api6 {
-                Task {
-                    do {
-                        try await api6.updateGravity()
-                        done(true)
-                    } catch {
-                        Log.error(error)
-                        done(false)
-                    }
-                }
-            } else if let api = pihole.api {
-                api.updateGravity(completion: done)
-            } else {
-                done(false)
-            }
-        }
-    }
-
-    func applyQuickDomainAction(_ action: QuickDomainAction, domain: String, completion: @escaping (PiBarActionResult) -> Void) {
-        performManagedAction(actionTitle: "\(action.buttonTitle) “\(domain)”", completion: completion) { pihole, done in
-            if let api6 = pihole.api6 {
-                Task {
-                    do {
-                        switch action {
-                        case .allow:
-                            try await api6.allow(domain: domain)
-                        case .block:
-                            try await api6.block(domain: domain)
-                        }
-                        done(true)
-                    } catch {
-                        Log.error(error)
-                        done(false)
-                    }
-                }
-            } else if let api = pihole.api {
-                switch action {
-                case .allow:
-                    api.allow(domain: domain, completion: done)
-                case .block:
-                    api.block(domain: domain, completion: done)
-                }
-            } else {
-                done(false)
-            }
-        }
     }
 
     // MARK: - Private Functions
@@ -239,64 +133,6 @@ class PiBarManager: NSObject {
         }
     }
 
-    private func stopSyncTimer() {
-        if let existingTimer = syncTimer {
-            Log.debug("Manager: Sync Timer Stopped")
-            existingTimer.invalidate()
-            syncTimer = nil
-        }
-    }
-
-    private func performManagedAction(
-        actionTitle: String,
-        completion: @escaping (PiBarActionResult) -> Void,
-        performer: @escaping (Pihole, @escaping (Bool) -> Void) -> Void
-    ) {
-        piholesLock.lock()
-        let manageablePiholes = piholes.values.filter { $0.canBeManaged ?? false }
-        piholesLock.unlock()
-
-        guard !manageablePiholes.isEmpty else {
-            DispatchQueue.main.async {
-                completion(PiBarActionResult(actionTitle: actionTitle, successfulIdentifiers: [], failedIdentifiers: []))
-            }
-            return
-        }
-
-        stopTimer()
-
-        let group = DispatchGroup()
-        let resultLock = NSLock()
-        var successful: [String] = []
-        var failed: [String] = []
-
-        for pihole in manageablePiholes {
-            group.enter()
-            performer(pihole) { succeeded in
-                resultLock.lock()
-                if succeeded {
-                    successful.append(pihole.identifier)
-                } else {
-                    failed.append(pihole.identifier)
-                }
-                resultLock.unlock()
-                group.leave()
-            }
-        }
-
-        group.notify(queue: .main) {
-            self.updatePiholes()
-            self.startTimer()
-            completion(
-                PiBarActionResult(
-                    actionTitle: actionTitle,
-                    successfulIdentifiers: successful.sorted(),
-                    failedIdentifiers: failed.sorted()
-                )
-            )
-        }
-    }
-
     // MARK: Data Updates
 
     private func createNewNetwork() {
@@ -315,16 +151,13 @@ class PiBarManager: NSObject {
         Log.debug("Manager: Updating Connections")
 
         stopTimer()
-        piholesLock.lock()
         piholes.removeAll()
-        piholesLock.unlock()
         createNewNetwork()
         
         for connection in connections {
             Log.debug("Manager: Updating Connection: \(connection.hostname)")
             if connection.isV6 {
                 let api = Pihole6API(connection: connection)
-                piholesLock.lock()
                 piholes[api.identifier] = Pihole(
                     api: nil,
                     api6: api,
@@ -333,14 +166,10 @@ class PiBarManager: NSObject {
                     summary: nil,
                     canBeManaged: nil,
                     enabled: nil,
-                    isV6: true,
-                    topDomains: [],
-                    topClients: []
+                    isV6: true
                 )
-                piholesLock.unlock()
             } else {
                 let api = PiholeAPI(connection: connection)
-                piholesLock.lock()
                 piholes[api.identifier] = Pihole(
                     api: api,
                     api6: nil,
@@ -349,11 +178,8 @@ class PiBarManager: NSObject {
                     summary: nil,
                     canBeManaged: nil,
                     enabled: nil,
-                    isV6: false,
-                    topDomains: [],
-                    topClients: []
+                    isV6: false
                 )
-                piholesLock.unlock()
                     
             }
         }
@@ -361,66 +187,34 @@ class PiBarManager: NSObject {
         updatePiholes()
 
         startTimer()
-        configureSyncFromPreferences()
     }
 
     @objc private func updatePiholes() {
-        updateStateLock.lock()
-        if isUpdateInFlight {
-            refreshRequested = true
-            updateStateLock.unlock()
-            return
-        }
-        isUpdateInFlight = true
-        updateStateLock.unlock()
-
         Log.debug("Manager: Updating Pi-holes")
 
-        var v6Operations: [UpdatePiholeV6Operation] = []
-        var legacyOperations: [UpdatePiholeOperation] = []
-
-        let completionOperation = BlockOperation { [weak self] in
-            guard let self else { return }
-
-            self.piholesLock.lock()
-            for operation in v6Operations {
-                self.piholes[operation.pihole.identifier] = operation.pihole
-            }
-            for operation in legacyOperations {
-                self.piholes[operation.pihole.identifier] = operation.pihole
-            }
-            self.piholesLock.unlock()
-
+        let completionOperation = BlockOperation {
+            // If we don't sleep here we run into some weird timing issues with dictionaries
+            sleep(1)
             self.updateNetworkOverview()
-
-            self.updateStateLock.lock()
-            self.isUpdateInFlight = false
-            let shouldRefreshAgain = self.refreshRequested
-            self.refreshRequested = false
-            self.updateStateLock.unlock()
-
-            if shouldRefreshAgain {
-                self.updatePiholes()
-            }
         }
 
-        piholesLock.lock()
-        let snapshot = Array(piholes.values)
-        piholesLock.unlock()
-
-        for pihole in snapshot {
+        for pihole in piholes.values {
             if pihole.isV6 {
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeV6Operation(pihole)
+                operation.completionBlock = { [unowned operation] in
+                    self.piholes[pihole.identifier] = operation.pihole
+                }
                 completionOperation.addDependency(operation)
                 operationQueue.addOperation(operation)
-                v6Operations.append(operation)
             } else {
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeOperation(pihole)
+                operation.completionBlock = { [unowned operation] in
+                    self.piholes[pihole.identifier] = operation.pihole
+                }
                 completionOperation.addDependency(operation)
                 operationQueue.addOperation(operation)
-                legacyOperations.append(operation)
             }
         }
 
@@ -430,67 +224,18 @@ class PiBarManager: NSObject {
     private func updateNetworkOverview() {
         Log.debug("Updating Network Overview")
 
-        piholesLock.lock()
-        let snapshot = piholes
-        piholesLock.unlock()
-
         networkOverview = PiholeNetworkOverview(
-            networkStatus: networkStatus(in: snapshot),
-            canBeManaged: canManage(in: snapshot),
-            totalQueriesToday: networkTotalQueries(in: snapshot),
-            adsBlockedToday: networkBlockedQueries(in: snapshot),
-            adsPercentageToday: networkPercentageBlocked(in: snapshot),
-            averageBlocklist: networkBlocklist(in: snapshot),
-            piholes: snapshot
+            networkStatus: networkStatus(),
+            canBeManaged: canManage(),
+            totalQueriesToday: networkTotalQueries(),
+            adsBlockedToday: networkBlockedQueries(),
+            adsPercentageToday: networkPercentageBlocked(),
+            averageBlocklist: networkBlocklist(),
+            piholes: piholes
         )
     }
 
-    // MARK: - Sync
-
-    @objc private func syncFromTimer() {
-        enqueueFullSync()
-    }
-
-    private func enqueueFullSync() {
-        syncStateLock.lock()
-        if isSyncInFlight {
-            syncRequested = true
-            syncStateLock.unlock()
-            return
-        }
-        isSyncInFlight = true
-        syncStateLock.unlock()
-
-        Log.debug("Manager: Enqueuing full sync (groups + adlists + domains)")
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .piBarSyncBegan, object: nil)
-        }
-
-        let operation = SyncPrimarySecondaryOperation()
-
-        let completion = BlockOperation { [weak self] in
-            guard let self else { return }
-            self.syncStateLock.lock()
-            self.isSyncInFlight = false
-            let shouldRunAgain = self.syncRequested
-            self.syncRequested = false
-            self.syncStateLock.unlock()
-
-            DispatchQueue.main.async {
-                NotificationCenter.default.post(name: .piBarSyncEnded, object: nil)
-            }
-
-            if shouldRunAgain {
-                self.enqueueFullSync()
-            }
-        }
-
-        completion.addDependency(operation)
-        operationQueue.addOperation(operation)
-        operationQueue.addOperation(completion)
-    }
-
-    private func networkTotalQueries(in piholes: [String: Pihole]) -> Int {
+    private func networkTotalQueries() -> Int {
         var queries: Int = 0
         piholes.values.forEach {
             queries += $0.summary?.dnsQueriesToday ?? 0
@@ -498,7 +243,7 @@ class PiBarManager: NSObject {
         return queries
     }
 
-    private func networkBlockedQueries(in piholes: [String: Pihole]) -> Int {
+    private func networkBlockedQueries() -> Int {
         var queries: Int = 0
         piholes.values.forEach {
             queries += $0.summary?.adsBlockedToday ?? 0
@@ -506,16 +251,16 @@ class PiBarManager: NSObject {
         return queries
     }
 
-    private func networkPercentageBlocked(in piholes: [String: Pihole]) -> Double {
-        let totalQueries = networkTotalQueries(in: piholes)
-        let blockedQueries = networkBlockedQueries(in: piholes)
+    private func networkPercentageBlocked() -> Double {
+        let totalQueries = networkTotalQueries()
+        let blockedQueries = networkBlockedQueries()
         if totalQueries == 0 || blockedQueries == 0 {
             return 0.0
         }
         return Double(blockedQueries) / Double(totalQueries) * 100.0
     }
 
-    private func networkBlocklist(in piholes: [String: Pihole]) -> Int {
+    private func networkBlocklist() -> Int {
         var blocklistCounts: [Int] = []
         piholes.values.forEach {
             blocklistCounts.append($0.summary?.domainsBeingBlocked ?? 0)
@@ -523,7 +268,7 @@ class PiBarManager: NSObject {
         return blocklistCounts.average()
     }
 
-    private func networkStatus(in piholes: [String: Pihole]) -> PiholeNetworkStatus {
+    private func networkStatus() -> PiholeNetworkStatus {
         var summaries: [PiholeAPISummary] = []
         piholes.values.forEach {
             if let summary = $0.summary { summaries.append(summary) }
@@ -553,7 +298,7 @@ class PiBarManager: NSObject {
         }
     }
 
-    private func canManage(in piholes: [String: Pihole]) -> Bool {
+    private func canManage() -> Bool {
         for pihole in piholes.values where pihole.canBeManaged ?? false {
             return true
         }

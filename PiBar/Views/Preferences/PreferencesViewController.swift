@@ -16,12 +16,10 @@ import LaunchAtLogin
 protocol PreferencesDelegate: AnyObject {
     func updatedPreferences()
     func updatedConnections()
-    func syncNowRequested()
 }
 
 class PreferencesViewController: NSViewController {
     weak var delegate: PreferencesDelegate?
-    private let preferredWindowSize = NSSize(width: 760, height: 470)
 
     lazy var piholeSheetController: PiholeSettingsViewController? = {
         guard let controller = self.storyboard!.instantiateController(
@@ -40,13 +38,6 @@ class PreferencesViewController: NSViewController {
         }
         return controller
     }()
-
-    private var syncSettingsController: SyncSettingsViewController?
-    private var syncSettingsButton: NSButton?
-    private var syncSummaryLabel: NSTextField?
-    private var connectionsHelperLabel: NSTextField?
-    private var notificationsCheckbox: NSButton?
-    private weak var pollingRateLabel: NSTextField?
 
     // MARK: - Outlets
 
@@ -151,7 +142,8 @@ class PreferencesViewController: NSViewController {
     }
     
     @IBAction func launchAtLoginAction(_ sender: NSButton) {
-        
+        LaunchAtLogin.isEnabled = sender.state == .on
+        updateUI()
     }
     
     @IBAction func pollingRateTextFieldAction(_: NSTextField) {
@@ -171,24 +163,9 @@ class PreferencesViewController: NSViewController {
         updateUI()
 
         shortcutEnabledCheckbox.toolTip = "This shortcut allows you to easily enable and disable your Pi-hole(s)"
-        tableView.usesAlternatingRowBackgroundColors = true
-        tableView.doubleAction = #selector(handleTableDoubleClick(_:))
-        tableView.target = self
-        editButton.title = "Edit Selected"
-        editButton.toolTip = "Edit the selected Pi-hole connection"
-        removeButton.toolTip = "Remove the selected Pi-hole connection"
-        pollingRateTextField.toolTip = "Polling rate cannot be less than 3 seconds"
-        installSyncSettingsButton()
-        installNotificationsCheckbox()
-        installConnectionsHelperLabel()
-    }
+        launchAtLogincheckbox.toolTip = "Automatically launch PiBar when you log in to your Mac"
 
-    override func viewWillAppear() {
-        super.viewWillAppear()
-        if let window = view.window {
-            window.setContentSize(preferredWindowSize)
-            window.minSize = preferredWindowSize
-        }
+        pollingRateTextField.toolTip = "Polling rate cannot be less than 3 seconds"
     }
 
     func updateUI() {
@@ -200,6 +177,7 @@ class PreferencesViewController: NSViewController {
 
         showLabelsCheckbox.state = Preferences.standard.showLabels ? .on : .off
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
+        shortcutEnabledCheckbox.state = Preferences.standard.shortcutEnabled ? .on : .off
 
         if !Preferences.standard.showTitle {
             showLabelsCheckbox.isEnabled = false
@@ -210,8 +188,6 @@ class PreferencesViewController: NSViewController {
         }
         
         launchAtLogincheckbox.state = LaunchAtLogin.isEnabled ? .on : .off
-        notificationsCheckbox?.state = Preferences.standard.notificationsEnabled ? .on : .off
-        syncSummaryLabel?.stringValue = syncSummaryText()
 
         pollingRateTextField.stringValue = "\(Preferences.standard.pollingRate)"
     }
@@ -231,7 +207,6 @@ class PreferencesViewController: NSViewController {
         Preferences.standard.set(verboseLabels: verboseLabelsCheckbox.state == .on ? true : false)
 
         Preferences.standard.set(shortcutEnabled: shortcutEnabledCheckbox.state == .on ? true : false)
-        Preferences.standard.set(notificationsEnabled: notificationsCheckbox?.state == .on ? true : false)
         
         if launchAtLogincheckbox.state == .on {
             LaunchAtLogin.isEnabled = true
@@ -250,201 +225,6 @@ class PreferencesViewController: NSViewController {
         delegate?.updatedPreferences()
 
         updateUI()
-    }
-
-    private func installNotificationsCheckbox() {
-        guard notificationsCheckbox == nil else { return }
-        guard let container = shortcutEnabledCheckbox.superview else { return }
-        guard let pollingRateLabel = findLabel(withText: "Polling Rate", in: container) else { return }
-
-        let checkbox = NSButton(checkboxWithTitle: "Enable Notifications", target: self, action: #selector(notificationCheckboxChanged(_:)))
-        checkbox.translatesAutoresizingMaskIntoConstraints = false
-        checkbox.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-        checkbox.toolTip = "Show macOS notifications for status changes and quick actions"
-        container.addSubview(checkbox)
-
-        if let existingConstraint = container.constraints.first(where: {
-            ($0.firstItem as? NSTextField) == pollingRateLabel &&
-            $0.firstAttribute == .top &&
-            ($0.secondItem as? NSButton) == launchAtLogincheckbox
-        }) {
-            existingConstraint.isActive = false
-        }
-
-        NSLayoutConstraint.activate([
-            checkbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
-            checkbox.topAnchor.constraint(equalTo: launchAtLogincheckbox.bottomAnchor, constant: 8),
-            pollingRateLabel.topAnchor.constraint(equalTo: checkbox.bottomAnchor, constant: 12),
-        ])
-
-        notificationsCheckbox = checkbox
-        self.pollingRateLabel = pollingRateLabel
-        checkbox.state = Preferences.standard.notificationsEnabled ? .on : .off
-    }
-
-    @objc private func notificationCheckboxChanged(_: NSButton) {
-        saveSettings()
-    }
-
-    @objc private func handleTableDoubleClick(_: Any?) {
-        guard tableView.clickedRow >= 0 || tableView.selectedRow >= 0 else { return }
-        editButtonAction(editButton)
-    }
-
-    private func installSyncSettingsButton() {
-        if syncSettingsButton != nil || syncSummaryLabel != nil {
-            return
-        }
-
-        guard let saveButton = findSaveAndCloseButton(in: view),
-              let footer = saveButton.superview else {
-            Log.debug("Sync button: could not find Save & Close button.")
-            return
-        }
-
-        let button = NSButton(title: "Sync Settings…", target: self, action: #selector(openSyncSettings))
-        button.bezelStyle = .rounded
-        button.translatesAutoresizingMaskIntoConstraints = false
-        button.toolTip = "Configure Primary → Secondary sync and review recent sync activity"
-
-        let summaryLabel = NSTextField(labelWithString: "")
-        summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        summaryLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        summaryLabel.textColor = .secondaryLabelColor
-        summaryLabel.lineBreakMode = .byWordWrapping
-        summaryLabel.maximumNumberOfLines = 2
-
-        footer.addSubview(button)
-        footer.addSubview(summaryLabel)
-
-        NSLayoutConstraint.activate([
-            summaryLabel.leadingAnchor.constraint(equalTo: footer.leadingAnchor, constant: 20),
-            summaryLabel.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
-            summaryLabel.trailingAnchor.constraint(lessThanOrEqualTo: button.leadingAnchor, constant: -12),
-            button.centerYAnchor.constraint(equalTo: saveButton.centerYAnchor),
-            button.trailingAnchor.constraint(equalTo: saveButton.leadingAnchor, constant: -8),
-        ])
-
-        syncSettingsButton = button
-        syncSummaryLabel = summaryLabel
-        summaryLabel.stringValue = syncSummaryText()
-    }
-
-    private func installConnectionsHelperLabel() {
-        guard connectionsHelperLabel == nil,
-              let container = tableView.enclosingScrollView?.superview,
-              let scrollView = tableView.enclosingScrollView,
-              let addButton = container.subviews.compactMap({ $0 as? NSButton }).first(where: { $0.action == #selector(addButtonActiom(_:)) }) else { return }
-
-        let label = NSTextField(labelWithString: "Tip: double-click a Pi-hole to edit it, or use Add to create new v5/v6 connections.")
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        label.textColor = .secondaryLabelColor
-        label.lineBreakMode = .byWordWrapping
-        label.maximumNumberOfLines = 2
-        container.addSubview(label)
-
-        NSLayoutConstraint.activate([
-            label.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            label.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            label.topAnchor.constraint(equalTo: scrollView.bottomAnchor, constant: 10),
-        ])
-
-        container.constraints
-            .filter {
-                $0.firstAttribute == .top &&
-                ($0.secondItem as? NSScrollView) == scrollView &&
-                (($0.firstItem as? NSButton) == addButton ||
-                 ($0.firstItem as? NSButton) == editButton ||
-                 ($0.firstItem as? NSButton) == removeButton)
-            }
-            .forEach { $0.isActive = false }
-
-        NSLayoutConstraint.activate([
-            addButton.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
-            editButton.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
-            removeButton.topAnchor.constraint(equalTo: label.bottomAnchor, constant: 10),
-        ])
-
-        connectionsHelperLabel = label
-    }
-
-    private func findSaveAndCloseButton(in root: NSView) -> NSButton? {
-        for subview in root.subviews {
-            if let button = subview as? NSButton,
-               button.title == "Save & Close",
-               button.action == #selector(saveAndCloseButtonAction(_:))
-            {
-                return button
-            }
-            if let found = findSaveAndCloseButton(in: subview) {
-                return found
-            }
-        }
-        return nil
-    }
-
-    private func findLabel(withText text: String, in root: NSView) -> NSTextField? {
-        for subview in root.subviews {
-            if let textField = subview as? NSTextField, textField.stringValue == text {
-                return textField
-            }
-            if let found = findLabel(withText: text, in: subview) {
-                return found
-            }
-        }
-        return nil
-    }
-
-    @objc private func openSyncSettings() {
-        if syncSettingsController == nil {
-            let controller = SyncSettingsViewController()
-            controller.delegate = self
-            syncSettingsController = controller
-        }
-
-        if let controller = syncSettingsController {
-            presentAsSheet(controller)
-        }
-    }
-
-    private func syncSummaryText() -> String {
-        let v6Connections = Preferences.standard.piholes.filter(\.isV6)
-        guard v6Connections.count >= 2 else {
-            let needed = max(0, 2 - v6Connections.count)
-            return needed == 0 ? "Sync available" : "Sync needs \(needed) more Pi-hole v6 connection(s)"
-        }
-
-        guard Preferences.standard.syncEnabled else {
-            return "Sync is off"
-        }
-
-        let primary = Preferences.standard.syncPrimaryIdentifier
-        let secondary = Preferences.standard.syncSecondaryIdentifier
-
-        guard !primary.isEmpty, !secondary.isEmpty else {
-            return "Sync needs a primary and secondary"
-        }
-
-        guard primary != secondary else {
-            return "Sync selection needs two different Pi-holes"
-        }
-
-        let interval = Preferences.standard.syncIntervalMinutes
-        if Preferences.standard.syncDryRunEnabled {
-            return "Sync ready every \(interval) min (dry run)"
-        }
-        return "Sync ready every \(interval) min"
-    }
-}
-
-extension PreferencesViewController: SyncSettingsViewControllerDelegate {
-    func syncSettingsUpdated() {
-        delegate?.updatedPreferences()
-    }
-
-    func syncNowRequestedFromSettings() {
-        delegate?.syncNowRequested()
     }
 }
 

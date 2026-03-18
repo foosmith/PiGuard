@@ -18,7 +18,6 @@ class PiholeV6SettingsViewController: NSViewController {
     weak var delegate: PiholeV6SettingsViewControllerDelegate?
 
     var passwordProtected: Bool = true
-    var validSidToken: String = ""
 
     // MARK: - Outlets
 
@@ -49,59 +48,45 @@ class PiholeV6SettingsViewController: NSViewController {
     }
 
     @IBAction func authenticateRequestAction(_ sender: NSButton) {
-        let password = passwordTextField.stringValue
-        let totp = Int(totpTextField.stringValue)
-        Log.debug("Authenticating connection...")
+        let password = passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        Log.debug("Validating Pi-hole app password...")
 
-        testConnectionLabel.stringValue = "Authenticating..."
-        saveAndCloseButton.isEnabled = false
+        testConnectionLabel.stringValue = "Validating..."
 
         let connection = PiholeConnectionV3(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
-            token: "",
-            passwordProtected: passwordProtected,
+            token: password,
+            passwordProtected: !password.isEmpty,
             adminPanelURL: "",
             isV6: true
         )
 
         let api = Pihole6API(connection: connection)
         
-        Task { [weak self] in
-            guard let self else { return }
+        Task {
             do {
-                let result = try await api.checkPassword(password: password, totp: totp)
-                await MainActor.run {
-                    if result.session.valid, let token = result.session.sid {
-                        self.validSidToken = token
+                if password.isEmpty {
+                    _ = try await api.fetchSummary()
+                    self.passwordProtected = false
+                    self.testConnectionLabel.stringValue = "Connected"
+                    self.saveAndCloseButton.isEnabled = true
+                } else {
+                    let result = try await api.checkPassword(password: password, totp: nil)
+                    if result.session.valid {
                         self.passwordProtected = true
-                        self.testConnectionLabel.stringValue = "Authenticated!"
+                        self.testConnectionLabel.stringValue = "Connected"
                         self.saveAndCloseButton.isEnabled = true
-                    } else if result.session.valid {
-                        self.validSidToken = ""
-                        self.passwordProtected = false
-                        self.testConnectionLabel.stringValue = "Authenticated!"
-                        self.saveAndCloseButton.isEnabled = true
-                    } else if result.session.totp, totp == nil {
-                        self.validSidToken = ""
-                        self.passwordProtected = true
-                        self.testConnectionLabel.stringValue = "TOTP required"
-                        self.saveAndCloseButton.isEnabled = false
                     } else {
-                        self.validSidToken = ""
-                        self.passwordProtected = true
-                        self.testConnectionLabel.stringValue = result.session.message ?? "Invalid credentials"
+                        self.testConnectionLabel.stringValue = "Invalid app password"
                         self.saveAndCloseButton.isEnabled = false
                     }
                 }
             } catch {
                 Log.error(error)
-                await MainActor.run {
-                    self.validSidToken = ""
-                    self.testConnectionLabel.stringValue = self.userFacingErrorMessage(for: error)
-                    self.saveAndCloseButton.isEnabled = false
-                }
+                self.testConnectionLabel.stringValue = "Error"
+                self.saveAndCloseButton.isEnabled = false
             }
         }
         
@@ -124,8 +109,8 @@ class PiholeV6SettingsViewController: NSViewController {
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
-            token: self.validSidToken,
-            passwordProtected: passwordProtected,
+            token: passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: adminPanelURL,
             isV6: true
         ), at: currentIndex)
@@ -151,18 +136,15 @@ class PiholeV6SettingsViewController: NSViewController {
             hostnameTextField.stringValue = connection.hostname
             portTextField.stringValue = "\(connection.port)"
             useSSLCheckbox.state = connection.useSSL ? .on : .off
-            passwordProtected = connection.passwordProtected
-            validSidToken = connection.token
-//            apiTokenTextField.stringValue = connection.token
+            passwordTextField.stringValue = connection.token
             adminURLTextField.stringValue = connection.adminPanelURL
+            passwordProtected = connection.passwordProtected
         } else {
             hostnameTextField.stringValue = "pi.hole"
             portTextField.stringValue = "80"
             useSSLCheckbox.state = .off
-//            apiTokenTextField.stringValue = ""
+            passwordTextField.stringValue = ""
             adminURLTextField.stringValue = ""
-            passwordProtected = true
-            validSidToken = ""
             adminURLTextField.placeholderString = PiholeConnectionV3.generateAdminPanelURL(
                 hostname: "pi.hole",
                 port: 80,
@@ -200,102 +182,29 @@ class PiholeV6SettingsViewController: NSViewController {
         Log.debug("Testing connection...")
 
         testConnectionLabel.stringValue = "Testing... Please wait..."
-        saveAndCloseButton.isEnabled = false
 
         let connection = PiholeConnectionV3(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
-            token: validSidToken,
-            passwordProtected: passwordProtected,
+            token: passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: "",
             isV6: true
         )
-
         let api = Pihole6API(connection: connection)
 
-        Task { [weak self] in
-            guard let self else { return }
+        Task {
             do {
                 _ = try await api.fetchSummary()
-                await MainActor.run {
-                    if self.validSidToken.isEmpty {
-                        self.passwordProtected = false
-                    }
-                    self.testConnectionLabel.stringValue = "Success"
-                    self.saveAndCloseButton.isEnabled = true
-                }
+                self.passwordProtected = connection.passwordProtected
+                self.testConnectionLabel.stringValue = "Success"
+                self.saveAndCloseButton.isEnabled = true
             } catch {
                 Log.error(error)
-                await MainActor.run {
-                    if self.isAuthFailure(error) {
-                        self.testConnectionLabel.stringValue = "Authentication required"
-                    } else {
-                        self.testConnectionLabel.stringValue = self.userFacingErrorMessage(for: error)
-                    }
-                    self.saveAndCloseButton.isEnabled = false
-                }
+                self.testConnectionLabel.stringValue = "Unable to Connect"
+                self.saveAndCloseButton.isEnabled = false
             }
         }
-    }
-
-    private func isAuthFailure(_ error: Error) -> Bool {
-        if let apiError = error as? APIError {
-            switch apiError {
-            case .unauthorized, .forbidden:
-                return true
-            default:
-                break
-            }
-        }
-        guard let statusCode = pihole6HTTPStatusCode(from: error) else { return false }
-        return statusCode == 401 || statusCode == 403
-    }
-
-    private func pihole6HTTPStatusCode(from error: Error) -> Int? {
-        var currentError: Error = error
-        while let apiError = currentError as? APIError, case let .requestFailed(underlying) = apiError {
-            currentError = underlying
-        }
-        if let apiError = currentError as? APIError, case let .invalidResponse(statusCode, _) = apiError {
-            return statusCode
-        }
-        return nil
-    }
-
-    private func userFacingErrorMessage(for error: Error) -> String {
-        var currentError: Error = error
-        while let apiError = currentError as? APIError, case let .requestFailed(underlying) = apiError {
-            currentError = underlying
-        }
-        if let apiError = currentError as? APIError {
-            switch apiError {
-            case .requestTimedOut:
-                return "Request timed out"
-            case .unreachableHost:
-                return "Unable to Connect"
-            case .notConnectedToInternet:
-                return "No internet connection"
-            case .unauthorized, .forbidden:
-                return "Authentication required"
-            case .decodingFailed:
-                return "Unexpected response"
-            default:
-                break
-            }
-        }
-        if let urlError = currentError as? URLError {
-            switch urlError.code {
-            case .timedOut:
-                return "Request timed out"
-            case .cannotFindHost, .cannotConnectToHost, .dnsLookupFailed:
-                return "Unable to Connect"
-            case .notConnectedToInternet:
-                return "No internet connection"
-            default:
-                return "Network error"
-            }
-        }
-        return "Error"
     }
 }
