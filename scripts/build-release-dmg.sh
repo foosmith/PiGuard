@@ -19,15 +19,24 @@ Options:
   --derived-data PATH      DerivedData path to use for the build.
   --configuration NAME     Xcode build configuration. Default: Release
   --codesign               Allow Xcode code signing during the build.
+  --sign-identity NAME     Manually codesign the app and DMG with this identity.
+  --notary-profile NAME    Submit the DMG for notarization with this notarytool keychain profile.
+  --bundle-id ID           Bundle identifier used for notarization metadata. Default: project setting.
   --help                   Show this help text.
 
 Example:
-  scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS
+  scripts/build-release-dmg.sh \
+    --artifact-name PiBar-1.2-beta2-macOS \
+    --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
+    --notary-profile pibar-notary
 EOF
 }
 
 ARTIFACT_NAME=""
 CODE_SIGNING_ALLOWED="NO"
+SIGN_IDENTITY=""
+NOTARY_PROFILE=""
+BUNDLE_ID=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -51,6 +60,18 @@ while [[ $# -gt 0 ]]; do
             CODE_SIGNING_ALLOWED="YES"
             shift
             ;;
+        --sign-identity)
+            SIGN_IDENTITY="${2:-}"
+            shift 2
+            ;;
+        --notary-profile)
+            NOTARY_PROFILE="${2:-}"
+            shift 2
+            ;;
+        --bundle-id)
+            BUNDLE_ID="${2:-}"
+            shift 2
+            ;;
         --help)
             usage
             exit 0
@@ -73,6 +94,7 @@ function read_project_setting() {
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
 APP_NAME="PiBar"
+BUNDLE_ID="${BUNDLE_ID:-$(read_project_setting PRODUCT_BUNDLE_IDENTIFIER)}"
 
 if [[ -z "$ARTIFACT_NAME" ]]; then
     ARTIFACT_NAME="${APP_NAME}-${MARKETING_VERSION}-${BUILD_NUMBER}-macOS"
@@ -105,6 +127,11 @@ echo "Preparing DMG staging directory..."
 cp -R "$APP_PATH" "$STAGING_DIR/"
 ln -s /Applications "$STAGING_DIR/Applications"
 
+if [[ -n "$SIGN_IDENTITY" ]]; then
+    echo "Signing ${APP_NAME}.app with ${SIGN_IDENTITY}..."
+    codesign --force --deep --sign "$SIGN_IDENTITY" --timestamp=none "$STAGING_DIR/${APP_NAME}.app"
+fi
+
 echo "Creating ${DMG_PATH}..."
 rm -f "$DMG_PATH"
 hdiutil create \
@@ -113,6 +140,29 @@ hdiutil create \
     -ov \
     -format UDZO \
     "$DMG_PATH" >/dev/null
+
+if [[ -n "$SIGN_IDENTITY" ]]; then
+    echo "Signing DMG with ${SIGN_IDENTITY}..."
+    codesign --force --sign "$SIGN_IDENTITY" --timestamp=none "$DMG_PATH"
+fi
+
+if [[ -n "$NOTARY_PROFILE" ]]; then
+    if [[ -z "$SIGN_IDENTITY" ]]; then
+        echo "Notarization requires --sign-identity." >&2
+        exit 1
+    fi
+
+    echo "Submitting DMG for notarization with profile ${NOTARY_PROFILE}..."
+    xcrun notarytool submit "$DMG_PATH" \
+        --keychain-profile "$NOTARY_PROFILE" \
+        --wait
+
+    echo "Stapling notarization ticket to DMG..."
+    xcrun stapler staple "$DMG_PATH"
+
+    echo "Validating stapled ticket..."
+    xcrun stapler validate "$DMG_PATH"
+fi
 
 rm -rf "$STAGING_DIR"
 

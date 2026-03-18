@@ -33,7 +33,9 @@ PiBar gives you all the tools you need to manage your [Pi-hole](https://pi-hole.
 
 - Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-beta2-macOS`
 - The script writes the finished installer to `build/release/`
-- Add `--codesign` if you want Xcode signing enabled for that build
+- Use `--sign-identity 'Developer ID Application: Your Name (TEAMID)'` for public-distribution signing
+- Use `--notary-profile PROFILE_NAME` after configuring `xcrun notarytool store-credentials PROFILE_NAME ...` to notarize and staple the DMG
+- `Apple Development` signing is suitable for testing only; public releases should use `Developer ID Application` plus notarization
 
 ## Quick Start
 
