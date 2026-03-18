@@ -59,10 +59,6 @@ If you are testing an unsigned ZIP instead of the notarized DMG, macOS may still
 5. Add additional Pi-holes if you want failover visibility or sync.
 6. Adjust display, shortcut, startup, polling, and sync settings to fit your setup.
 
-## Maintainer Notes
-
-- Release instructions are kept in `docs/release-candidate-process.md`
-
 ## About This Fork
 
 PiBar Enhanced reflects the work I have been doing to make PiBar more useful for current Pi-hole deployments. The focus of this fork is straightforward:
