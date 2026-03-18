@@ -37,9 +37,9 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ## Download
 
-- Next release candidate: `PiBar-1.2-rc1-macOS.dmg`
+- Next release candidate: `PiBar-2.0-rc1-macOS.dmg`
 - Current release candidate build: `684`
-- Planned release tag: `macOS-v1.2-rc1`
+- Planned release tag: `macOS-v2.0-rc1`
 
 Release candidates should be signed with `Developer ID Application` and notarized before distribution so users can open the DMG without Finder workarounds.
 
@@ -54,7 +54,7 @@ Release candidates should be signed with `Developer ID Application` and notarize
 
 ## Release Process
 
-- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-1.2-rc1-macOS`
+- Build a release DMG with `scripts/build-release-dmg.sh --artifact-name PiBar-2.0-rc1-macOS`
 - The script writes the installer to `build/release/`
 - `Apple Development` signing is suitable for testing and private sharing
 - `Developer ID Application` signing and notarization are supported for public distribution
@@ -78,7 +78,7 @@ xcrun notarytool store-credentials pibar-notary \
 
 ```bash
 scripts/build-release-dmg.sh \
-  --artifact-name PiBar-1.2-rc1-macOS \
+  --artifact-name PiBar-2.0-rc1-macOS \
   --sign-identity 'Developer ID Application: Your Name (2Y9M69QJKZ)' \
   --notary-profile pibar-notary
 ```

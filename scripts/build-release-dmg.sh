@@ -26,7 +26,7 @@ Options:
 
 Example:
   scripts/build-release-dmg.sh \
-    --artifact-name PiBar-1.2-rc1-macOS \
+    --artifact-name PiBar-2.0-rc1-macOS \
     --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
     --notary-profile pibar-notary
 EOF
