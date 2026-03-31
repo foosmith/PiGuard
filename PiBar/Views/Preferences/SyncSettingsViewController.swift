@@ -59,7 +59,7 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 940, height: 720))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 940, height: 680))
         container.translatesAutoresizingMaskIntoConstraints = false
 
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -68,8 +68,8 @@ final class SyncSettingsViewController: NSViewController {
         summaryLabel.maximumNumberOfLines = 3
 
         lastSyncLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        lastSyncLabel.lineBreakMode = .byWordWrapping
-        lastSyncLabel.maximumNumberOfLines = 4
+        lastSyncLabel.lineBreakMode = .byTruncatingTail
+        lastSyncLabel.maximumNumberOfLines = 2
 
         let headerTitleLabel = NSTextField(labelWithString: "Sync Settings")
         headerTitleLabel.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
@@ -204,7 +204,7 @@ final class SyncSettingsViewController: NSViewController {
             buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
             buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
 
-            statusBand.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 180),
+            statusBand.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
         ])
 
         view = container
@@ -213,7 +213,7 @@ final class SyncSettingsViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sync Settings"
-        preferredContentSize = NSSize(width: 940, height: 720)
+        preferredContentSize = NSSize(width: 940, height: 680)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piBarSyncProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
@@ -487,10 +487,11 @@ final class SyncSettingsViewController: NSViewController {
             let status = Preferences.standard.syncLastStatus
             let message = Preferences.standard.syncLastMessage
             let statusText = status.isEmpty ? "Last sync" : "Last sync (\(status))"
+            let compactMessage = compactLastSyncMessage(message)
             if message.isEmpty {
                 lastSyncLabel.stringValue = "\(statusText): \(formatter.string(from: last))"
             } else {
-                lastSyncLabel.stringValue = "\(statusText): \(formatter.string(from: last))\n\(message)"
+                lastSyncLabel.stringValue = "\(statusText): \(formatter.string(from: last))\n\(compactMessage)"
             }
         } else if isSyncInProgress {
             lastSyncLabel.stringValue = "Current activity: sync in progress."
@@ -502,7 +503,52 @@ final class SyncSettingsViewController: NSViewController {
     private func updateLogVisibility() {
         let showLog = logToggleCheckbox.state == .on
         logScrollView.isHidden = !showLog
-        logHeightConstraint?.constant = showLog ? 250 : 0
+        logHeightConstraint?.constant = showLog ? 220 : 0
+    }
+
+    private func compactLastSyncMessage(_ message: String) -> String {
+        let trimmed = message.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+
+        let parts = trimmed
+            .components(separatedBy: "|")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        guard parts.count > 1 else {
+            return shorten(trimmed, maxLength: 120)
+        }
+
+        let compactParts = parts.map { part -> String in
+            let cleaned = part.replacingOccurrences(of: "[Dry run] ", with: "Dry run ")
+            if cleaned.hasPrefix("Groups:") || cleaned.hasPrefix("Dry run Groups:") {
+                return compactSyncSection(cleaned, label: "Groups")
+            }
+            if cleaned.hasPrefix("Adlists:") || cleaned.hasPrefix("Dry run Adlists:") {
+                return compactSyncSection(cleaned, label: "Adlists")
+            }
+            if cleaned.hasPrefix("Domains") || cleaned.hasPrefix("Dry run Domains") {
+                return cleaned.contains("skipped") ? "Domains skipped" : "Domains updated"
+            }
+            return shorten(cleaned, maxLength: 40)
+        }
+
+        return shorten(compactParts.joined(separator: "  •  "), maxLength: 120)
+    }
+
+    private func compactSyncSection(_ message: String, label: String) -> String {
+        let dryRunPrefix = message.hasPrefix("Dry run ") ? "Dry run " : ""
+        let withoutPrefix = dryRunPrefix.isEmpty ? message : String(message.dropFirst("Dry run ".count))
+        let summary = withoutPrefix
+            .replacingOccurrences(of: "\(label): ", with: "")
+            .replacingOccurrences(of: #"\s*\([^)]*\)"#, with: "", options: .regularExpression)
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return "\(dryRunPrefix)\(label) \(summary)"
+    }
+
+    private func shorten(_ string: String, maxLength: Int) -> String {
+        guard string.count > maxLength else { return string }
+        return String(string.prefix(maxLength - 1)).trimmingCharacters(in: .whitespacesAndNewlines) + "…"
     }
 
     private func configureIntervalControls() {
