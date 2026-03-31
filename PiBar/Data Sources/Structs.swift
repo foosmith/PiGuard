@@ -126,6 +126,84 @@ enum PiholeConnectionTestResult {
     case failureInvalidToken
 }
 
+enum BackendType: String, Codable {
+    case piholeV5
+    case piholeV6
+    case adguardHome
+
+    var displayName: String {
+        switch self {
+        case .piholeV5:
+            return "Pi-hole v5"
+        case .piholeV6:
+            return "Pi-hole v6"
+        case .adguardHome:
+            return "AdGuard Home"
+        }
+    }
+
+    var supportsSync: Bool {
+        self == .piholeV6
+    }
+}
+
+struct PiholeConnectionV4: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+    let username: String
+    let passwordProtected: Bool
+    let adminPanelURL: String
+    let backendType: BackendType
+}
+
+extension PiholeConnectionV4 {
+    var identifier: String { "\(hostname):\(port)" }
+    var isV6: Bool { backendType == .piholeV6 }
+
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV4.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    init(_ connection: PiholeConnectionV3) {
+        self.hostname = connection.hostname
+        self.port = connection.port
+        self.useSSL = connection.useSSL
+        self.token = connection.token
+        self.username = ""
+        self.passwordProtected = connection.passwordProtected
+        self.adminPanelURL = connection.adminPanelURL
+        self.backendType = connection.isV6 ? .piholeV6 : .piholeV5
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
+    static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool, backendType: BackendType) -> String {
+        let prefix: String = useSSL ? "https" : "http"
+        switch backendType {
+        case .adguardHome:
+            return "\(prefix)://\(hostname):\(port)"
+        case .piholeV5, .piholeV6:
+            return "\(prefix)://\(hostname):\(port)/admin/"
+        }
+    }
+}
+
 // MARK: - Pi-hole API
 
 struct PiholeAPIEndpoint {
@@ -158,19 +236,23 @@ enum PiholeNetworkStatus: String {
     case partiallyEnabled = "Partially Enabled"
     case offline = "Offline"
     case partiallyOffline = "Partially Offline"
-    case noneSet = "No Pi-holes"
+    case noneSet = "No Servers"
     case initializing = "Initializing"
 }
 
 struct Pihole {
     let api: PiholeAPI?
     let api6: Pihole6API?
+    let apiAdguard: AdGuardHomeAPI?
     let identifier: String
     let online: Bool
     let summary: PiholeAPISummary?
     let canBeManaged: Bool?
     let enabled: Bool?
-    let isV6: Bool
+    let backendType: BackendType
+
+    var isV6: Bool { backendType == .piholeV6 }
+    var isAdGuardHome: Bool { backendType == .adguardHome }
 
     var status: PiholeNetworkStatus {
         if !online {

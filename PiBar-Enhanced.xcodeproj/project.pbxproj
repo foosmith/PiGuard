@@ -32,6 +32,10 @@
 		44E390C72D87C3E2002196DC /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 44E390C62D87C3E2002196DC /* LaunchAtLogin */; };
 		44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */; };
 		44FFB092247627B100DCEDEC /* PiBarManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FFB091247627B100DCEDEC /* PiBarManager.swift */; };
+		FBAA0011FBAA0011FBAA0011 /* AdGuardHomeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */; };
+		FBAA0013FBAA0013FBAA0013 /* UpdateAdGuardHomeOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */; };
+		FBAA0015FBAA0015FBAA0015 /* BackendDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0014FBAA0014FBAA0014 /* BackendDetector.swift */; };
+		FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */; };
 		FBAA0002FBAA0002FBAA0002 /* SyncPrimarySecondaryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */; };
 		FBAA0004FBAA0004FBAA0004 /* SyncProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */; };
 		FBAA0006FBAA0006FBAA0006 /* SyncSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */; };
@@ -78,6 +82,10 @@
 		44E390C32D8785E1002196DC /* Pihole6API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pihole6API.swift; sourceTree = "<group>"; };
 		44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiholeV6SettingsViewController.swift; sourceTree = "<group>"; };
 		44FFB091247627B100DCEDEC /* PiBarManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiBarManager.swift; sourceTree = "<group>"; };
+		FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeAPI.swift; sourceTree = "<group>"; };
+		FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAdGuardHomeOperation.swift; sourceTree = "<group>"; };
+		FBAA0014FBAA0014FBAA0014 /* BackendDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDetector.swift; sourceTree = "<group>"; };
+		FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeSettingsViewController.swift; sourceTree = "<group>"; };
 		FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPrimarySecondaryOperation.swift; sourceTree = "<group>"; };
 		FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncProgress.swift; sourceTree = "<group>"; };
 		FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsViewController.swift; sourceTree = "<group>"; };
@@ -104,6 +112,7 @@
 				4415D73324731FE0009E0B31 /* Structs.swift */,
 				449395ED2471C47F00FA0C34 /* PiholeAPI.swift */,
 				44E390C32D8785E1002196DC /* Pihole6API.swift */,
+				FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */,
 				442F6F88247212D1008F1101 /* Preferences.swift */,
 			);
 			path = "Data Sources";
@@ -124,6 +133,7 @@
 			isa = PBXGroup;
 			children = (
 				447CCB5B2D87FB9C00811F7C /* UpdatePiholeV6Operation.swift */,
+				FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */,
 				441E78AD247E3AF300FBC7A0 /* AsyncOperation.swift */,
 				441E78AF247E3BC500FBC7A0 /* UpdatePiholeOperation.swift */,
 				441E78B3247E3F9400FBC7A0 /* ChangePiholeStatusOperation.swift */,
@@ -146,6 +156,7 @@
 			isa = PBXGroup;
 			children = (
 				44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */,
+				FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */,
 				442F6F8A24721523008F1101 /* PreferencesViewController.swift */,
 				449395EB2471B1EB00FA0C34 /* PreferencesWindowController.swift */,
 				44B6DAF1247C70F500D364EC /* PiholeSettingsViewController.swift */,
@@ -212,6 +223,7 @@
 				442F6F862471E8DF008F1101 /* Extensions.swift */,
 				4415D73524747331009E0B31 /* Logging.swift */,
 				FBAA0007FBAA0007FBAA0007 /* KeychainCredentialStore.swift */,
+				FBAA0014FBAA0014FBAA0014 /* BackendDetector.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -340,12 +352,16 @@
 				4438184E247DE31A009D9B3F /* AboutViewController.swift in Sources */,
 				449395D62471ABD600FA0C34 /* AppDelegate.swift in Sources */,
 				44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */,
+				FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */,
 				44FFB092247627B100DCEDEC /* PiBarManager.swift in Sources */,
 				442F6F8B24721523008F1101 /* PreferencesViewController.swift in Sources */,
 				4415D73624747331009E0B31 /* Logging.swift in Sources */,
+				FBAA0015FBAA0015FBAA0015 /* BackendDetector.swift in Sources */,
 				449395E82471AC9D00FA0C34 /* MainMenuController.swift in Sources */,
 				447CCB5C2D87FBA200811F7C /* UpdatePiholeV6Operation.swift in Sources */,
 				44E390C42D8785E1002196DC /* Pihole6API.swift in Sources */,
+				FBAA0011FBAA0011FBAA0011 /* AdGuardHomeAPI.swift in Sources */,
+				FBAA0013FBAA0013FBAA0013 /* UpdateAdGuardHomeOperation.swift in Sources */,
 				FBAA0002FBAA0002FBAA0002 /* SyncPrimarySecondaryOperation.swift in Sources */,
 				FBAA0004FBAA0004FBAA0004 /* SyncProgress.swift in Sources */,
 				FBAA0006FBAA0006FBAA0006 /* SyncSettingsViewController.swift in Sources */,

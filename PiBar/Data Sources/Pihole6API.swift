@@ -156,7 +156,7 @@ struct PiholeV6BlockingRequest: Encodable {
 }
 
 class Pihole6API: NSObject {
-    let connection: PiholeConnectionV3
+    let connection: PiholeConnectionV4
     private var sessionID: String?
     private var sessionExpiry: Date?
 
@@ -168,19 +168,20 @@ class Pihole6API: NSObject {
     private let timeout: Int = 2
 
     override init() {
-        connection = PiholeConnectionV3(
+        connection = PiholeConnectionV4(
             hostname: "pi.hole",
             port: 80,
             useSSL: false,
             token: "",
+            username: "",
             passwordProtected: true,
             adminPanelURL: "http://pi.hole/admin/",
-            isV6: true
+            backendType: .piholeV6
         )
         super.init()
     }
 
-    init(connection: PiholeConnectionV3) {
+    init(connection: PiholeConnectionV4) {
         self.connection = connection
         super.init()
     }

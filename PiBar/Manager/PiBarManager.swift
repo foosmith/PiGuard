@@ -77,13 +77,17 @@ class PiBarManager: NSObject {
                     NotificationCenter.default.post(name: .piBarGravityEnded, object: nil)
                 }
             }
-            for pihole in piholes.values where pihole.isV6 {
-                guard let api6 = pihole.api6 else { continue }
+            for pihole in piholes.values {
                 do {
-                    try await api6.triggerGravityUpdate()
-                    Log.debug("Manager: Gravity update triggered for \(pihole.identifier)")
+                    if let api6 = pihole.api6 {
+                        try await api6.triggerGravityUpdate()
+                        Log.debug("Manager: Gravity update triggered for \(pihole.identifier)")
+                    } else if let apiAdguard = pihole.apiAdguard {
+                        try await apiAdguard.refreshFilters()
+                        Log.debug("Manager: Filter refresh triggered for \(pihole.identifier)")
+                    }
                 } catch {
-                    Log.error("Manager: Failed to trigger gravity update for \(pihole.identifier): \(error)")
+                    Log.error("Manager: Failed to trigger filter refresh for \(pihole.identifier): \(error)")
                 }
             }
         }
@@ -221,7 +225,7 @@ class PiBarManager: NSObject {
         )
     }
 
-    private func createPiholes(_ connections: [PiholeConnectionV3]) {
+    private func createPiholes(_ connections: [PiholeConnectionV4]) {
         Log.debug("Manager: Updating Connections")
 
         stopTimer()
@@ -230,31 +234,46 @@ class PiBarManager: NSObject {
         
         for connection in connections {
             Log.debug("Manager: Updating Connection: \(connection.hostname)")
-            if connection.isV6 {
+            switch connection.backendType {
+            case .piholeV6:
                 let api = Pihole6API(connection: connection)
                 piholes[api.identifier] = Pihole(
                     api: nil,
                     api6: api,
+                    apiAdguard: nil,
                     identifier: api.identifier,
                     online: false,
                     summary: nil,
                     canBeManaged: nil,
                     enabled: nil,
-                    isV6: true
+                    backendType: .piholeV6
                 )
-            } else {
+            case .piholeV5:
                 let api = PiholeAPI(connection: connection)
                 piholes[api.identifier] = Pihole(
                     api: api,
                     api6: nil,
+                    apiAdguard: nil,
                     identifier: api.identifier,
                     online: false,
                     summary: nil,
                     canBeManaged: nil,
                     enabled: nil,
-                    isV6: false
+                    backendType: .piholeV5
                 )
-                    
+            case .adguardHome:
+                let api = AdGuardHomeAPI(connection: connection)
+                piholes[api.identifier] = Pihole(
+                    api: nil,
+                    api6: nil,
+                    apiAdguard: api,
+                    identifier: api.identifier,
+                    online: false,
+                    summary: nil,
+                    canBeManaged: nil,
+                    enabled: nil,
+                    backendType: .adguardHome
+                )
             }
         }
 
@@ -273,7 +292,8 @@ class PiBarManager: NSObject {
         }
 
         for pihole in piholes.values {
-            if pihole.isV6 {
+            switch pihole.backendType {
+            case .piholeV6:
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeV6Operation(pihole)
                 operation.completionBlock = { [unowned operation] in
@@ -281,9 +301,17 @@ class PiBarManager: NSObject {
                 }
                 completionOperation.addDependency(operation)
                 operationQueue.addOperation(operation)
-            } else {
+            case .piholeV5:
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeOperation(pihole)
+                operation.completionBlock = { [unowned operation] in
+                    self.piholes[pihole.identifier] = operation.pihole
+                }
+                completionOperation.addDependency(operation)
+                operationQueue.addOperation(operation)
+            case .adguardHome:
+                Log.debug("Creating operation for \(pihole.identifier)")
+                let operation = UpdateAdGuardHomeOperation(pihole)
                 operation.completionBlock = { [unowned operation] in
                     self.piholes[pihole.identifier] = operation.pihole
                 }

@@ -15,7 +15,8 @@ struct Preferences {
     fileprivate enum Key {
         static let piholes = "piholes" // Deprecated in PiBar 1.1
         static let piholesV2 = "piholesV2" // Deprecated in PiBar 1.2
-        static let piholesV3 = "piholesV3"
+        static let piholesV3 = "piholesV3" // Deprecated in PiGuard draft
+        static let piholesV4 = "piholesV4"
         static let showBlocked = "showBlocked"
         static let showQueries = "showQueries"
         static let showPercentage = "showPercentage"
@@ -44,6 +45,7 @@ struct Preferences {
             Key.piholes: [],
             Key.piholesV2: [],
             Key.piholesV3: [],
+            Key.piholesV4: [],
             Key.showBlocked: true,
             Key.showQueries: true,
             Key.showPercentage: true,
@@ -70,12 +72,12 @@ struct Preferences {
 }
 
 extension UserDefaults {
-    var piholes: [PiholeConnectionV3] {
+    var piholes: [PiholeConnectionV4] {
         if let array = array(forKey: Preferences.Key.piholesV2), !array.isEmpty {
             // Migrate from PiBar v1.1 format to PiBar v1.2 format if needed
             Log.debug("Found V1 Pi-holes")
             var piholesV2: [PiholeConnectionV2] = []
-            var piholesV3: [PiholeConnectionV3] = []
+            var piholesV4: [PiholeConnectionV4] = []
             for data in array {
                 Log.debug("Loading Pi-hole V2...")
                 guard let data = data as? Data, let piholeConnection = PiholeConnectionV2(data: data) else { continue }
@@ -83,29 +85,42 @@ extension UserDefaults {
             }
             if !piholesV2.isEmpty {
                 for pihole in piholesV2 {
-                    Log.debug("Converting V2 Pi-hole to V3")
-                    piholesV3.append(PiholeConnectionV3(hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL, token: pihole.token, passwordProtected: pihole.passwordProtected, adminPanelURL: pihole.adminPanelURL, isV6: false))
+                    Log.debug("Converting V2 Pi-hole to V4")
+                    piholesV4.append(PiholeConnectionV4(hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL, token: pihole.token, username: "", passwordProtected: pihole.passwordProtected, adminPanelURL: pihole.adminPanelURL, backendType: .piholeV5))
                 }
                 set([], for: Preferences.Key.piholesV2)
-                let encodedArray = piholesV3.map { $0.encode()! }
-                set(encodedArray, for: Preferences.Key.piholesV3)
+                let encodedArray = piholesV4.map { $0.encode()! }
+                set(encodedArray, for: Preferences.Key.piholesV4)
             }
-            return piholesV3
+            return piholesV4
         } else if let array = array(forKey: Preferences.Key.piholesV3), !array.isEmpty {
-            var piholesV3: [PiholeConnectionV3] = []
+            var piholesV4: [PiholeConnectionV4] = []
             for data in array {
                 Log.debug("Loading V3 Pi-hole")
                 guard let data = data as? Data, let piholeConnection = PiholeConnectionV3(data: data) else { continue }
-                piholesV3.append(piholeConnection)
+                piholesV4.append(PiholeConnectionV4(piholeConnection))
             }
-            return piholesV3
+            if !piholesV4.isEmpty {
+                set([], for: Preferences.Key.piholesV3)
+                let encodedArray = piholesV4.map { $0.encode()! }
+                set(encodedArray, for: Preferences.Key.piholesV4)
+            }
+            return piholesV4
+        } else if let array = array(forKey: Preferences.Key.piholesV4), !array.isEmpty {
+            var piholesV4: [PiholeConnectionV4] = []
+            for data in array {
+                Log.debug("Loading V4 connection")
+                guard let data = data as? Data, let piholeConnection = PiholeConnectionV4(data: data) else { continue }
+                piholesV4.append(piholeConnection)
+            }
+            return piholesV4
         }
         return []
     }
 
-    func set(piholes: [PiholeConnectionV3]) {
+    func set(piholes: [PiholeConnectionV4]) {
         let array = piholes.map { $0.encode()! }
-        set(array, for: Preferences.Key.piholesV3)
+        set(array, for: Preferences.Key.piholesV4)
     }
 
     var showBlocked: Bool {

@@ -46,7 +46,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 return
             }
 
-            let connections = Preferences.standard.piholes.filter(\.isV6)
+            let connections = Preferences.standard.piholes.filter { $0.backendType.supportsSync }
             guard
                 let primaryConnection = connections.first(where: { $0.identifier == primaryId }),
                 let secondaryConnection = connections.first(where: { $0.identifier == secondaryId })

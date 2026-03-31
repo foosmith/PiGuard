@@ -47,6 +47,15 @@ final class ChangePiholeStatusOperation: AsyncOperation, @unchecked Sendable {
                 }
                 self.state = .isFinished
             }
+        } else if let adguardAPI = pihole.apiAdguard {
+            Task {
+                if status == .disable {
+                    _ = try? await adguardAPI.setProtection(enabled: false, durationMilliseconds: seconds.map { $0 * 1000 })
+                } else {
+                    _ = try? await adguardAPI.setProtection(enabled: true)
+                }
+                self.state = .isFinished
+            }
         }
     }
 }

@@ -40,12 +40,13 @@ final class UpdatePiholeV6Operation: AsyncOperation, @unchecked Sendable {
                 let updatedPihole: Pihole = Pihole(
                     api: nil,
                     api6: self.pihole.api6!,
+                    apiAdguard: nil,
                     identifier: self.pihole.identifier,
                     online: online,
                     summary: newSummary,
                     canBeManaged: canBeManaged,
                     enabled: enabled,
-                    isV6: true
+                    backendType: .piholeV6
                 )
                 self.pihole = updatedPihole
             } catch {
@@ -53,12 +54,13 @@ final class UpdatePiholeV6Operation: AsyncOperation, @unchecked Sendable {
                 let updatedPihole: Pihole = Pihole(
                     api: nil,
                     api6: self.pihole.api6!,
+                    apiAdguard: nil,
                     identifier: self.pihole.identifier,
                     online: false,
                     summary: nil,
                     canBeManaged: false,
                     enabled: nil,
-                    isV6: true
+                    backendType: .piholeV6
                 )
                 self.pihole = updatedPihole
             }

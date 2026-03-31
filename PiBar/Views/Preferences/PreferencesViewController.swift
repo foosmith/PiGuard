@@ -243,7 +243,7 @@ class PreferencesViewController: NSViewController {
 }
 
 extension PreferencesViewController: PiholeSettingsViewControllerDelegate {
-    func savePiholeConnection(_ connection: PiholeConnectionV3, at index: Int) {
+    func savePiholeConnection(_ connection: PiholeConnectionV4, at index: Int) {
         var piholes = Preferences.standard.piholes
         if index == -1 {
             piholes.append(connection)
@@ -262,7 +262,7 @@ extension PreferencesViewController: PiholeSettingsViewControllerDelegate {
 }
 
 extension PreferencesViewController: PiholeV6SettingsViewControllerDelegate {
-    func savePiholeV3Connection(_ connection: PiholeConnectionV3, at index: Int) {
+    func savePiholeV4Connection(_ connection: PiholeConnectionV4, at index: Int) {
         var piholes = Preferences.standard.piholes
         if index == -1 {
             piholes.append(connection)
@@ -311,7 +311,7 @@ extension PreferencesViewController: NSTableViewDelegate {
             text = "\(pihole.port)"
             cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "portCell")
         } else if tableColumn == tableView.tableColumns[2] {
-            text = pihole.isV6 ? ">=6" : "<6"
+            text = pihole.backendType.displayName
             cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "versionCell")
         }
         if let cell = tableView.makeView(withIdentifier: cellIdentifier, owner: nil) as? NSTableCellView {
