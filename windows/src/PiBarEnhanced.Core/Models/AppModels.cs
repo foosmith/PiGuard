@@ -91,4 +91,8 @@ public sealed record SyncPreferences
     public bool SkipDomains { get; init; }
     public bool DryRunEnabled { get; init; }
     public bool WipeSecondaryBeforeSync { get; init; }
+    public SyncRunStatus? LastStatus { get; init; }
+    public DateTimeOffset? LastRunAt { get; init; }
+    public string LastSummary { get; init; } = string.Empty;
+    public List<SyncActivityEntry> Activity { get; init; } = [];
 }
