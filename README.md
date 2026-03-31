@@ -4,6 +4,12 @@ PiBar Enhanced is my macOS menu bar companion for Pi-hole. It keeps the importan
 
 This fork builds on the original PiBar idea and pushes it toward modern Pi-hole setups, especially homes and labs running multiple Pi-hole instances that need to stay aligned.
 
+## Interface Preview
+
+PiBar Enhanced brings together menu bar controls, connection management, modern preferences, and built-in Pi-hole v6 sync tools in one native macOS app.
+
+![PiBar Enhanced interface preview](.github/product-screenshot-beta6.png)
+
 ## What PiBar Enhanced Does
 
 - Shows Pi-hole status and DNS activity from the macOS menu bar
