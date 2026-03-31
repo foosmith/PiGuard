@@ -104,7 +104,6 @@ DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
 APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiBar/PiBar.entitlements"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
-    CODE_SIGNING_ALLOWED="YES"
     team_from_identity="$(printf '%s\n' "$SIGN_IDENTITY" | sed -nE 's/^.*\(([A-Z0-9]+)\)$/\1/p')"
     if [[ "$team_from_identity" != "$SIGN_IDENTITY" && -n "$team_from_identity" ]]; then
         DEVELOPMENT_TEAM="$team_from_identity"

@@ -709,9 +709,10 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
             )
 
             if !dryRun {
-                if let existingId = existing?.id {
+                if existing != nil {
+                    let encoded = Pihole6API.encodePathComponent(domainStr)
                     _ = try await secondary.putData(
-                        "/domains/\(existingId)",
+                        "\(bucket.path)/\(encoded)",
                         apiKey: secondary.connection.token,
                         queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
                         body: DomainUpdateRequest(enabled: desired.enabled, comment: desired.comment, groups: translatedGroups)

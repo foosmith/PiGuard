@@ -56,13 +56,19 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 780, height: 560))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 920, height: 620))
         container.translatesAutoresizingMaskIntoConstraints = false
 
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
         summaryLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize + 2, weight: .semibold)
         summaryLabel.lineBreakMode = .byWordWrapping
         summaryLabel.maximumNumberOfLines = 3
+
+        let headerTitleLabel = NSTextField(labelWithString: "Sync Settings")
+        headerTitleLabel.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
+
+        let headerDetailLabel = Self.makeHelperLabel("Set the source Pi-hole, the destination Pi-hole, and how aggressively PiBar should reconcile them.")
+        headerDetailLabel.maximumNumberOfLines = 2
 
         let summaryCard = Self.makeSection(title: "Status")
         summaryCard.stack.addArrangedSubview(summaryLabel)
@@ -131,16 +137,10 @@ final class SyncSettingsViewController: NSViewController {
         configureLogView()
         activityCard.stack.addArrangedSubview(logScrollView)
 
-        let contentStack = NSStackView(views: [
-            summaryCard.box,
-            setupCard.box,
-            behaviorCard.box,
-            safetyCard.box,
-            activityCard.box,
-        ])
-        contentStack.orientation = NSUserInterfaceLayoutOrientation.vertical
-        contentStack.spacing = 14
-        contentStack.translatesAutoresizingMaskIntoConstraints = false
+        let headerTextStack = NSStackView(views: [headerTitleLabel, headerDetailLabel])
+        headerTextStack.orientation = .vertical
+        headerTextStack.spacing = 4
+        headerTextStack.translatesAutoresizingMaskIntoConstraints = false
 
         let buttons = NSStackView(views: [syncNowButton, closeButton])
         buttons.orientation = .horizontal
@@ -148,17 +148,76 @@ final class SyncSettingsViewController: NSViewController {
         buttons.alignment = .centerY
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        container.addSubview(contentStack)
-        container.addSubview(buttons)
+        let headerRow = NSStackView(views: [headerTextStack, buttons])
+        headerRow.orientation = .horizontal
+        headerRow.alignment = .top
+        headerRow.spacing = 20
+        headerRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let leftColumn = NSStackView(views: [
+            setupCard.box,
+            behaviorCard.box,
+            safetyCard.box,
+        ])
+        leftColumn.orientation = .vertical
+        leftColumn.spacing = 14
+        leftColumn.translatesAutoresizingMaskIntoConstraints = false
+
+        let rightColumn = NSStackView(views: [
+            summaryCard.box,
+            activityCard.box,
+        ])
+        rightColumn.orientation = .vertical
+        rightColumn.spacing = 14
+        rightColumn.translatesAutoresizingMaskIntoConstraints = false
+
+        let sidebarPanel = NSVisualEffectView()
+        sidebarPanel.translatesAutoresizingMaskIntoConstraints = false
+        sidebarPanel.material = .sidebar
+        sidebarPanel.state = .active
+        sidebarPanel.blendingMode = .withinWindow
+        sidebarPanel.wantsLayer = true
+        sidebarPanel.layer?.cornerRadius = 12
+        sidebarPanel.layer?.masksToBounds = true
+        sidebarPanel.addSubview(rightColumn)
 
         NSLayoutConstraint.activate([
-            contentStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            contentStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            contentStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            rightColumn.topAnchor.constraint(equalTo: sidebarPanel.topAnchor, constant: 16),
+            rightColumn.leadingAnchor.constraint(equalTo: sidebarPanel.leadingAnchor, constant: 16),
+            rightColumn.trailingAnchor.constraint(equalTo: sidebarPanel.trailingAnchor, constant: -16),
+            rightColumn.bottomAnchor.constraint(equalTo: sidebarPanel.bottomAnchor, constant: -16),
+        ])
 
-            buttons.topAnchor.constraint(equalTo: contentStack.bottomAnchor, constant: 16),
-            buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
+        let contentColumns = NSStackView(views: [leftColumn, sidebarPanel])
+        contentColumns.orientation = .horizontal
+        contentColumns.alignment = .top
+        contentColumns.distribution = .fill
+        contentColumns.spacing = 20
+        contentColumns.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(headerRow)
+        container.addSubview(contentColumns)
+
+        leftColumn.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        leftColumn.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        sidebarPanel.setContentHuggingPriority(.required, for: .horizontal)
+        sidebarPanel.setContentCompressionResistancePriority(.required, for: .horizontal)
+        summaryCard.box.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        activityCard.box.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+
+        NSLayoutConstraint.activate([
+            headerRow.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            headerRow.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            headerRow.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+
+            contentColumns.topAnchor.constraint(equalTo: headerRow.bottomAnchor, constant: 18),
+            contentColumns.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            contentColumns.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            contentColumns.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -20),
+
+            buttons.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+            leftColumn.widthAnchor.constraint(greaterThanOrEqualToConstant: 540),
+            sidebarPanel.widthAnchor.constraint(equalToConstant: 300),
         ])
 
         view = container
@@ -167,7 +226,7 @@ final class SyncSettingsViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sync Settings"
-        preferredContentSize = NSSize(width: 780, height: 560)
+        preferredContentSize = NSSize(width: 920, height: 620)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piBarSyncProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
@@ -559,7 +618,7 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     @objc private func closePressed() {
-        dismiss(self)
+        view.window?.close()
     }
 
     private static func makeSection(title: String) -> (box: NSBox, stack: NSStackView) {

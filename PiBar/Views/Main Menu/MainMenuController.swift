@@ -43,8 +43,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         let window = NSWindow(contentViewController: vc)
         window.title = "Sync Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 780, height: 560))
-        window.minSize = NSSize(width: 780, height: 560)
+        window.setContentSize(NSSize(width: 920, height: 620))
+        window.minSize = NSSize(width: 920, height: 620)
         window.center()
         return window
     }()
