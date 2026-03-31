@@ -2,14 +2,18 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="PiBar Enhanced Preferences"
-        Width="760"
-        Height="560"
+        Width="980"
+        Height="700"
+        MinWidth="920"
+        MinHeight="640"
         WindowStartupLocation="CenterScreen">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="16" />
             <RowDefinition Height="*" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <StackPanel>
@@ -17,37 +21,135 @@
             <TextBlock Margin="0,8,0,0"
                        Foreground="#FF666666"
                        TextWrapping="Wrap"
-                       Text="Windows foundation for the tray-first PiBar Enhanced port. This window is the future home of connection management, menu bar status settings, startup behavior, logging, and hotkeys." />
+                       Text="Manage Pi-hole connections and the basic tray app behavior for the Windows port." />
         </StackPanel>
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="1.1*" />
                 <ColumnDefinition Width="16" />
-                <ColumnDefinition Width="1*" />
+                <ColumnDefinition Width="1.4*" />
             </Grid.ColumnDefinitions>
 
             <GroupBox Header="Connections">
-                <StackPanel Margin="12">
-                    <TextBlock TextWrapping="Wrap"
-                               Text="This section will manage Pi-hole v5 and v6 connections, including app-password-backed v6 authentication and secure credential storage." />
-                    <ListView Margin="0,12,0,0" Height="280">
-                        <ListViewItem Content="Connection management scaffolded for Windows port" />
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="12" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <ListView x:Name="ConnectionsListView"
+                              SelectionChanged="ConnectionsListView_SelectionChanged">
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn Header="Host" Width="220" DisplayMemberBinding="{Binding DisplayName}" />
+                                <GridViewColumn Header="Version" Width="80" DisplayMemberBinding="{Binding VersionLabel}" />
+                                <GridViewColumn Header="Auth" Width="120" DisplayMemberBinding="{Binding AuthenticationLabel}" />
+                            </GridView>
+                        </ListView.View>
                     </ListView>
-                </StackPanel>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal">
+                        <Button Width="100" Margin="0,0,8,0" Content="New" Click="NewConnectionButton_Click" />
+                        <Button Width="100" Margin="0,0,8,0" Content="Delete" Click="DeleteConnectionButton_Click" />
+                        <TextBlock VerticalAlignment="Center"
+                                   Foreground="#FF666666"
+                                   Text="Changes are saved explicitly with Save Changes." />
+                    </StackPanel>
+                </Grid>
             </GroupBox>
 
-            <GroupBox Grid.Column="2" Header="App Behavior">
-                <StackPanel Margin="12">
-                    <CheckBox Margin="0,0,0,10" Content="Launch at startup" />
-                    <CheckBox Margin="0,0,0,10" Content="Enable global hotkey" />
-                    <CheckBox Margin="0,0,0,10" Content="Enable diagnostic logging" />
-                    <TextBlock Margin="0,16,0,0"
-                               TextWrapping="Wrap"
-                               Foreground="#FF666666"
-                               Text="The Windows shell is tray-first now, but the MVVM/service split is intended to support a richer desktop app later without replacing the core logic." />
-                </StackPanel>
-            </GroupBox>
+            <Grid Grid.Column="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="16" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <GroupBox Header="Connection Details">
+                    <Grid Margin="12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="150" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="Hostname" />
+                        <TextBox x:Name="HostnameTextBox" Grid.Row="0" Grid.Column="1" Margin="8,0,0,8" />
+
+                        <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="Port" />
+                        <TextBox x:Name="PortTextBox" Grid.Row="1" Grid.Column="1" Margin="8,0,0,8" />
+
+                        <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Version" />
+                        <ComboBox x:Name="VersionComboBox" Grid.Row="2" Grid.Column="1" Margin="8,0,0,8" SelectedIndex="0">
+                            <ComboBoxItem Content="Pi-hole v5 or earlier" Tag="LegacyV5" />
+                            <ComboBoxItem Content="Pi-hole v6" Tag="V6" />
+                        </ComboBox>
+
+                        <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Security" />
+                        <CheckBox x:Name="UseSslCheckBox"
+                                  Grid.Row="3"
+                                  Grid.Column="1"
+                                  Margin="8,0,0,8"
+                                  VerticalAlignment="Center"
+                                  Content="Use HTTPS" />
+
+                        <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="Admin URL" />
+                        <TextBox x:Name="AdminUrlTextBox" Grid.Row="4" Grid.Column="1" Margin="8,0,0,8" />
+
+                        <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="Secret" />
+                        <PasswordBox x:Name="SecretPasswordBox" Grid.Row="5" Grid.Column="1" Margin="8,0,0,8" />
+
+                        <TextBlock Grid.Row="6" VerticalAlignment="Center" Text="Secret Behavior" />
+                        <CheckBox x:Name="PasswordProtectedCheckBox"
+                                  Grid.Row="6"
+                                  Grid.Column="1"
+                                  Margin="8,0,0,8"
+                                  VerticalAlignment="Center"
+                                  Content="Connection requires token/app password" />
+
+                        <TextBlock Grid.Row="7"
+                                   Grid.ColumnSpan="2"
+                                   Margin="0,12,0,0"
+                                   Foreground="#FF666666"
+                                   TextWrapping="Wrap"
+                                   Text="For v5 connections, store the API token here. For v6 connections, store the app password. Leaving the secret blank while editing keeps the existing stored secret." />
+                    </Grid>
+                </GroupBox>
+
+                <GroupBox Grid.Row="2" Header="App Behavior">
+                    <StackPanel Margin="12">
+                        <CheckBox x:Name="LaunchAtStartupCheckBox" Margin="0,0,0,10" Content="Launch at startup" />
+                        <CheckBox x:Name="ShortcutEnabledCheckBox" Margin="0,0,0,10" Content="Enable global hotkey" />
+                        <CheckBox x:Name="EnableLoggingCheckBox" Margin="0,0,0,10" Content="Enable diagnostic logging" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock VerticalAlignment="Center" Text="Polling rate (seconds)" />
+                            <TextBox x:Name="PollingRateTextBox" Width="80" Margin="12,0,0,0" />
+                        </StackPanel>
+                    </StackPanel>
+                </GroupBox>
+            </Grid>
         </Grid>
+
+        <DockPanel Grid.Row="4" LastChildFill="False">
+            <TextBlock x:Name="StatusTextBlock"
+                       VerticalAlignment="Center"
+                       Foreground="#FF666666"
+                       Text="Load or create a connection, then save changes." />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
+                <Button Width="120" Margin="0,0,12,0" Content="Save Changes" Click="SaveChangesButton_Click" />
+                <Button Width="100" Content="Close" Click="CloseButton_Click" />
+            </StackPanel>
+        </DockPanel>
     </Grid>
 </Window>
