@@ -42,11 +42,13 @@ final class UpdatePiholeOperation: AsyncOperation, @unchecked Sendable {
             let updatedPihole: Pihole = Pihole(
                 api: self.pihole.api!,
                 api6: nil,
+                apiAdguard: nil,
                 identifier: self.pihole.api!.identifier,
                 online: online,
                 summary: summary,
                 canBeManaged: canBeManaged,
-                enabled: enabled, isV6: false
+                enabled: enabled,
+                backendType: .piholeV5
             )
 
             self.pihole = updatedPihole

@@ -661,7 +661,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
             enableNetworkMenuItem.isEnabled = false
         }
 
-        if networkOverview.piholes.count > 1 {
+        let hasAdGuard = networkOverview.piholes.values.contains(where: \.isAdGuardHome)
+        if hasAdGuard {
+            disableNetworkMenuItem.title = "Disable Blocking"
+            enableNetworkMenuItem.title = "Enable Blocking"
+        } else if networkOverview.piholes.count > 1 {
             disableNetworkMenuItem.title = "Disable Pi-holes"
             enableNetworkMenuItem.title = "Enable Pi-holes"
         } else {
@@ -669,9 +673,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
             enableNetworkMenuItem.title = "Enable Pi-hole"
         }
 
-        let hasV6 = networkOverview.piholes.values.contains(where: { $0.isV6 })
+        let hasV6 = networkOverview.piholes.values.contains(where: { $0.backendType == .piholeV6 })
         let isBusy = isSyncInProgress || isGravityUpdateInProgress
-        updateGravityMenuItem.isEnabled = hasV6 && networkOverview.canBeManaged && !isBusy
+        let hasRefreshableBackend = hasV6 || hasAdGuard
+        updateGravityMenuItem.isEnabled = hasRefreshableBackend && networkOverview.canBeManaged && !isBusy
         syncNowMenuItem.isEnabled = Preferences.standard.syncEnabled && !isBusy
     }
 }

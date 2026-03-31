@@ -9,11 +9,11 @@
 import Cocoa
 
 protocol PiholeV6SettingsViewControllerDelegate: AnyObject {
-    func savePiholeV3Connection(_ connection: PiholeConnectionV3, at index: Int)
+    func savePiholeV4Connection(_ connection: PiholeConnectionV4, at index: Int)
 }
 
 class PiholeV6SettingsViewController: NSViewController {
-    var connection: PiholeConnectionV3?
+    var connection: PiholeConnectionV4?
     var currentIndex: Int = -1
     weak var delegate: PiholeV6SettingsViewControllerDelegate?
 
@@ -53,14 +53,15 @@ class PiholeV6SettingsViewController: NSViewController {
 
         testConnectionLabel.stringValue = "Validating..."
 
-        let connection = PiholeConnectionV3(
+        let connection = PiholeConnectionV4(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
             token: password,
+            username: "",
             passwordProtected: !password.isEmpty,
             adminPanelURL: "",
-            isV6: true
+            backendType: .piholeV6
         )
 
         let api = Pihole6API(connection: connection)
@@ -99,20 +100,22 @@ class PiholeV6SettingsViewController: NSViewController {
     @IBAction func saveAndCloseButtonAction(_: NSButton) {
         var adminPanelURL = adminURLTextField.stringValue
         if adminPanelURL.isEmpty {
-            adminPanelURL = PiholeConnectionV3.generateAdminPanelURL(
+            adminPanelURL = PiholeConnectionV4.generateAdminPanelURL(
                 hostname: hostnameTextField.stringValue,
                 port: Int(portTextField.stringValue) ?? 80,
-                useSSL: useSSLCheckbox.state == .on ? true : false
+                useSSL: useSSLCheckbox.state == .on ? true : false,
+                backendType: .piholeV6
             )
         }
-        delegate?.savePiholeV3Connection(PiholeConnectionV3(
+        delegate?.savePiholeV4Connection(PiholeConnectionV4(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
             token: passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            username: "",
             passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: adminPanelURL,
-            isV6: true
+            backendType: .piholeV6
         ), at: currentIndex)
         dismiss(self)
     }
@@ -145,10 +148,11 @@ class PiholeV6SettingsViewController: NSViewController {
             useSSLCheckbox.state = .off
             passwordTextField.stringValue = ""
             adminURLTextField.stringValue = ""
-            adminURLTextField.placeholderString = PiholeConnectionV3.generateAdminPanelURL(
+            adminURLTextField.placeholderString = PiholeConnectionV4.generateAdminPanelURL(
                 hostname: "pi.hole",
                 port: 80,
-                useSSL: false
+                useSSL: false,
+                backendType: .piholeV6
             )
         }
         testConnectionLabel.stringValue = ""
@@ -170,10 +174,11 @@ class PiholeV6SettingsViewController: NSViewController {
     }
 
     private func updateAdminURLPlaceholder() {
-        let adminURLString = PiholeConnectionV3.generateAdminPanelURL(
+        let adminURLString = PiholeConnectionV4.generateAdminPanelURL(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
-            useSSL: useSSLCheckbox.state == .on ? true : false
+            useSSL: useSSLCheckbox.state == .on ? true : false,
+            backendType: .piholeV6
         )
         adminURLTextField.placeholderString = "\(adminURLString)"
     }
@@ -183,14 +188,15 @@ class PiholeV6SettingsViewController: NSViewController {
 
         testConnectionLabel.stringValue = "Testing... Please wait..."
 
-        let connection = PiholeConnectionV3(
+        let connection = PiholeConnectionV4(
             hostname: hostnameTextField.stringValue,
             port: Int(portTextField.stringValue) ?? 80,
             useSSL: useSSLCheckbox.state == .on ? true : false,
             token: passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            username: "",
             passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: "",
-            isV6: true
+            backendType: .piholeV6
         )
         let api = Pihole6API(connection: connection)
 

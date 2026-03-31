@@ -54,8 +54,8 @@ final class SyncSettingsViewController: NSViewController {
     private let settingLabelWidth: CGFloat = 180
     private let helpPopoverWidth: CGFloat = 280
 
-    private var v6Connections: [PiholeConnectionV3] {
-        Preferences.standard.piholes.filter(\.isV6)
+    private var v6Connections: [PiholeConnectionV4] {
+        Preferences.standard.piholes.filter { $0.backendType.supportsSync }
     }
 
     override func loadView() {
@@ -585,7 +585,7 @@ final class SyncSettingsViewController: NSViewController {
         }
     }
 
-    private func displayTitle(for connection: PiholeConnectionV3) -> String {
+    private func displayTitle(for connection: PiholeConnectionV4) -> String {
         let scheme = connection.useSSL ? "https" : "http"
         return "\(connection.hostname) (\(scheme):\(connection.port))"
     }
