@@ -34,7 +34,7 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Launch at login is wired directly into preferences
 - Keyboard shortcut preferences load and save correctly
 - Polling preferences are easier to manage
-- Sync Settings now uses a wider, sidebar-based layout that makes setup and activity easier to scan
+- Sync Settings now uses a taller full-width layout with a bottom status band, wider activity log, and inline help popovers for advanced settings
 - The menu bar now shows a visual in-progress indicator during sync and gravity updates
 - Public macOS builds are packaged as signed and notarized `.dmg` downloads
 

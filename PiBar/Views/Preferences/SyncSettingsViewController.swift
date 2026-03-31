@@ -45,18 +45,21 @@ final class SyncSettingsViewController: NSViewController {
     private let logTextView = NSTextView()
     private var logHeightConstraint: NSLayoutConstraint?
     private var isSyncInProgress = false
+    private var activeHelpPopover: NSPopover?
 
     private let syncNowButton = NSButton(title: "Sync Now", target: nil, action: nil)
     private let closeButton = NSButton(title: "Close", target: nil, action: nil)
 
     private let presetIntervals = [5, 15, 30, 60]
+    private let settingLabelWidth: CGFloat = 180
+    private let helpPopoverWidth: CGFloat = 280
 
     private var v6Connections: [PiholeConnectionV3] {
         Preferences.standard.piholes.filter(\.isV6)
     }
 
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 920, height: 620))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 940, height: 720))
         container.translatesAutoresizingMaskIntoConstraints = false
 
         summaryLabel.translatesAutoresizingMaskIntoConstraints = false
@@ -64,14 +67,15 @@ final class SyncSettingsViewController: NSViewController {
         summaryLabel.lineBreakMode = .byWordWrapping
         summaryLabel.maximumNumberOfLines = 3
 
+        lastSyncLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
+        lastSyncLabel.lineBreakMode = .byWordWrapping
+        lastSyncLabel.maximumNumberOfLines = 4
+
         let headerTitleLabel = NSTextField(labelWithString: "Sync Settings")
         headerTitleLabel.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
 
-        let headerDetailLabel = Self.makeHelperLabel("Set the source Pi-hole, the destination Pi-hole, and how aggressively PiBar should reconcile them.")
+        let headerDetailLabel = Self.makeHelperLabel("Choose how PiBar mirrors one Pi-hole into another, then monitor the sync state from the status band below.")
         headerDetailLabel.maximumNumberOfLines = 2
-
-        let summaryCard = Self.makeSection(title: "Status")
-        summaryCard.stack.addArrangedSubview(summaryLabel)
 
         syncEnabledCheckbox.target = self
         syncEnabledCheckbox.action = #selector(syncEnabledChanged)
@@ -108,39 +112,68 @@ final class SyncSettingsViewController: NSViewController {
         secondaryPopup.controlSize = .small
         syncNowButton.bezelStyle = .rounded
         closeButton.bezelStyle = .rounded
+        logToggleCheckbox.setButtonType(.switch)
 
         intervalPresetPopup.addItems(withTitles: presetIntervals.map { "\($0) min" } + ["Custom"])
 
         let setupCard = Self.makeSection(title: "Setup")
-        setupCard.stack.addArrangedSubview(syncEnabledCheckbox)
+        setupCard.stack.addArrangedSubview(
+            makeCheckboxRow(
+                syncEnabledCheckbox,
+                helpText: "Turn this on when you want PiBar to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it. PiBar will only let you run sync after both ends are chosen and they are different systems."
+            )
+        )
         setupCard.stack.addArrangedSubview(setupHelperLabel)
         setupCard.stack.addArrangedSubview(makeSetupGrid())
 
         let behaviorCard = Self.makeSection(title: "Behavior")
         behaviorCard.stack.addArrangedSubview(makeBehaviorGrid())
         behaviorCard.stack.addArrangedSubview(makeScopeRow())
-        behaviorCard.stack.addArrangedSubview(dryRunCheckbox)
+        behaviorCard.stack.addArrangedSubview(
+            makeCheckboxRow(
+                dryRunCheckbox,
+                helpText: "Dry run lets you preview what PiBar would add, remove, or change on the secondary without writing anything. Use this first if you want to validate scope and connection choices before a live sync."
+            )
+        )
         behaviorCard.stack.addArrangedSubview(behaviorHelperLabel)
 
         let safetyCard = Self.makeSection(title: "Safety")
-        safetyCard.stack.addArrangedSubview(wipeSecondaryCheckbox)
+        safetyCard.stack.addArrangedSubview(
+            makeCheckboxRow(
+                wipeSecondaryCheckbox,
+                helpText: "This clears the secondary adlist set before PiBar rebuilds it from the primary. Use it only when you want a hard reset, because blocking coverage on the secondary can drop until gravity finishes."
+            )
+        )
         safetyCard.stack.addArrangedSubview(safetyHelperLabel)
 
-        let activityCard = Self.makeSection(title: "Activity")
-        lastSyncLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        lastSyncLabel.lineBreakMode = .byWordWrapping
-        lastSyncLabel.maximumNumberOfLines = 4
-        logToggleCheckbox.setButtonType(.switch)
-        activityCard.stack.addArrangedSubview(lastSyncLabel)
-        activityCard.stack.addArrangedSubview(logToggleCheckbox)
+        let statusBand = Self.makeSection(title: "Sync Status")
+        let statusSpacer = NSView()
+        statusSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        statusSpacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        let statusHeaderRow = NSStackView(views: [summaryLabel, statusSpacer, logToggleCheckbox])
+        statusHeaderRow.orientation = .horizontal
+        statusHeaderRow.alignment = .firstBaseline
+        statusHeaderRow.spacing = 12
+        statusBand.stack.addArrangedSubview(statusHeaderRow)
+        statusBand.stack.addArrangedSubview(lastSyncLabel)
 
         configureLogView()
-        activityCard.stack.addArrangedSubview(logScrollView)
+        statusBand.stack.addArrangedSubview(logScrollView)
 
         let headerTextStack = NSStackView(views: [headerTitleLabel, headerDetailLabel])
         headerTextStack.orientation = .vertical
         headerTextStack.spacing = 4
         headerTextStack.translatesAutoresizingMaskIntoConstraints = false
+
+        let contentStack = NSStackView(views: [
+            setupCard.box,
+            behaviorCard.box,
+            safetyCard.box,
+            statusBand.box,
+        ])
+        contentStack.orientation = .vertical
+        contentStack.spacing = 16
+        contentStack.translatesAutoresizingMaskIntoConstraints = false
 
         let buttons = NSStackView(views: [syncNowButton, closeButton])
         buttons.orientation = .horizontal
@@ -148,76 +181,30 @@ final class SyncSettingsViewController: NSViewController {
         buttons.alignment = .centerY
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let leftColumn = NSStackView(views: [
-            setupCard.box,
-            behaviorCard.box,
-            safetyCard.box,
-        ])
-        leftColumn.orientation = .vertical
-        leftColumn.spacing = 14
-        leftColumn.translatesAutoresizingMaskIntoConstraints = false
-
-        let rightColumn = NSStackView(views: [
-            summaryCard.box,
-            activityCard.box,
-        ])
-        rightColumn.orientation = .vertical
-        rightColumn.spacing = 14
-        rightColumn.translatesAutoresizingMaskIntoConstraints = false
-
-        let sidebarPanel = NSVisualEffectView()
-        sidebarPanel.translatesAutoresizingMaskIntoConstraints = false
-        sidebarPanel.material = .sidebar
-        sidebarPanel.state = .active
-        sidebarPanel.blendingMode = .withinWindow
-        sidebarPanel.wantsLayer = true
-        sidebarPanel.layer?.cornerRadius = 12
-        sidebarPanel.layer?.masksToBounds = true
-        sidebarPanel.addSubview(rightColumn)
-
-        NSLayoutConstraint.activate([
-            rightColumn.topAnchor.constraint(equalTo: sidebarPanel.topAnchor, constant: 16),
-            rightColumn.leadingAnchor.constraint(equalTo: sidebarPanel.leadingAnchor, constant: 16),
-            rightColumn.trailingAnchor.constraint(equalTo: sidebarPanel.trailingAnchor, constant: -16),
-            rightColumn.bottomAnchor.constraint(equalTo: sidebarPanel.bottomAnchor, constant: -16),
-        ])
-
-        let contentColumns = NSStackView(views: [leftColumn, sidebarPanel])
-        contentColumns.orientation = .horizontal
-        contentColumns.alignment = .top
-        contentColumns.distribution = .fill
-        contentColumns.spacing = 20
-        contentColumns.translatesAutoresizingMaskIntoConstraints = false
-
         container.addSubview(headerTextStack)
-        container.addSubview(contentColumns)
+        container.addSubview(contentStack)
         container.addSubview(buttons)
 
-        leftColumn.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        leftColumn.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        sidebarPanel.setContentHuggingPriority(.required, for: .horizontal)
-        sidebarPanel.setContentCompressionResistancePriority(.required, for: .horizontal)
-        summaryCard.box.setContentHuggingPriority(.defaultHigh, for: .vertical)
-        summaryCard.box.setContentCompressionResistancePriority(.required, for: .vertical)
-        activityCard.box.setContentHuggingPriority(.defaultLow, for: .vertical)
-        activityCard.box.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        setupCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        behaviorCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        safetyCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
+        statusBand.box.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         NSLayoutConstraint.activate([
             headerTextStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
             headerTextStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            headerTextStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -20),
+            headerTextStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
 
-            contentColumns.topAnchor.constraint(equalTo: headerTextStack.bottomAnchor, constant: 18),
-            contentColumns.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            contentColumns.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            contentColumns.bottomAnchor.constraint(equalTo: buttons.topAnchor, constant: -18),
+            contentStack.topAnchor.constraint(equalTo: headerTextStack.bottomAnchor, constant: 18),
+            contentStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            contentStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            contentStack.bottomAnchor.constraint(equalTo: buttons.topAnchor, constant: -18),
 
             buttons.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
             buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
             buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
-            leftColumn.widthAnchor.constraint(greaterThanOrEqualToConstant: 540),
-            sidebarPanel.widthAnchor.constraint(equalToConstant: 320),
-            activityCard.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 280),
+
+            statusBand.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 180),
         ])
 
         view = container
@@ -226,7 +213,7 @@ final class SyncSettingsViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sync Settings"
-        preferredContentSize = NSSize(width: 940, height: 680)
+        preferredContentSize = NSSize(width: 940, height: 720)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piBarSyncProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
@@ -247,18 +234,16 @@ final class SyncSettingsViewController: NSViewController {
 
     private func makeSetupGrid() -> NSGridView {
         let grid = NSGridView(views: [
-            [primaryLabel, primaryPopup],
-            [secondaryLabel, secondaryPopup],
+            [makeSettingLabelRow(primaryLabel), primaryPopup],
+            [makeSettingLabelRow(secondaryLabel), secondaryPopup],
         ])
         grid.translatesAutoresizingMaskIntoConstraints = false
         grid.rowSpacing = 10
         grid.columnSpacing = 12
         grid.xPlacement = .fill
+        grid.column(at: 0).width = settingLabelWidth
         grid.column(at: 0).xPlacement = .leading
         grid.column(at: 1).xPlacement = .fill
-        [primaryLabel, secondaryLabel].forEach {
-            $0.setContentHuggingPriority(.required, for: .horizontal)
-        }
         [primaryPopup, secondaryPopup].forEach {
             $0.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         }
@@ -273,25 +258,132 @@ final class SyncSettingsViewController: NSViewController {
         intervalField.widthAnchor.constraint(equalToConstant: 64).isActive = true
 
         let grid = NSGridView(views: [
-            [intervalLabel, intervalRow],
+            [
+                makeSettingLabelRow(
+                    intervalLabel,
+                    helpText: "This controls how often PiBar compares the primary and secondary and applies any needed changes. Shorter intervals keep the secondary closer to real time, but they also create more frequent network traffic and sync work."
+                ),
+                intervalRow,
+            ],
         ])
         grid.translatesAutoresizingMaskIntoConstraints = false
         grid.rowSpacing = 10
         grid.columnSpacing = 12
         grid.xPlacement = .fill
+        grid.column(at: 0).width = settingLabelWidth
         grid.column(at: 0).xPlacement = .leading
         grid.column(at: 1).xPlacement = .fill
-        intervalLabel.setContentHuggingPriority(.required, for: .horizontal)
         return grid
     }
 
-    private func makeScopeRow() -> NSStackView {
-        let row = NSStackView(views: [scopeLabel, syncGroupsCheckbox, syncAdlistsCheckbox, syncDomainsCheckbox])
+    private func makeScopeRow() -> NSGridView {
+        let scopeControls = NSStackView(views: [syncGroupsCheckbox, syncAdlistsCheckbox, syncDomainsCheckbox])
+        scopeControls.orientation = .horizontal
+        scopeControls.spacing = 14
+        scopeControls.alignment = .centerY
+
+        let grid = NSGridView(views: [
+            [
+                makeSettingLabelRow(
+                    scopeLabel,
+                    helpText: "These options decide which configuration areas PiBar reconciles from the primary onto the secondary. Turn off any category you want to manage independently on the secondary, because enabled categories are treated as managed by the primary."
+                ),
+                scopeControls,
+            ],
+        ])
+        grid.translatesAutoresizingMaskIntoConstraints = false
+        grid.columnSpacing = 12
+        grid.xPlacement = .fill
+        grid.column(at: 0).width = settingLabelWidth
+        grid.column(at: 0).xPlacement = .leading
+        grid.column(at: 1).xPlacement = .fill
+        return grid
+    }
+
+    private func makeSettingLabelRow(_ label: NSTextField, helpText: String? = nil) -> NSView {
+        label.setContentHuggingPriority(.required, for: .horizontal)
+
+        var views: [NSView] = [label]
+        if let helpText {
+            views.append(makeHelpButton(text: helpText))
+        }
+        let row = NSStackView(views: views)
         row.orientation = .horizontal
-        row.spacing = 14
+        row.spacing = 6
         row.alignment = .centerY
-        scopeLabel.setContentHuggingPriority(.required, for: .horizontal)
+        row.translatesAutoresizingMaskIntoConstraints = false
         return row
+    }
+
+    private func makeCheckboxRow(_ checkbox: NSButton, helpText: String? = nil) -> NSView {
+        checkbox.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        var views: [NSView] = [checkbox]
+        if let helpText {
+            views.append(makeHelpButton(text: helpText))
+        }
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+        views.append(spacer)
+
+        let row = NSStackView(views: views)
+        row.orientation = .horizontal
+        row.spacing = 8
+        row.alignment = .centerY
+        row.translatesAutoresizingMaskIntoConstraints = false
+        return row
+    }
+
+    private func makeHelpButton(text: String) -> NSButton {
+        let button = NSButton(title: "", target: self, action: #selector(helpButtonPressed(_:)))
+        button.translatesAutoresizingMaskIntoConstraints = false
+        button.bezelStyle = .regularSquare
+        button.isBordered = false
+        button.image = NSImage(systemSymbolName: "questionmark.circle", accessibilityDescription: "More information")
+        button.imagePosition = .imageOnly
+        button.contentTintColor = .secondaryLabelColor
+        button.controlSize = .small
+        button.toolTip = "More information"
+        button.setButtonType(.momentaryPushIn)
+        button.identifier = NSUserInterfaceItemIdentifier(text)
+        NSLayoutConstraint.activate([
+            button.widthAnchor.constraint(equalToConstant: 18),
+            button.heightAnchor.constraint(equalToConstant: 18),
+        ])
+        return button
+    }
+
+    @objc private func helpButtonPressed(_ sender: NSButton) {
+        guard let text = sender.identifier?.rawValue else { return }
+
+        activeHelpPopover?.close()
+
+        let label = Self.makeHelperLabel(text)
+        label.maximumNumberOfLines = 0
+        label.translatesAutoresizingMaskIntoConstraints = false
+
+        let contentView = NSView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+            contentView.widthAnchor.constraint(equalToConstant: helpPopoverWidth),
+        ])
+
+        let viewController = NSViewController()
+        viewController.view = contentView
+
+        let popover = NSPopover()
+        popover.behavior = .transient
+        popover.animates = true
+        popover.contentViewController = viewController
+        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
+        activeHelpPopover = popover
     }
 
     private func configureLogView() {
@@ -410,7 +502,7 @@ final class SyncSettingsViewController: NSViewController {
     private func updateLogVisibility() {
         let showLog = logToggleCheckbox.state == .on
         logScrollView.isHidden = !showLog
-        logHeightConstraint?.constant = showLog ? 220 : 0
+        logHeightConstraint?.constant = showLog ? 250 : 0
     }
 
     private func configureIntervalControls() {
@@ -631,7 +723,7 @@ final class SyncSettingsViewController: NSViewController {
 
         let stack = NSStackView()
         stack.orientation = .vertical
-        stack.spacing = 8
+        stack.spacing = 10
         stack.translatesAutoresizingMaskIntoConstraints = false
         box.contentView?.addSubview(stack)
 

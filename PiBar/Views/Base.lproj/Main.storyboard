@@ -96,7 +96,7 @@ of Pi-hole LLC.</string>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
                                             <rect key="frame" x="61" y="110" width="109" height="14"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 5)" id="oRj-Vt-ZIN">
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 6)" id="oRj-Vt-ZIN">
                                                 <font key="font" metaFont="label" size="11"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

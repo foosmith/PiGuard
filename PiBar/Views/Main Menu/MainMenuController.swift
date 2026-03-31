@@ -53,8 +53,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         let window = NSWindow(contentViewController: vc)
         window.title = "Sync Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 940, height: 680))
-        window.minSize = NSSize(width: 940, height: 680)
+        window.setContentSize(NSSize(width: 940, height: 720))
+        window.minSize = NSSize(width: 940, height: 720)
         window.center()
         return window
     }()
@@ -374,16 +374,15 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
 
     private func menuBarActivityTitle() -> String? {
         guard isSyncInProgress || isGravityUpdateInProgress else { return nil }
-        let dots = String(repeating: ".", count: menuBarActivityFrame)
         let base = menuBarBaseTitle()
         let status: String
 
         if isSyncInProgress && isGravityUpdateInProgress {
-            status = "Syncing + gravity\(dots)"
+            status = "Syncing + gravity"
         } else if isSyncInProgress {
-            status = "Syncing\(dots)"
+            status = "Syncing"
         } else {
-            status = "Updating gravity\(dots)"
+            status = "Updating gravity"
         }
 
         return base.isEmpty ? status : "\(base)  \(status)"

@@ -370,13 +370,13 @@
                     </connections>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="Jp9-vn-utI"/>
-                <menuItem title="About PiBar" id="YMn-9f-Uru">
+                <menuItem title="About PiBar-Enhanced" id="YMn-9f-Uru">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="aboutAction:" target="Ufk-kp-3MV" id="pAS-t6-Vla"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Quit PiBar" keyEquivalent="q" id="ETE-5r-Mpn">
+                <menuItem title="Quit PiBar-Enhanced" keyEquivalent="q" id="ETE-5r-Mpn">
                     <connections>
                         <action selector="quitMenuBarAction:" target="Ufk-kp-3MV" id="BIl-j0-uBf"/>
                     </connections>
