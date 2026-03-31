@@ -123,7 +123,6 @@ final class SyncSettingsViewController: NSViewController {
                 helpText: "Turn this on when you want PiBar to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it. PiBar will only let you run sync after both ends are chosen and they are different systems."
             )
         )
-        setupCard.stack.addArrangedSubview(setupHelperLabel)
         setupCard.stack.addArrangedSubview(makeSetupGrid())
 
         let behaviorCard = Self.makeSection(title: "Behavior")
@@ -135,7 +134,6 @@ final class SyncSettingsViewController: NSViewController {
                 helpText: "Dry run lets you preview what PiBar would add, remove, or change on the secondary without writing anything. Use this first if you want to validate scope and connection choices before a live sync."
             )
         )
-        behaviorCard.stack.addArrangedSubview(behaviorHelperLabel)
 
         let safetyCard = Self.makeSection(title: "Safety")
         safetyCard.stack.addArrangedSubview(
@@ -144,7 +142,6 @@ final class SyncSettingsViewController: NSViewController {
                 helpText: "This clears the secondary adlist set before PiBar rebuilds it from the primary. Use it only when you want a hard reset, because blocking coverage on the secondary can drop until gravity finishes."
             )
         )
-        safetyCard.stack.addArrangedSubview(safetyHelperLabel)
 
         let statusBand = Self.makeSection(title: "Sync Status")
         let statusSpacer = NSView()
@@ -173,6 +170,7 @@ final class SyncSettingsViewController: NSViewController {
         ])
         contentStack.orientation = .vertical
         contentStack.spacing = 16
+        contentStack.alignment = .centerX
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
         let buttons = NSStackView(views: [syncNowButton, closeButton])
@@ -204,6 +202,10 @@ final class SyncSettingsViewController: NSViewController {
             buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
             buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
 
+            setupCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
+            behaviorCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
+            safetyCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
+            statusBand.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
             statusBand.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
         ])
 
