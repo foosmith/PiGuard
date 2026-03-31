@@ -35,7 +35,7 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Keyboard shortcut preferences load and save correctly
 - Polling preferences are easier to manage
 - Sync Settings now uses a wider, sidebar-based layout that makes setup and activity easier to scan
-- Public macOS builds are packaged as signed `.dmg` downloads
+- Public macOS builds are packaged as signed and notarized `.dmg` downloads
 
 ## Download & Install
 
@@ -51,7 +51,7 @@ Requires macOS 13 or later.
 4. Eject the DMG (drag it to Trash or right-click → Eject)
 5. Open **Launchpad** or your **Applications** folder and launch PiBar — it will appear in your menu bar
 
-> **Gatekeeper on first launch:** Because this build is signed but not notarized, macOS may show a `"PiBar.app" can't be opened` warning. To allow it, Control-click **PiBar.app** in Finder and choose **Open**, then click **Open** in the dialog. Alternatively, go to **System Settings → Privacy & Security** and click **Open Anyway** after the blocked launch attempt.
+> **Gatekeeper on first launch:** This beta is signed and notarized, so macOS should open it normally after you drag it into **Applications**. If Finder still warns due to quarantine caching, eject the DMG, reopen it, and launch the copied app from **Applications**.
 
 All releases are listed on the [Releases page](https://github.com/foosmith/pibar-enhanced/releases).
 
