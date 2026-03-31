@@ -13,6 +13,10 @@ extension Notification.Name {
     static let piBarSyncBegan = Notification.Name("PiBar.Sync.Began")
     /// Posted on the main thread when a sync operation ends (success, failure, or skip).
     static let piBarSyncEnded = Notification.Name("PiBar.Sync.Ended")
+    /// Posted on the main thread when a gravity update begins.
+    static let piBarGravityBegan = Notification.Name("PiBar.Gravity.Began")
+    /// Posted on the main thread when a gravity update ends.
+    static let piBarGravityEnded = Notification.Name("PiBar.Gravity.Ended")
 }
 
 enum SyncProgress {

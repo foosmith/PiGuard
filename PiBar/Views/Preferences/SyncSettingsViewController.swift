@@ -148,12 +148,6 @@ final class SyncSettingsViewController: NSViewController {
         buttons.alignment = .centerY
         buttons.translatesAutoresizingMaskIntoConstraints = false
 
-        let headerRow = NSStackView(views: [headerTextStack, buttons])
-        headerRow.orientation = .horizontal
-        headerRow.alignment = .top
-        headerRow.spacing = 20
-        headerRow.translatesAutoresizingMaskIntoConstraints = false
-
         let leftColumn = NSStackView(views: [
             setupCard.box,
             behaviorCard.box,
@@ -195,29 +189,35 @@ final class SyncSettingsViewController: NSViewController {
         contentColumns.spacing = 20
         contentColumns.translatesAutoresizingMaskIntoConstraints = false
 
-        container.addSubview(headerRow)
+        container.addSubview(headerTextStack)
         container.addSubview(contentColumns)
+        container.addSubview(buttons)
 
         leftColumn.setContentHuggingPriority(.defaultLow, for: .horizontal)
         leftColumn.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         sidebarPanel.setContentHuggingPriority(.required, for: .horizontal)
         sidebarPanel.setContentCompressionResistancePriority(.required, for: .horizontal)
         summaryCard.box.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        summaryCard.box.setContentCompressionResistancePriority(.required, for: .vertical)
+        activityCard.box.setContentHuggingPriority(.defaultLow, for: .vertical)
         activityCard.box.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
 
         NSLayoutConstraint.activate([
-            headerRow.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            headerRow.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            headerRow.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            headerTextStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            headerTextStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            headerTextStack.trailingAnchor.constraint(lessThanOrEqualTo: container.trailingAnchor, constant: -20),
 
-            contentColumns.topAnchor.constraint(equalTo: headerRow.bottomAnchor, constant: 18),
+            contentColumns.topAnchor.constraint(equalTo: headerTextStack.bottomAnchor, constant: 18),
             contentColumns.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
             contentColumns.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            contentColumns.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -20),
+            contentColumns.bottomAnchor.constraint(equalTo: buttons.topAnchor, constant: -18),
 
             buttons.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
+            buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
             leftColumn.widthAnchor.constraint(greaterThanOrEqualToConstant: 540),
-            sidebarPanel.widthAnchor.constraint(equalToConstant: 300),
+            sidebarPanel.widthAnchor.constraint(equalToConstant: 320),
+            activityCard.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 280),
         ])
 
         view = container
@@ -226,7 +226,7 @@ final class SyncSettingsViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sync Settings"
-        preferredContentSize = NSSize(width: 920, height: 620)
+        preferredContentSize = NSSize(width: 940, height: 680)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piBarSyncProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
@@ -410,7 +410,7 @@ final class SyncSettingsViewController: NSViewController {
     private func updateLogVisibility() {
         let showLog = logToggleCheckbox.state == .on
         logScrollView.isHidden = !showLog
-        logHeightConstraint?.constant = showLog ? 140 : 0
+        logHeightConstraint?.constant = showLog ? 220 : 0
     }
 
     private func configureIntervalControls() {

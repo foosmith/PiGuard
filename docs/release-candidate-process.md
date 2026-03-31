@@ -10,7 +10,7 @@ This document captures the maintainer workflow for cutting a signed and notarize
 
 ## Build The Release Candidate
 
-1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `PiBar.xcodeproj/project.pbxproj`.
+1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `PiBar-Enhanced.xcodeproj/project.pbxproj`.
 2. Build the signed and notarized DMG:
 
 ```bash
@@ -34,7 +34,7 @@ What the DMG workflow does:
 ## Verify The Artifact
 
 1. Mount the DMG.
-2. Drag `PiBar.app` to `/Applications`.
+2. Drag `PiBar-Enhanced.app` to `/Applications`.
 3. Launch the installed app locally.
 4. Confirm Gatekeeper does not show an unsigned or damaged warning.
 

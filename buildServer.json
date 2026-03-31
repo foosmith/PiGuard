@@ -12,8 +12,8 @@
 	"argv": [
 		"/opt/homebrew/bin/xcode-build-server"
 	],
-	"workspace": "/Users/smithm/Library/CloudStorage/OneDrive-Personal/Documents/pibar-enhanced/pibar-enhanced/PiBar.xcodeproj/project.xcworkspace",
+	"workspace": "/Users/smithm/Library/CloudStorage/OneDrive-Personal/Documents/pibar-enhanced/PiBar-Enhanced.xcodeproj/project.xcworkspace",
 	"build_root": "/Users/smithm/Library/Developer/Xcode/DerivedData/PiBar-cwzavnkcyklutvbpfnbzwlzitzrj",
-	"scheme": "PiBar",
+	"scheme": "PiBar-Enhanced",
 	"kind": "xcode"
 }

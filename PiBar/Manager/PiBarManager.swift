@@ -70,7 +70,13 @@ class PiBarManager: NSObject {
 
     func updateGravityOnNetwork() {
         Log.debug("Manager: Update Gravity requested")
+        NotificationCenter.default.post(name: .piBarGravityBegan, object: nil)
         Task {
+            defer {
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: .piBarGravityEnded, object: nil)
+                }
+            }
             for pihole in piholes.values where pihole.isV6 {
                 guard let api6 = pihole.api6 else { continue }
                 do {

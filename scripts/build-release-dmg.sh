@@ -76,7 +76,7 @@ fi
 
 function read_project_setting() {
     local key="$1"
-    rg -m 1 -N "^[[:space:]]*${key} = " "$ROOT_DIR/PiBar.xcodeproj/project.pbxproj" \
+    rg -m 1 -N "^[[:space:]]*${key} = " "$ROOT_DIR/PiBar-Enhanced.xcodeproj/project.pbxproj" \
         | perl -pe 's/\r$//' \
         | sed -E "s/^[[:space:]]*${key} = ([^;]+);$/\1/"
 }
@@ -89,7 +89,7 @@ function run_codesign_verify() {
 
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
-APP_NAME="PiBar"
+APP_NAME="PiBar-Enhanced"
 
 if [[ -z "$ARTIFACT_NAME" ]]; then
     ARTIFACT_NAME="${APP_NAME}-${MARKETING_VERSION}-${BUILD_NUMBER}-macOS"

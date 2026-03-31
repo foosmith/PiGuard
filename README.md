@@ -35,19 +35,20 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 - Keyboard shortcut preferences load and save correctly
 - Polling preferences are easier to manage
 - Sync Settings now uses a wider, sidebar-based layout that makes setup and activity easier to scan
+- The menu bar now shows a visual in-progress indicator during sync and gravity updates
 - Public macOS builds are packaged as signed and notarized `.dmg` downloads
 
 ## Download & Install
 
 ### Latest Release — beta 6 (build 689)
 
-**[⬇ Download PiBar Enhanced — beta 6 (.dmg)](https://github.com/foosmith/pibar-enhanced/releases/download/v2.3-beta6/PiBar-2.3-beta6-macOS.dmg)**
+**[⬇ Download PiBar Enhanced — beta 6 (.dmg)](https://github.com/foosmith/pibar-enhanced/releases/download/v2.3-beta6/PiBar-Enhanced-2.3-beta6-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiBar-2.3-beta6-macOS.dmg**
-2. Open the DMG — a window will appear showing PiBar.app and an Applications shortcut
-3. Drag **PiBar.app** into the **Applications** folder
+1. Download **PiBar-Enhanced-2.3-beta6-macOS.dmg**
+2. Open the DMG — a window will appear showing PiBar-Enhanced.app and an Applications shortcut
+3. Drag **PiBar-Enhanced.app** into the **Applications** folder
 4. Eject the DMG (drag it to Trash or right-click → Eject)
 5. Open **Launchpad** or your **Applications** folder and launch PiBar — it will appear in your menu bar
 

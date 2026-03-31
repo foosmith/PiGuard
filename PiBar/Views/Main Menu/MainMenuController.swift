@@ -14,10 +14,20 @@ import HotKey
 
 class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarManagerDelegate {
     private let toggleHotKey = HotKey(key: .p, modifiers: [.command, .option, .shift])
+    private let activitySymbolNames = [
+        "arrow.triangle.2.circlepath",
+        "arrow.clockwise",
+        "arrow.triangle.2.circlepath.circle.fill",
+        "arrow.counterclockwise",
+    ]
 
     private let manager: PiBarManager = PiBarManager()
 
     private var networkOverview: PiholeNetworkOverview?
+    private var isSyncInProgress = false
+    private var isGravityUpdateInProgress = false
+    private var menuBarActivityTimer: Timer?
+    private var menuBarActivityFrame = 0
 
     // MARK: - Internal Views
 
@@ -43,8 +53,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         let window = NSWindow(contentViewController: vc)
         window.title = "Sync Settings"
         window.styleMask = [.titled, .closable, .miniaturizable]
-        window.setContentSize(NSSize(width: 920, height: 620))
-        window.minSize = NSSize(width: 920, height: 620)
+        window.setContentSize(NSSize(width: 940, height: 680))
+        window.minSize = NSSize(width: 940, height: 680)
         window.center()
         return window
     }()
@@ -126,7 +136,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
 
     override func awakeFromNib() {
         if let statusBarButton = statusBarItem.button {
-            statusBarButton.image = NSImage(named: "icon")
+            statusBarButton.image = menuBarImage()
             statusBarButton.imagePosition = .imageLeading
             statusBarButton.title = "Initializing"
         }
@@ -134,10 +144,19 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         mainMenu.delegate = self
 
         enableKeyboardShortcut()
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piBarGravityBegan, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityEnded), name: .piBarGravityEnded, object: nil)
 
         if let viewController = preferencesWindowController?.contentViewController as? PreferencesViewController {
             viewController.delegate = self
         }
+    }
+
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+        menuBarActivityTimer?.invalidate()
     }
 
     // MARK: - Keyboard Shortcut
@@ -229,7 +248,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         Log.debug("Updating Interface")
 
         DispatchQueue.main.async {
-            self.updateMenuBarTitle()
+            self.refreshMenuBarDisplay()
             self.updateStatusButtons()
             self.updateMenuButtons()
             self.updateStatusSubmenus()
@@ -241,6 +260,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
 
         if let statusBarButton = statusBarItem.button {
             DispatchQueue.main.async {
+                statusBarButton.image = self.menuBarImage()
                 if title.isEmpty {
                     statusBarButton.imagePosition = .imageOnly
                 } else {
@@ -299,6 +319,145 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         // Set title
         let titleString = titleElements.joined(separator: " ")
         setMenuBarTitle(titleString)
+    }
+
+    private func menuBarImage() -> NSImage? {
+        if isSyncInProgress || isGravityUpdateInProgress {
+            let index = menuBarActivityFrame % activitySymbolNames.count
+            let image = NSImage(
+                systemSymbolName: activitySymbolNames[index],
+                accessibilityDescription: "Activity in progress"
+            )
+            image?.isTemplate = true
+            return image
+        }
+
+        let image = NSImage(named: "icon")
+        image?.isTemplate = true
+        return image
+    }
+
+    private func refreshMenuBarDisplay() {
+        if let title = menuBarActivityTitle() {
+            setMenuBarTitle(title)
+        } else {
+            menuBarActivityTimer?.invalidate()
+            menuBarActivityTimer = nil
+            updateMenuBarTitle()
+        }
+    }
+
+    private func updateMenuBarActivityState() {
+        menuBarActivityFrame = 0
+
+        guard menuBarActivityTitle() != nil else {
+            menuBarActivityTimer?.invalidate()
+            menuBarActivityTimer = nil
+            refreshMenuBarDisplay()
+            return
+        }
+
+        if menuBarActivityTimer == nil {
+            let timer = Timer(timeInterval: 0.5, target: self, selector: #selector(advanceMenuBarActivityFrame), userInfo: nil, repeats: true)
+            RunLoop.main.add(timer, forMode: .common)
+            menuBarActivityTimer = timer
+        }
+
+        refreshMenuBarDisplay()
+    }
+
+    @objc private func advanceMenuBarActivityFrame() {
+        guard menuBarActivityTitle() != nil else { return }
+        menuBarActivityFrame = (menuBarActivityFrame + 1) % 4
+        refreshMenuBarDisplay()
+    }
+
+    private func menuBarActivityTitle() -> String? {
+        guard isSyncInProgress || isGravityUpdateInProgress else { return nil }
+        let dots = String(repeating: ".", count: menuBarActivityFrame)
+        let base = menuBarBaseTitle()
+        let status: String
+
+        if isSyncInProgress && isGravityUpdateInProgress {
+            status = "Syncing + gravity\(dots)"
+        } else if isSyncInProgress {
+            status = "Syncing\(dots)"
+        } else {
+            status = "Updating gravity\(dots)"
+        }
+
+        return base.isEmpty ? status : "\(base)  \(status)"
+    }
+
+    private func menuBarBaseTitle() -> String {
+        guard let networkOverview = networkOverview else { return "" }
+        let currentStatus = networkOverview.networkStatus
+        var titleElements: [String] = []
+
+        if currentStatus == .enabled || currentStatus == .partiallyEnabled {
+            let showLabels = Preferences.standard.showLabels
+            let verboseLabels = Preferences.standard.verboseLabels
+            if Preferences.standard.showQueries {
+                if showLabels {
+                    let label = verboseLabels ? "Queries:" : "Q:"
+                    titleElements.append(label)
+                }
+                titleElements.append(networkOverview.totalQueriesToday.string)
+                if Preferences.standard.showBlocked || Preferences.standard.showPercentage, showLabels {
+                    titleElements.append("•")
+                }
+            }
+            if Preferences.standard.showBlocked {
+                if showLabels {
+                    let label = verboseLabels ? "Blocked:" : "B:"
+                    titleElements.append(label)
+                }
+                if Preferences.standard.showQueries, !showLabels {
+                    titleElements.append("/")
+                }
+                titleElements.append(networkOverview.adsBlockedToday.string)
+            }
+
+            if Preferences.standard.showPercentage {
+                if Preferences.standard.showBlocked || (Preferences.standard.showQueries && !showLabels) {
+                    titleElements.append("(\(networkOverview.adsPercentageToday.string))")
+                } else {
+                    if showLabels {
+                        let label = verboseLabels ? "Blocked:" : "B:"
+                        titleElements.append(label)
+                    }
+                    titleElements.append("\(networkOverview.adsPercentageToday.string)")
+                }
+            }
+        } else {
+            titleElements = [currentStatus.rawValue]
+        }
+
+        return titleElements.joined(separator: " ")
+    }
+
+    @objc private func handleSyncBegan() {
+        isSyncInProgress = true
+        updateMenuBarActivityState()
+        updateMenuButtons()
+    }
+
+    @objc private func handleSyncEnded() {
+        isSyncInProgress = false
+        updateMenuBarActivityState()
+        updateMenuButtons()
+    }
+
+    @objc private func handleGravityBegan() {
+        isGravityUpdateInProgress = true
+        updateMenuBarActivityState()
+        updateMenuButtons()
+    }
+
+    @objc private func handleGravityEnded() {
+        isGravityUpdateInProgress = false
+        updateMenuBarActivityState()
+        updateMenuButtons()
     }
 
     private func updateStatusButtons() {
@@ -512,8 +671,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         }
 
         let hasV6 = networkOverview.piholes.values.contains(where: { $0.isV6 })
-        updateGravityMenuItem.isEnabled = hasV6 && networkOverview.canBeManaged
-        syncNowMenuItem.isEnabled = Preferences.standard.syncEnabled
+        let isBusy = isSyncInProgress || isGravityUpdateInProgress
+        updateGravityMenuItem.isEnabled = hasV6 && networkOverview.canBeManaged && !isBusy
+        syncNowMenuItem.isEnabled = Preferences.standard.syncEnabled && !isBusy
     }
 }
 

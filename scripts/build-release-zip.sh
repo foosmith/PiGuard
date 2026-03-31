@@ -3,8 +3,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_PATH="$ROOT_DIR/PiBar.xcodeproj"
-SCHEME="PiBar"
+PROJECT_PATH="$ROOT_DIR/PiBar-Enhanced.xcodeproj"
+SCHEME="PiBar-Enhanced"
 CONFIGURATION="Release"
 OUTPUT_DIR="$ROOT_DIR/build/release"
 DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
@@ -99,7 +99,7 @@ function normalize_entitlements() {
 
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
-APP_NAME="PiBar"
+APP_NAME="PiBar-Enhanced"
 DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
 APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiBar/PiBar.entitlements"
 
