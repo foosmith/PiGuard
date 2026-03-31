@@ -1,0 +1,15 @@
+# PiBar Enhanced for Windows
+
+This folder contains the Windows port foundation for PiBar Enhanced.
+
+Current scope:
+- `PiBarEnhanced.Core`: reusable models, settings abstractions, sync activity abstractions, and cross-platform service contracts
+- `PiBarEnhanced.Windows`: tray-first Windows shell scaffold in `C# / .NET 8 / WPF`
+
+The Windows app is intentionally structured so the tray utility can grow into a fuller desktop application later without replacing the core service layer.
+
+Planned next implementation steps:
+- Port Pi-hole v5/v6 API clients into `PiBarEnhanced.Core`
+- Port polling/update/sync orchestration into the core service layer
+- Replace placeholder windows with fully functional settings and sync flows
+- Add Windows-specific startup, hotkey, notification, and update plumbing

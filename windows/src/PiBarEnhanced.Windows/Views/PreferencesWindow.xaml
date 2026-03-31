@@ -1,0 +1,53 @@
+<Window x:Class="PiBarEnhanced.Windows.Views.PreferencesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PiBar Enhanced Preferences"
+        Width="760"
+        Height="560"
+        WindowStartupLocation="CenterScreen">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="16" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <TextBlock FontSize="24" FontWeight="SemiBold" Text="Preferences" />
+            <TextBlock Margin="0,8,0,0"
+                       Foreground="#FF666666"
+                       TextWrapping="Wrap"
+                       Text="Windows foundation for the tray-first PiBar Enhanced port. This window is the future home of connection management, menu bar status settings, startup behavior, logging, and hotkeys." />
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1.2*" />
+                <ColumnDefinition Width="16" />
+                <ColumnDefinition Width="1*" />
+            </Grid.ColumnDefinitions>
+
+            <GroupBox Header="Connections">
+                <StackPanel Margin="12">
+                    <TextBlock TextWrapping="Wrap"
+                               Text="This section will manage Pi-hole v5 and v6 connections, including app-password-backed v6 authentication and secure credential storage." />
+                    <ListView Margin="0,12,0,0" Height="280">
+                        <ListViewItem Content="Connection management scaffolded for Windows port" />
+                    </ListView>
+                </StackPanel>
+            </GroupBox>
+
+            <GroupBox Grid.Column="2" Header="App Behavior">
+                <StackPanel Margin="12">
+                    <CheckBox Margin="0,0,0,10" Content="Launch at startup" />
+                    <CheckBox Margin="0,0,0,10" Content="Enable global hotkey" />
+                    <CheckBox Margin="0,0,0,10" Content="Enable diagnostic logging" />
+                    <TextBlock Margin="0,16,0,0"
+                               TextWrapping="Wrap"
+                               Foreground="#FF666666"
+                               Text="The Windows shell is tray-first now, but the MVVM/service split is intended to support a richer desktop app later without replacing the core logic." />
+                </StackPanel>
+            </GroupBox>
+        </Grid>
+    </Grid>
+</Window>
