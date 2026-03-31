@@ -8,6 +8,9 @@ Current scope:
 
 The Windows app is intentionally structured so the tray utility can grow into a fuller desktop application later without replacing the core service layer.
 
+Planning docs:
+- [Windows implementation plan](docs/windows-plan.md)
+
 Planned next implementation steps:
 - Port Pi-hole v5/v6 API clients into `PiBarEnhanced.Core`
 - Port polling/update/sync orchestration into the core service layer
