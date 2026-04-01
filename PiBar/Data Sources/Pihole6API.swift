@@ -1,6 +1,6 @@
 //
 //  PiholeAPI.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Brad Root on 5/17/20.
 //  Copyright © 2020 Brad Root. All rights reserved.
@@ -193,7 +193,7 @@ class Pihole6API: NSObject {
         return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
     }
     
-    var userAgent: String = "PiBar:1.2:https://github.com/amiantos/pibar"
+    var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/pibar-enhanced"
 
     var admin: URL {
         return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!

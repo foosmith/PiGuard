@@ -10,14 +10,14 @@ This document captures the maintainer workflow for cutting a signed and notarize
 
 ## Build The Release Candidate
 
-1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `PiBar-Enhanced.xcodeproj/project.pbxproj`.
+1. Update `MARKETING_VERSION` and `CURRENT_PROJECT_VERSION` in `PiGuard.xcodeproj/project.pbxproj`.
 2. Build the signed and notarized DMG:
 
 ```bash
 scripts/build-release-dmg.sh \
-  --artifact-name PiBar-<version>-rc<rc>-macOS \
+  --artifact-name PiGuard-<version>-rc<rc>-macOS \
   --sign-identity 'Developer ID Application: Matthew Smith (GB7Z2TZ8LT)' \
-  --notary-profile pibar-notary
+  --notary-profile piguard-notary
 ```
 
 What the DMG workflow does:
@@ -34,7 +34,7 @@ What the DMG workflow does:
 ## Verify The Artifact
 
 1. Mount the DMG.
-2. Drag `PiBar-Enhanced.app` to `/Applications`.
+2. Drag `PiGuard.app` to `/Applications`.
 3. Launch the installed app locally.
 4. Confirm Gatekeeper does not show an unsigned or damaged warning.
 
@@ -53,5 +53,5 @@ git tag -a macOS-v<version>-rc<rc> -m "macOS v<version> RC <rc>"
 Example asset name:
 
 ```text
-PiBar-2.0-rc1-macOS.dmg
+PiGuard-2.0-rc1-macOS.dmg
 ```

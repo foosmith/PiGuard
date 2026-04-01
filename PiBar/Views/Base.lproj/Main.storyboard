@@ -8,7 +8,7 @@
         <!--Window Controller-->
         <scene sceneID="78C-Tq-YMk">
             <objects>
-                <windowController storyboardIdentifier="PreferencesWindowContoller" showSeguePresentationStyle="single" id="jXe-pL-4lR" customClass="PreferencesWindowController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <windowController storyboardIdentifier="PreferencesWindowContoller" showSeguePresentationStyle="single" id="jXe-pL-4lR" customClass="PreferencesWindowController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <window key="window" title="PiGuard Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="OFZ-oX-26S">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
@@ -29,7 +29,7 @@
         <!--Window Controller-->
         <scene sceneID="9IB-04-fo0">
             <objects>
-                <windowController storyboardIdentifier="AboutWindowController" showSeguePresentationStyle="single" id="gmV-ql-AU5" customClass="AboutWindowController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <windowController storyboardIdentifier="AboutWindowController" showSeguePresentationStyle="single" id="gmV-ql-AU5" customClass="AboutWindowController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <window key="window" title="About PiGuard" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="eLV-a3-iIv">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
@@ -50,7 +50,7 @@
         <!--About View Controller-->
         <scene sceneID="hDB-Cw-Vyc">
             <objects>
-                <viewController id="8lv-Nf-Li8" customClass="AboutViewController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="8lv-Nf-Li8" customClass="AboutViewController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="4DW-02-72t">
                         <rect key="frame" x="0.0" y="0.0" width="270" height="275"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -75,9 +75,9 @@
                                             <rect key="frame" x="18" y="16" width="194" height="42"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" id="WN0-cg-lqh">
                                                 <font key="font" metaFont="label" size="11"/>
-                                                <string key="title">PiGuard © 2026 foosmith 
-Pi-hole® is a registered trademark
-of Pi-hole LLC.</string>
+                                                <string key="title">PiGuard © 2026 foosmith
+Supports Pi-hole and AdGuard Home.
+Pi-hole® is a registered trademark of Pi-hole LLC.</string>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
@@ -142,20 +142,20 @@ of Pi-hole LLC.</string>
         <!--Preferences View Controller-->
         <scene sceneID="PXR-hs-Mxg">
             <objects>
-                <viewController id="GTm-9k-36S" customClass="PreferencesViewController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController id="GTm-9k-36S" customClass="PreferencesViewController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="77P-BY-lJe">
                         <rect key="frame" x="0.0" y="0.0" width="574" height="433"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="J44-eX-Cmj">
                                 <rect key="frame" x="18" y="353" width="304" height="64"/>
-                                <textFieldCell key="cell" lineBreakMode="clipping" title="Pi-holes" id="1au-rN-a6J">
+                                <textFieldCell key="cell" lineBreakMode="clipping" title="Servers" id="1au-rN-a6J">
                                     <font key="font" metaFont="system"/>
                                     <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <box title="Pi-holes" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="rf3-sM-sEw">
+                            <box title="Servers" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="rf3-sM-sEw">
                                 <rect key="frame" x="20" y="61" width="300" height="284"/>
                                 <view key="contentView" id="U8L-6W-MRA">
                                     <rect key="frame" x="0.0" y="0.0" width="300" height="284"/>
@@ -619,7 +619,7 @@ of Pi-hole LLC.</string>
         <!--Pihole Settings View Controller-->
         <scene sceneID="ayz-je-3b6">
             <objects>
-                <viewController storyboardIdentifier="piHoleDialog" id="JhG-OK-RWV" customClass="PiholeSettingsViewController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="piHoleDialog" id="JhG-OK-RWV" customClass="PiholeSettingsViewController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="VTg-m3-cFh">
                         <rect key="frame" x="0.0" y="0.0" width="450" height="285"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -644,7 +644,7 @@ of Pi-hole LLC.</string>
                                     <action selector="saveAndCloseButtonAction:" target="JhG-OK-RWV" id="YFb-zY-uRe"/>
                                 </connections>
                             </button>
-                            <box title="Pi-hole Settings" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="3K7-bD-5VH">
+                            <box title="Server Settings" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="3K7-bD-5VH">
                                 <rect key="frame" x="20" y="64" width="410" height="196"/>
                                 <view key="contentView" id="xIe-VM-MBv">
                                     <rect key="frame" x="0.0" y="0.0" width="410" height="196"/>
@@ -847,7 +847,7 @@ of Pi-hole LLC.</string>
         <!--PiholeV6 Settings View Controller-->
         <scene sceneID="bKj-zN-9t0">
             <objects>
-                <viewController storyboardIdentifier="piHoleDialogV6" id="DCw-Ag-BHe" customClass="PiholeV6SettingsViewController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
+                <viewController storyboardIdentifier="piHoleDialogV6" id="DCw-Ag-BHe" customClass="PiholeV6SettingsViewController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" id="Aq6-2c-i1T">
                         <rect key="frame" x="0.0" y="0.0" width="450" height="345"/>
                         <autoresizingMask key="autoresizingMask"/>
@@ -872,7 +872,7 @@ of Pi-hole LLC.</string>
                                     <action selector="saveAndCloseButtonAction:" target="DCw-Ag-BHe" id="XBQ-PD-dfh"/>
                                 </connections>
                             </button>
-                            <box title="Pi-hole Settings" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="8Kd-Fq-egr">
+                            <box title="Server Settings" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="8Kd-Fq-egr">
                                 <rect key="frame" x="20" y="64" width="410" height="256"/>
                                 <view key="contentView" id="XmN-OI-mNu">
                                     <rect key="frame" x="0.0" y="0.0" width="410" height="256"/>

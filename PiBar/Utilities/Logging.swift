@@ -1,6 +1,6 @@
 //
 //  Logging.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Brad Root on 5/19/20.
 //  Copyright © 2020 Brad Root. All rights reserved.
@@ -52,7 +52,7 @@ open class Log {
     public static let logFileURL: URL = {
         let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("Logs/PiGuard")
-        return logsDir.appendingPathComponent("pibar.log")
+        return logsDir.appendingPathComponent("piguard.log")
     }()
 
     public static func startFileLogging() {

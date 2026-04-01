@@ -194,7 +194,7 @@ class PreferencesViewController: NSViewController {
 
         updateUI()
 
-        shortcutEnabledCheckbox.toolTip = "This shortcut allows you to easily enable and disable your Pi-hole(s)"
+        shortcutEnabledCheckbox.toolTip = "This shortcut lets you quickly enable or disable blocking on your configured servers"
         launchAtLogincheckbox.toolTip = "Automatically launch PiGuard when you log in to your Mac"
 
         pollingRateTextField.toolTip = "Polling rate cannot be less than 3 seconds"

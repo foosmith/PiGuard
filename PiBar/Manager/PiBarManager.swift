@@ -1,6 +1,6 @@
 //
 //  PiBarManager.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Brad Root on 5/20/20.
 //  Copyright © 2020 Brad Root. All rights reserved.
@@ -31,7 +31,7 @@ class PiBarManager: NSObject {
     private let syncQueue: OperationQueue = {
         let q = OperationQueue()
         q.maxConcurrentOperationCount = 1
-        q.name = "com.foosmith.PiBar.syncQueue"
+        q.name = "com.foosmith.PiGuard.syncQueue"
         return q
     }()
 
@@ -70,11 +70,11 @@ class PiBarManager: NSObject {
 
     func updateGravityOnNetwork() {
         Log.debug("Manager: Update Gravity requested")
-        NotificationCenter.default.post(name: .piBarGravityBegan, object: nil)
+        NotificationCenter.default.post(name: .piGuardGravityBegan, object: nil)
         Task {
             defer {
                 DispatchQueue.main.async {
-                    NotificationCenter.default.post(name: .piBarGravityEnded, object: nil)
+                    NotificationCenter.default.post(name: .piGuardGravityEnded, object: nil)
                 }
             }
             for pihole in piholes.values {
@@ -114,11 +114,11 @@ class PiBarManager: NSObject {
 
     func syncNow() {
         Log.debug("Manager: Sync Now requested")
-        NotificationCenter.default.post(name: .piBarSyncBegan, object: nil)
+        NotificationCenter.default.post(name: .piGuardSyncBegan, object: nil)
         let operation = SyncPrimarySecondaryOperation()
         operation.completionBlock = {
             DispatchQueue.main.async {
-                NotificationCenter.default.post(name: .piBarSyncEnded, object: nil)
+                NotificationCenter.default.post(name: .piGuardSyncEnded, object: nil)
             }
         }
         syncQueue.addOperation(operation)

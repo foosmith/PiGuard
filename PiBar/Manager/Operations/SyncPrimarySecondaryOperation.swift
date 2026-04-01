@@ -1,6 +1,6 @@
 //
 //  SyncPrimarySecondaryOperation.swift
-//  PiBar
+//  PiGuard
 //
 //  Full Primary → Secondary sync covering Phase 3 (adlists), Phase 4 (domains),
 //  and Phase 5 (groups + group ID translation for adlists/domains).
@@ -568,7 +568,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                     ],
                     body: AdlistUpdateRequest(
                         type: "block", address: fixed, enabled: false,
-                        comment: "Fixed by PiBar sync (was percent-encoded)", groups: nil
+                        comment: "Fixed by PiGuard sync (was percent-encoded)", groups: nil
                     )
                 )
                 fixedIdToDecoded[id] = fixed
@@ -595,7 +595,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                         ],
                         body: AdlistUpdateRequest(
                             type: "block", address: nil, enabled: false,
-                            comment: "Disabled by PiBar sync (invalid encoded URL)", groups: nil
+                            comment: "Disabled by PiGuard sync (invalid encoded URL)", groups: nil
                         )
                     )
                 }
@@ -643,7 +643,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                             URLQueryItem(name: "type", value: "block"),
                             URLQueryItem(name: "app_sudo", value: "true"),
                         ],
-                        body: AdlistUpdateRequest(type: "block", address: nil, enabled: false, comment: "Disabled by PiBar pre-clean", groups: nil)
+                        body: AdlistUpdateRequest(type: "block", address: nil, enabled: false, comment: "Disabled by PiGuard pre-clean", groups: nil)
                     )
                 }
             }
@@ -663,7 +663,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 URLQueryItem(name: "type", value: "block"),
                 URLQueryItem(name: "app_sudo", value: "true"),
             ],
-            body: AdlistUpdateRequest(type: "block", address: nil, enabled: false, comment: "Disabled by PiBar sync", groups: nil)
+            body: AdlistUpdateRequest(type: "block", address: nil, enabled: false, comment: "Disabled by PiGuard sync", groups: nil)
         )
     }
 

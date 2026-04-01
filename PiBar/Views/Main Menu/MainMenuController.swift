@@ -1,6 +1,6 @@
 //
 //  MainMenuController.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Brad Root on 5/17/20.
 //  Copyright © 2020 Brad Root. All rights reserved.
@@ -145,10 +145,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         mainMenu.delegate = self
 
         enableKeyboardShortcut()
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piBarGravityBegan, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityEnded), name: .piBarGravityEnded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleGravityEnded), name: .piGuardGravityEnded, object: nil)
 
         if let viewController = preferencesWindowController?.contentViewController as? PreferencesViewController {
             viewController.delegate = self
@@ -202,7 +202,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
     @objc func launchWebAdmin(sender: NSMenuItem) {
         if sender.title == "Admin Console" {
             guard let piholeIdentifier = networkOverview?.piholes.keys.first else {
-                Log.debug("No Pi-holes found.")
+                Log.debug("No servers found.")
                 return
             }
             launchWebAdmin(for: piholeIdentifier)
@@ -213,15 +213,16 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
 
     private func launchWebAdmin(for identifier: String) {
         guard let pihole = networkOverview?.piholes[identifier] else {
-            Log.debug("Could not find Pi-hole with identifier \(identifier)")
+            Log.debug("Could not find server with identifier \(identifier)")
             return
         }
         if let legacyAPI = pihole.api, let adminURL = URL(string: legacyAPI.connection.adminPanelURL) {
             NSWorkspace.shared.open(adminURL)
         } else if let newAPI = pihole.api6, let adminURL = URL(string: newAPI.connection.adminPanelURL) {
             NSWorkspace.shared.open(adminURL)
+        } else if let adguardAPI = pihole.apiAdguard, let adminURL = URL(string: adguardAPI.connection.adminPanelURL) {
+            NSWorkspace.shared.open(adminURL)
         }
-        
     }
 
     // MARK: - UI Updates
@@ -379,14 +380,29 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
         let status: String
 
         if isSyncInProgress && isGravityUpdateInProgress {
-            status = "Syncing + gravity"
+            status = "Syncing + refreshing"
         } else if isSyncInProgress {
             status = "Syncing"
         } else {
-            status = "Updating gravity"
+            status = refreshActivityTitle()
         }
 
         return base.isEmpty ? status : "\(base)  \(status)"
+    }
+
+    private func refreshActivityTitle() -> String {
+        guard let networkOverview = networkOverview else { return "Refreshing" }
+        let backends = networkOverview.piholes.values.map(\.backendType)
+        let hasAdGuard = backends.contains(.adguardHome)
+        let hasV6 = backends.contains(.piholeV6)
+
+        if hasAdGuard && hasV6 {
+            return "Refreshing filters + gravity"
+        } else if hasAdGuard {
+            return "Refreshing filters"
+        } else {
+            return "Updating gravity"
+        }
     }
 
     private func menuBarBaseTitle() -> String {

@@ -537,7 +537,7 @@
 				MARKETING_VERSION = 2.3;
 				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
-				PRODUCT_MODULE_NAME = PiBar;
+				PRODUCT_MODULE_NAME = PiGuard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
@@ -568,7 +568,7 @@
 				MARKETING_VERSION = 2.3;
 				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
-				PRODUCT_MODULE_NAME = PiBar;
+				PRODUCT_MODULE_NAME = PiGuard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
@@ -577,7 +577,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		449395CD2471ABD600FA0C34 /* Build configuration list for PBXProject "PiBar-Enhanced" */ = {
+		449395CD2471ABD600FA0C34 /* Build configuration list for PBXProject "PiGuard" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				449395E02471ABD700FA0C34 /* Debug */,
