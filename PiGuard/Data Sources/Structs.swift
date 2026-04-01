@@ -1,0 +1,290 @@
+//
+//  Structs.swift
+//  PiGuard
+//
+//  Created by Brad Root on 5/18/20.
+//  Copyright © 2020 Brad Root. All rights reserved.
+//
+//  This Source Code Form is subject to the terms of the Mozilla Public
+//  License, v. 2.0. If a copy of the MPL was not distributed with this
+//  file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+import Foundation
+
+// MARK: - Pi-hole Connections
+
+// PiGuard legacy v1.0 format
+struct PiholeConnectionV1: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+}
+
+extension PiholeConnectionV1 {
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV1.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+}
+
+// PiGuard legacy v1.1 format
+struct PiholeConnectionV2: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+    let passwordProtected: Bool
+    let adminPanelURL: String
+}
+
+extension PiholeConnectionV2 {
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV2.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
+    static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool) -> String {
+        let prefix: String = useSSL ? "https" : "http"
+        return "\(prefix)://\(hostname):\(port)/admin/"
+    }
+}
+
+// PiGuard legacy v1.2 format
+struct PiholeConnectionV3: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+    let passwordProtected: Bool
+    let adminPanelURL: String
+    let isV6: Bool
+}
+
+extension PiholeConnectionV3 {
+    var identifier: String { "\(hostname):\(port)" }
+
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV3.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
+    static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool) -> String {
+        let prefix: String = useSSL ? "https" : "http"
+        return "\(prefix)://\(hostname):\(port)/admin/"
+    }
+}
+
+enum PiholeConnectionTestResult {
+    case success
+    case failure
+    case failureInvalidToken
+}
+
+enum BackendType: String, Codable {
+    case piholeV5
+    case piholeV6
+    case adguardHome
+
+    var displayName: String {
+        switch self {
+        case .piholeV5:
+            return "Pi-hole v5"
+        case .piholeV6:
+            return "Pi-hole v6"
+        case .adguardHome:
+            return "AdGuard Home"
+        }
+    }
+
+    var supportsSync: Bool {
+        self == .piholeV6
+    }
+}
+
+struct PiholeConnectionV4: Codable {
+    let hostname: String
+    let port: Int
+    let useSSL: Bool
+    let token: String
+    let username: String
+    let passwordProtected: Bool
+    let adminPanelURL: String
+    let backendType: BackendType
+}
+
+extension PiholeConnectionV4 {
+    var legacyIdentifier: String { "\(hostname):\(port)" }
+    var identifier: String {
+        let scheme = useSSL ? "https" : "http"
+        return "\(scheme)://\(hostname):\(port)::\(backendType.rawValue)"
+    }
+    var endpointDisplayName: String {
+        let scheme = useSSL ? "https" : "http"
+        return "\(hostname) (\(scheme):\(port))"
+    }
+    var isV6: Bool { backendType == .piholeV6 }
+
+    init?(data: Data) {
+        let jsonDecoder = JSONDecoder()
+        do {
+            let object = try jsonDecoder.decode(PiholeConnectionV4.self, from: data)
+            self = object
+        } catch {
+            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    init(_ connection: PiholeConnectionV3) {
+        self.hostname = connection.hostname
+        self.port = connection.port
+        self.useSSL = connection.useSSL
+        self.token = connection.token
+        self.username = ""
+        self.passwordProtected = connection.passwordProtected
+        self.adminPanelURL = connection.adminPanelURL
+        self.backendType = connection.isV6 ? .piholeV6 : .piholeV5
+    }
+
+    func encode() -> Data? {
+        let jsonEncoder = JSONEncoder()
+        if let data = try? jsonEncoder.encode(self) {
+            return data
+        } else {
+            return nil
+        }
+    }
+
+    static func generateAdminPanelURL(hostname: String, port: Int, useSSL: Bool, backendType: BackendType) -> String {
+        let prefix: String = useSSL ? "https" : "http"
+        switch backendType {
+        case .adguardHome:
+            return "\(prefix)://\(hostname):\(port)"
+        case .piholeV5, .piholeV6:
+            return "\(prefix)://\(hostname):\(port)/admin/"
+        }
+    }
+}
+
+// MARK: - Pi-hole API
+
+struct PiholeAPIEndpoint {
+    let queryParameter: String
+    let authorizationRequired: Bool
+}
+
+struct PiholeAPISummary: Decodable {
+    let domainsBeingBlocked: Int
+    let dnsQueriesToday: Int
+    let adsBlockedToday: Int
+    let adsPercentageToday: Double
+    let uniqueDomains: Int
+    let queriesForwarded: Int
+    let queriesCached: Int
+    let uniqueClients: Int
+    let dnsQueriesAllTypes: Int
+    let status: String
+}
+
+struct PiholeAPIStatus: Decodable {
+    let status: String
+}
+
+// MARK: - Pi-hole Network
+
+enum PiholeNetworkStatus: String {
+    case enabled = "Enabled"
+    case disabled = "Disabled"
+    case partiallyEnabled = "Partially Enabled"
+    case offline = "Offline"
+    case partiallyOffline = "Partially Offline"
+    case noneSet = "No Servers"
+    case initializing = "Initializing"
+}
+
+struct Pihole {
+    let api: PiholeAPI?
+    let api6: Pihole6API?
+    let apiAdguard: AdGuardHomeAPI?
+    let identifier: String
+    let online: Bool
+    let summary: PiholeAPISummary?
+    let canBeManaged: Bool?
+    let enabled: Bool?
+    let backendType: BackendType
+
+    var isV6: Bool { backendType == .piholeV6 }
+    var isAdGuardHome: Bool { backendType == .adguardHome }
+    var connection: PiholeConnectionV4? { api?.connection ?? api6?.connection ?? apiAdguard?.connection }
+    var displayName: String { connection?.endpointDisplayName ?? identifier }
+
+    var status: PiholeNetworkStatus {
+        if !online {
+            return .offline
+        }
+        if let enabled = enabled {
+            if enabled {
+                return .enabled
+            }
+            return .disabled
+        }
+        return .initializing
+    }
+}
+
+struct PiholeNetworkOverview {
+    let networkStatus: PiholeNetworkStatus
+    let canBeManaged: Bool
+    let totalQueriesToday: Int
+    let adsBlockedToday: Int
+    let adsPercentageToday: Double
+    let averageBlocklist: Int
+
+    let piholes: [String: Pihole]
+}

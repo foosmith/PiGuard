@@ -1,4 +1,4 @@
-# PiBar Implementation Checklist
+# PiGuard Implementation Checklist
 
 ## Phase 1: Fix Immediate Functional Bugs
 
@@ -18,7 +18,7 @@
 
 ## Phase 3: Stabilize Network Update Flow
 
-- [x] Remove the `sleep(1)` synchronization workaround in `PiBarManager.updatePiholes()`.
+- [x] Remove the `sleep(1)` synchronization workaround in `PiGuardManager.updatePiholes()`.
 - [x] Replace shared dictionary mutation from operation completion blocks with a safer model.
 - [x] Choose one concurrency model and apply it consistently:
 - [x] Option A: keep `OperationQueue`, but return explicit results and merge state in one place.
