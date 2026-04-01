@@ -3,8 +3,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-PROJECT_PATH="$ROOT_DIR/PiBar-Enhanced.xcodeproj"
-SCHEME="PiBar-Enhanced"
+PROJECT_PATH="$ROOT_DIR/PiGuard.xcodeproj"
+SCHEME="PiGuard"
 CONFIGURATION="Release"
 OUTPUT_DIR="$ROOT_DIR/build/release"
 DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
@@ -25,9 +25,9 @@ Options:
 
 Example:
   scripts/build-release-zip.sh \
-    --artifact-name PiBar-<version>-macOS \
+    --artifact-name PiGuard-<version>-macOS \
     --sign-identity 'Developer ID Application: Example, Inc. (TEAMID1234)' \
-    --notary-profile pibar-notary
+    --notary-profile piguard-notary
 EOF
 }
 
@@ -99,7 +99,7 @@ function normalize_entitlements() {
 
 MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
-APP_NAME="PiBar-Enhanced"
+APP_NAME="PiGuard"
 DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
 APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiBar/PiBar.entitlements"
 
