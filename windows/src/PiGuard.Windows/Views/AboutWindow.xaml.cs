@@ -1,6 +1,6 @@
 using System.Windows;
 
-namespace PiBarEnhanced.Windows.Views;
+namespace PiGuard.Windows.Views;
 
 public partial class AboutWindow : Window
 {

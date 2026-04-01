@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PiBarEnhanced.Core.Models;
+namespace PiGuard.Core.Models;
 
 public sealed class PiholeApiException : Exception
 {

@@ -1,6 +1,6 @@
-using PiBarEnhanced.Core.Models;
+using PiGuard.Core.Models;
 
-namespace PiBarEnhanced.Core.Abstractions;
+namespace PiGuard.Core.Abstractions;
 
 public interface ISettingsStore
 {

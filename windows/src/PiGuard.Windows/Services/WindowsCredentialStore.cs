@@ -1,9 +1,9 @@
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using PiBarEnhanced.Core.Abstractions;
+using PiGuard.Core.Abstractions;
 
-namespace PiBarEnhanced.Windows.Services;
+namespace PiGuard.Windows.Services;
 
 public sealed class WindowsCredentialStore : ICredentialStore
 {

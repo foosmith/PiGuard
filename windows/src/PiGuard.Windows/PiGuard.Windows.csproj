@@ -5,11 +5,11 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
-    <RootNamespace>PiBarEnhanced.Windows</RootNamespace>
-    <AssemblyName>PiBarEnhanced.Windows</AssemblyName>
+    <RootNamespace>PiGuard.Windows</RootNamespace>
+    <AssemblyName>PiGuard.Windows</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PiBarEnhanced.Core\PiBarEnhanced.Core.csproj" />
+    <ProjectReference Include="..\PiGuard.Core\PiGuard.Core.csproj" />
   </ItemGroup>
 </Project>

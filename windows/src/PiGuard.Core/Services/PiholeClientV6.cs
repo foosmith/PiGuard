@@ -2,10 +2,10 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using PiBarEnhanced.Core.Abstractions;
-using PiBarEnhanced.Core.Models;
+using PiGuard.Core.Abstractions;
+using PiGuard.Core.Models;
 
-namespace PiBarEnhanced.Core.Services;
+namespace PiGuard.Core.Services;
 
 public sealed class PiholeClientV6 : IPiholeClientV6
 {
@@ -79,7 +79,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     {
         var request = new HttpRequestMessage(method, BuildUri(path));
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Headers.UserAgent.ParseAdd("PiBarEnhanced.Windows/0.1");
+        request.Headers.UserAgent.ParseAdd("PiGuard.Windows/0.1");
 
         var sessionId = await GetSessionTokenAsync(cancellationToken);
         if (!string.IsNullOrWhiteSpace(sessionId))
@@ -119,7 +119,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
             Content = JsonContent.Create(new { password = _appPassword, totp = (int?)null }),
         };
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-        request.Headers.UserAgent.ParseAdd("PiBarEnhanced.Windows/0.1");
+        request.Headers.UserAgent.ParseAdd("PiGuard.Windows/0.1");
 
         using var response = await SendAsync(request, cancellationToken);
         var auth = await ReadJsonAsync<PiholeV6PasswordResponse>(response, cancellationToken);

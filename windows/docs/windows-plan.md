@@ -2,7 +2,7 @@
 
 ## Summary
 
-PiBar Enhanced for Windows should be built as a Windows-native application, not as a Swift port. The right first release is a tray-first app that matches the current product's day-to-day workflow while keeping the architecture open for a larger desktop experience later.
+PiGuard for Windows should be built as a Windows-native application, not as a Swift port. The right first release is a tray-first app that matches the current product's day-to-day workflow while keeping the architecture open for a larger desktop experience later.
 
 Recommended stack:
 - `C#`
@@ -31,7 +31,7 @@ Create two main layers:
 
 ### 1. Shared Core
 
-`PiBarEnhanced.Core` should own:
+`PiGuard.Core` should own:
 - Pi-hole v5 and v6 API clients
 - models for connections, preferences, status snapshots, sync state, and activity
 - polling/update orchestration
@@ -43,7 +43,7 @@ This layer should stay UI-agnostic so it can be tested and reused independently 
 
 ### 2. Windows Shell
 
-`PiBarEnhanced.Windows` should own:
+`PiGuard.Windows` should own:
 - tray icon and context menu
 - WPF windows and view models
 - Windows-specific startup registration
@@ -82,9 +82,9 @@ Platform-specific work includes:
 ## Current Workspace Structure
 
 The Windows workspace currently includes:
-- `windows/src/PiBarEnhanced.Core`
-- `windows/src/PiBarEnhanced.Windows`
-- `windows/PiBarEnhanced.Windows.sln`
+- `windows/src/PiGuard.Core`
+- `windows/src/PiGuard.Windows`
+- `windows/PiGuard.Windows.sln`
 
 The current codebase already establishes:
 - shared models and service contracts
@@ -108,7 +108,7 @@ Completed in initial scaffold:
 ### Phase 2: Core Port
 
 Next major work:
-- port Pi-hole API clients from the macOS app into `PiBarEnhanced.Core`
+- port Pi-hole API clients from the macOS app into `PiGuard.Core`
 - port polling/state aggregation
 - port sync engine behavior
 - port sync progress and activity reporting
@@ -159,7 +159,7 @@ Release testing:
 
 ## Immediate Next Steps
 
-1. Port the Pi-hole API clients into `PiBarEnhanced.Core`.
+1. Port the Pi-hole API clients into `PiGuard.Core`.
 2. Port polling and sync orchestration into the core layer.
 3. Build real view models for Preferences and Sync Settings.
 4. Replace placeholder tray actions with live behavior.

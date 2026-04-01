@@ -2,7 +2,7 @@
 
 ## Summary
 
-PiGuard is the proposed next branch of PiBar Enhanced: a single menu bar app that can monitor and control both Pi-hole and AdGuard Home instances.
+PiGuard is a single menu bar app that can monitor and control both Pi-hole and AdGuard Home instances.
 
 Core goals:
 

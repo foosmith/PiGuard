@@ -280,7 +280,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 449395CD2471ABD600FA0C34 /* Build configuration list for PBXProject "PiBar-Enhanced" */;
+			buildConfigurationList = 449395CD2471ABD600FA0C34 /* Build configuration list for PBXProject "PiGuard" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;

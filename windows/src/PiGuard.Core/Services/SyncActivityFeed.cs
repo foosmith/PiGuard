@@ -1,6 +1,6 @@
-using PiBarEnhanced.Core.Models;
+using PiGuard.Core.Models;
 
-namespace PiBarEnhanced.Core.Services;
+namespace PiGuard.Core.Services;
 
 public sealed class SyncActivityFeed
 {

@@ -1,4 +1,4 @@
-namespace PiBarEnhanced.Core.Models;
+namespace PiGuard.Core.Models;
 
 public enum ConnectionVersion
 {

@@ -1,8 +1,8 @@
 using System.IO;
 using Microsoft.Win32;
-using PiBarEnhanced.Core.Abstractions;
+using PiGuard.Core.Abstractions;
 
-namespace PiBarEnhanced.Windows.Services;
+namespace PiGuard.Windows.Services;
 
 public sealed class WindowsStartupService : IStartupService
 {

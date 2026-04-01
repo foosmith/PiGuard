@@ -2,9 +2,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBarEnhanced.Core", "src\PiBarEnhanced.Core\PiBarEnhanced.Core.csproj", "{B6DD0826-1A97-45D7-8A6A-65D2D0F3656E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiGuard.Core", "src\PiGuard.Core\PiGuard.Core.csproj", "{B6DD0826-1A97-45D7-8A6A-65D2D0F3656E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiBarEnhanced.Windows", "src\PiBarEnhanced.Windows\PiBarEnhanced.Windows.csproj", "{49E9ED1E-76DB-4A16-9931-8B560678D9B6}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PiGuard.Windows", "src\PiGuard.Windows\PiGuard.Windows.csproj", "{49E9ED1E-76DB-4A16-9931-8B560678D9B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
