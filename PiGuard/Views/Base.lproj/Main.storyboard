@@ -96,7 +96,7 @@ Pi-hole® is a registered trademark of Pi-hole LLC.</string>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
                                             <rect key="frame" x="33" y="110" width="165" height="14"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 7, build 690)" id="oRj-Vt-ZIN">
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 8, build 691)" id="oRj-Vt-ZIN">
                                                 <font key="font" metaFont="label" size="11"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
