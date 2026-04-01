@@ -1,7 +1,7 @@
 # Primary → Secondary Pi-hole v6 Sync (Phased Plan)
 
 ## Goal
-Add an optional feature to PiBar that keeps two **Pi-hole v6** instances in sync using a **Primary → Secondary** model:
+Add an optional feature to PiGuard that keeps two **Pi-hole v6** instances in sync using a **Primary → Secondary** model:
 - Primary is source of truth
 - Secondary is reconciled to match Primary
 - Sync runs **manually (“Sync Now”) + on an interval**
@@ -15,7 +15,7 @@ Add an optional feature to PiBar that keeps two **Pi-hole v6** instances in sync
 - Teleporter full backup/restore (unless later phase)
 
 ## Prerequisites
-- Two configured connections in PiBar, both `isV6 == true`
+- Two configured connections in PiGuard, both `isV6 == true`
 - Secondary Pi-hole allows API writes (likely requires `webserver.api.app_sudo=true`)
 - Both connections have valid auth (`sid`) in Keychain or are not password protected
 
@@ -80,7 +80,7 @@ Add an optional feature to PiBar that keeps two **Pi-hole v6** instances in sync
 **Implementation Tasks**
 - Implement sync coalescing:
   - `isSyncInFlight` + `syncRequested` to avoid overlap
-- Serialize sync behind the existing `PiBarManager.operationQueue`.
+- Serialize sync behind the existing `PiGuardManager.operationQueue`.
 - Implement “diff” data structures for:
   - adlists
   - domainlists (4 buckets)
@@ -183,4 +183,3 @@ Add an optional feature to PiBar that keeps two **Pi-hole v6** instances in sync
 ## Rollback
 - Disabling sync stops the timer and prevents any sync writes.
 - No sync settings affect existing polling/enable/disable behaviors.
-

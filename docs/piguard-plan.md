@@ -64,7 +64,7 @@ Shared direction:
 
 ### Phase 2: AdGuard Home API Client
 
-Create `PiBar/Data Sources/AdGuardHomeAPI.swift` with support for:
+Create `PiGuard/Data Sources/AdGuardHomeAPI.swift` with support for:
 
 - `GET /control/status`
 - `GET /control/stats`
@@ -74,7 +74,7 @@ Create `PiBar/Data Sources/AdGuardHomeAPI.swift` with support for:
 
 ### Phase 3: AdGuard Update Operation
 
-Create `PiBar/Manager/Operations/UpdateAdGuardHomeOperation.swift` to:
+Create `PiGuard/Manager/Operations/UpdateAdGuardHomeOperation.swift` to:
 
 - Fetch status, stats, and filtering data
 - Map the results into `PiholeAPISummary`
@@ -82,7 +82,7 @@ Create `PiBar/Manager/Operations/UpdateAdGuardHomeOperation.swift` to:
 
 ### Phase 4: Manager Integration
 
-Update `PiBar/Manager/PiBarManager.swift` and `PiBar/Manager/Operations/ChangePiholeStatusOperation.swift` to:
+Update `PiGuard/Manager/PiGuardManager.swift` and `PiGuard/Manager/Operations/ChangePiholeStatusOperation.swift` to:
 
 - Create AdGuard-backed runtime nodes
 - Poll them with a dedicated update operation
@@ -91,7 +91,7 @@ Update `PiBar/Manager/PiBarManager.swift` and `PiBar/Manager/Operations/ChangePi
 
 ### Phase 5: Settings UI
 
-Create `PiBar/Views/Preferences/AdGuardHomeSettingsViewController.swift` for:
+Create `PiGuard/Views/Preferences/AdGuardHomeSettingsViewController.swift` for:
 
 - Hostname
 - Port
@@ -103,7 +103,7 @@ Create `PiBar/Views/Preferences/AdGuardHomeSettingsViewController.swift` for:
 
 ### Phase 6: Auto-Detection
 
-Create `PiBar/Utilities/BackendDetector.swift` to probe:
+Create `PiGuard/Utilities/BackendDetector.swift` to probe:
 
 - `GET /admin/api.php?summaryRaw`
 - `POST /api/auth`

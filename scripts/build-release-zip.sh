@@ -101,7 +101,7 @@ MARKETING_VERSION="$(read_project_setting MARKETING_VERSION)"
 BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
 APP_NAME="PiGuard"
 DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
-APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiBar/PiBar.entitlements"
+APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiGuard/PiGuard.entitlements"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
     team_from_identity="$(printf '%s\n' "$SIGN_IDENTITY" | sed -nE 's/^.*\(([A-Z0-9]+)\)$/\1/p')"
@@ -117,7 +117,7 @@ fi
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/${APP_NAME}.app"
 ZIP_PATH="$OUTPUT_DIR/${ARTIFACT_NAME}.zip"
 NOTARY_STAGING_DIR="$OUTPUT_DIR/notary-staging"
-APP_ENTITLEMENTS_XML_PATH="$OUTPUT_DIR/PiBar.release.entitlements"
+APP_ENTITLEMENTS_XML_PATH="$OUTPUT_DIR/PiGuard.release.entitlements"
 LAUNCH_AT_LOGIN_RESOURCES_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources"
 LOGIN_HELPER_APP_PATH="$APP_PATH/Contents/Library/LoginItems/LaunchAtLoginHelper.app"
 LOGIN_HELPER_ENTITLEMENTS_PATH="$LAUNCH_AT_LOGIN_RESOURCES_PATH/LaunchAtLogin.entitlements"
