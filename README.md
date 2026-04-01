@@ -68,7 +68,7 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ### Current Public Build — beta 8 (build 692)
 
-**[⬇ Download current beta DMG](https://github.com/foosmith/pibar-enhanced/releases/download/v2.3-beta8/PiGuard-2.3-beta8-macOS.dmg)**
+**[⬇ Download current beta DMG](https://github.com/foosmith/PiGuard/releases/download/v2.3-beta8/PiGuard-2.3-beta8-macOS.dmg)**
 
 Requires macOS 13 or later.
 
@@ -80,7 +80,7 @@ Requires macOS 13 or later.
 
 > **Gatekeeper on first launch:** This beta is signed and notarized, so macOS should open it normally after you drag it into **Applications**. If Finder still warns due to quarantine caching, eject the DMG, reopen it, and launch the copied app from **Applications**.
 
-All releases are listed on the [Releases page](https://github.com/foosmith/pibar-enhanced/releases).
+All releases are listed on the [Releases page](https://github.com/foosmith/PiGuard/releases).
 
 ## About This Fork
 
@@ -96,8 +96,8 @@ If you are running multiple DNS filtering servers and want a lightweight native 
 
 ## Feedback
 
-- Issues and feature requests: [GitHub Issues](https://github.com/foosmith/pibar-enhanced/issues)
-- Release downloads and notes: [GitHub Releases](https://github.com/foosmith/pibar-enhanced/releases)
+- Issues and feature requests: [GitHub Issues](https://github.com/foosmith/PiGuard/issues)
+- Release downloads and notes: [GitHub Releases](https://github.com/foosmith/PiGuard/releases)
 
 ## Credits
 

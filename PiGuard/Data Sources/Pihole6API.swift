@@ -193,7 +193,7 @@ class Pihole6API: NSObject {
         return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
     }
     
-    var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/pibar-enhanced"
+    var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/PiGuard"
 
     var admin: URL {
         return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!
