@@ -1,9 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
-using PiBarEnhanced.Core.Abstractions;
-using PiBarEnhanced.Core.Models;
+using PiGuard.Core.Abstractions;
+using PiGuard.Core.Models;
 
-namespace PiBarEnhanced.Windows.Views;
+namespace PiGuard.Windows.Views;
 
 public partial class PreferencesWindow : Window
 {

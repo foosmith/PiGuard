@@ -1,11 +1,11 @@
 using System.Drawing;
 using System.Windows;
 using Forms = System.Windows.Forms;
-using PiBarEnhanced.Core.Abstractions;
-using PiBarEnhanced.Core.Models;
-using PiBarEnhanced.Windows.Views;
+using PiGuard.Core.Abstractions;
+using PiGuard.Core.Models;
+using PiGuard.Windows.Views;
 
-namespace PiBarEnhanced.Windows.Services;
+namespace PiGuard.Windows.Services;
 
 public sealed class TrayHost : IDisposable
 {
@@ -44,11 +44,11 @@ public sealed class TrayHost : IDisposable
         menu.Items.Add("Refresh Now", null, async (_, _) => await RefreshNowAsync());
         menu.Items.Add("Preferences", null, (_, _) => ShowPreferences());
         menu.Items.Add("Sync Settings", null, (_, _) => ShowSyncSettings());
-        menu.Items.Add("About PiBar Enhanced", null, (_, _) => ShowAbout());
+        menu.Items.Add("About PiGuard", null, (_, _) => ShowAbout());
         menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Exit", null, (_, _) => ExitApplication());
 
-        _notifyIcon.Text = "PiBar Enhanced";
+        _notifyIcon.Text = "PiGuard";
         _notifyIcon.Icon = SystemIcons.Application;
         _notifyIcon.ContextMenuStrip = menu;
         _notifyIcon.Visible = true;
@@ -146,13 +146,13 @@ public sealed class TrayHost : IDisposable
 
         var trayText = overview.Status switch
         {
-            PiholeNetworkStatus.Enabled => $"PiBar Enhanced: {overview.TotalQueriesToday:N0} queries",
-            PiholeNetworkStatus.PartiallyEnabled => "PiBar Enhanced: partially enabled",
-            PiholeNetworkStatus.PartiallyOffline => "PiBar Enhanced: partially offline",
-            PiholeNetworkStatus.Disabled => "PiBar Enhanced: blocking disabled",
-            PiholeNetworkStatus.Offline => "PiBar Enhanced: offline",
-            PiholeNetworkStatus.NoneSet => "PiBar Enhanced: no connections configured",
-            _ => "PiBar Enhanced: initializing",
+            PiholeNetworkStatus.Enabled => $"PiGuard: {overview.TotalQueriesToday:N0} queries",
+            PiholeNetworkStatus.PartiallyEnabled => "PiGuard: partially enabled",
+            PiholeNetworkStatus.PartiallyOffline => "PiGuard: partially offline",
+            PiholeNetworkStatus.Disabled => "PiGuard: blocking disabled",
+            PiholeNetworkStatus.Offline => "PiGuard: offline",
+            PiholeNetworkStatus.NoneSet => "PiGuard: no connections configured",
+            _ => "PiGuard: initializing",
         };
 
         _notifyIcon.Text = trayText.Length <= 63 ? trayText : trayText[..63];

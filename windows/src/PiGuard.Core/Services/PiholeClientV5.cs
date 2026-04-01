@@ -1,9 +1,9 @@
 using System.Net.Http.Json;
 using System.Text.Json;
-using PiBarEnhanced.Core.Abstractions;
-using PiBarEnhanced.Core.Models;
+using PiGuard.Core.Abstractions;
+using PiGuard.Core.Models;
 
-namespace PiBarEnhanced.Core.Services;
+namespace PiGuard.Core.Services;
 
 public sealed class PiholeClientV5 : IPiholeClientV5
 {
