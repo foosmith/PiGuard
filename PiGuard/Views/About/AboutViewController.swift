@@ -15,7 +15,7 @@ class AboutViewController: NSViewController {
     @IBOutlet private weak var versionLabel: NSTextField!
 
     @IBAction func aboutURLAction(_: NSButton) {
-        let url = URL(string: "https://github.com/foosmith/pibar-enhanced")!
+        let url = URL(string: "https://github.com/foosmith/PiGuard")!
         NSWorkspace.shared.open(url)
     }
 
