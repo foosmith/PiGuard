@@ -9,7 +9,7 @@
         <scene sceneID="78C-Tq-YMk">
             <objects>
                 <windowController storyboardIdentifier="PreferencesWindowContoller" showSeguePresentationStyle="single" id="jXe-pL-4lR" customClass="PreferencesWindowController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
-                    <window key="window" title="PiBar-Enhanced Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="OFZ-oX-26S">
+                    <window key="window" title="PiGuard Preferences" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="OFZ-oX-26S">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
                         <rect key="contentRect" x="425" y="461" width="480" height="270"/>
@@ -30,7 +30,7 @@
         <scene sceneID="9IB-04-fo0">
             <objects>
                 <windowController storyboardIdentifier="AboutWindowController" showSeguePresentationStyle="single" id="gmV-ql-AU5" customClass="AboutWindowController" customModule="PiBar" customModuleProvider="target" sceneMemberID="viewController">
-                    <window key="window" title="About PiBar-Enhanced" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="eLV-a3-iIv">
+                    <window key="window" title="About PiGuard" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="eLV-a3-iIv">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
                         <rect key="contentRect" x="425" y="461" width="480" height="270"/>
@@ -75,7 +75,7 @@
                                             <rect key="frame" x="18" y="16" width="194" height="42"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" id="WN0-cg-lqh">
                                                 <font key="font" metaFont="label" size="11"/>
-                                                <string key="title">PiBar-Enhanced © 2025 Brad Root 
+                                                <string key="title">PiGuard © 2026 foosmith 
 Pi-hole® is a registered trademark
 of Pi-hole LLC.</string>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
@@ -88,7 +88,7 @@ of Pi-hole LLC.</string>
                                         </imageView>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="HRV-Iq-n3o">
                                             <rect key="frame" x="1" y="124" width="228" height="38"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="PiBar-Enhanced" id="ryo-yk-Q62">
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="PiGuard" id="ryo-yk-Q62">
                                                 <font key="font" metaFont="system" size="32"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>

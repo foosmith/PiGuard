@@ -40,6 +40,16 @@ class PreferencesViewController: NSViewController {
         return controller
     }()
 
+    lazy var adGuardHomeSheetController: AdGuardHomeSettingsViewController = {
+        let controller = AdGuardHomeSettingsViewController()
+        return controller
+    }()
+
+    lazy var backendDetectionSheetController: BackendDetectionViewController = {
+        let controller = BackendDetectionViewController()
+        return controller
+    }()
+
     // MARK: - Outlets
 
     @IBOutlet var tableView: NSTableView!
@@ -65,43 +75,62 @@ class PreferencesViewController: NSViewController {
 
     @IBAction func addButtonActiom(_: NSButton) {
         let alert = NSAlert()
-        alert.messageText = "Pi-hole Version"
-        alert.informativeText = "What version of Pi-hole would you like to add?"
+        alert.messageText = "Server Type"
+        alert.informativeText = "Auto-detect is recommended when you know the server address."
         alert.alertStyle = .warning
         
         // Adding buttons
-        alert.addButton(withTitle: "Pi-hole v6+") // Index 0
-        alert.addButton(withTitle: "Pi-hole v5 or earlier") // Index 1
-        alert.addButton(withTitle: "Cancel")   // Index 2
+        alert.addButton(withTitle: "Auto-Detect") // Index 0
+        alert.addButton(withTitle: "Pi-hole v6") // Index 1
+        alert.addButton(withTitle: "Pi-hole v5") // Index 2
+        alert.addButton(withTitle: "AdGuard Home") // Index 3
+        alert.addButton(withTitle: "Cancel")   // Index 4
 
         // Display alert and handle response
         let response = alert.runModal()
+        let adGuardResponse = NSApplication.ModalResponse(rawValue: NSApplication.ModalResponse.alertThirdButtonReturn.rawValue + 1)
         
         switch response {
         case .alertFirstButtonReturn:
-            newPihole()
+            presentBackendDetectionSheet()
         case .alertSecondButtonReturn:
-            legacyVersion()
+            presentPiholeV6Sheet(connection: nil, index: -1)
         case .alertThirdButtonReturn:
-            handleCancel()
+            presentPiholeV5Sheet(connection: nil, index: -1)
+        case adGuardResponse:
+            presentAdGuardHomeSheet(connection: nil, index: -1)
         default:
-            break
+            handleCancel()
         }
     }
-    
-    func newPihole() {
-        guard let controller = piholeV6SheetController else { return }
+
+    private func presentBackendDetectionSheet() {
+        let controller = backendDetectionSheetController
         controller.delegate = self
-        controller.connection = nil
-        controller.currentIndex = -1
         presentAsSheet(controller)
     }
-    
-    func legacyVersion() {
+
+    private func presentPiholeV6Sheet(connection: PiholeConnectionV4?, index: Int) {
+        guard let controller = piholeV6SheetController else { return }
+        controller.delegate = self
+        controller.connection = connection
+        controller.currentIndex = index
+        presentAsSheet(controller)
+    }
+
+    private func presentPiholeV5Sheet(connection: PiholeConnectionV4?, index: Int) {
         guard let controller = piholeSheetController else { return }
         controller.delegate = self
-        controller.connection = nil
-        controller.currentIndex = -1
+        controller.connection = connection
+        controller.currentIndex = index
+        presentAsSheet(controller)
+    }
+
+    private func presentAdGuardHomeSheet(connection: PiholeConnectionV4?, index: Int) {
+        let controller = adGuardHomeSheetController
+        controller.delegate = self
+        controller.connection = connection
+        controller.currentIndex = index
         presentAsSheet(controller)
     }
     
@@ -113,18 +142,13 @@ class PreferencesViewController: NSViewController {
     @IBAction func editButtonAction(_: NSButton) {
         if tableView.selectedRow >= 0 {
             let pihole = Preferences.standard.piholes[tableView.selectedRow]
-            if pihole.isV6 {
-                guard let controller = piholeV6SheetController else { return }
-                controller.delegate = self
-                controller.connection = pihole
-                controller.currentIndex = tableView.selectedRow
-                presentAsSheet(controller)
-            } else {
-                guard let controller = piholeSheetController else { return }
-                controller.delegate = self
-                controller.connection = pihole
-                controller.currentIndex = tableView.selectedRow
-                presentAsSheet(controller)
+            switch pihole.backendType {
+            case .piholeV6:
+                presentPiholeV6Sheet(connection: pihole, index: tableView.selectedRow)
+            case .piholeV5:
+                presentPiholeV5Sheet(connection: pihole, index: tableView.selectedRow)
+            case .adguardHome:
+                presentAdGuardHomeSheet(connection: pihole, index: tableView.selectedRow)
             }
         }
     }
@@ -171,7 +195,7 @@ class PreferencesViewController: NSViewController {
         updateUI()
 
         shortcutEnabledCheckbox.toolTip = "This shortcut allows you to easily enable and disable your Pi-hole(s)"
-        launchAtLogincheckbox.toolTip = "Automatically launch PiBar when you log in to your Mac"
+        launchAtLogincheckbox.toolTip = "Automatically launch PiGuard when you log in to your Mac"
 
         pollingRateTextField.toolTip = "Polling rate cannot be less than 3 seconds"
     }
@@ -244,25 +268,41 @@ class PreferencesViewController: NSViewController {
 
 extension PreferencesViewController: PiholeSettingsViewControllerDelegate {
     func savePiholeConnection(_ connection: PiholeConnectionV4, at index: Int) {
-        var piholes = Preferences.standard.piholes
-        if index == -1 {
-            piholes.append(connection)
-            Preferences.standard.set(piholes: piholes)
-            let newRowIndexSet = IndexSet(integer: piholes.count - 1)
-            tableView.insertRows(at: newRowIndexSet, withAnimation: .slideDown)
-            tableView.selectRowIndexes(newRowIndexSet, byExtendingSelection: false)
-        } else {
-            piholes[index] = connection
-            Preferences.standard.set(piholes: piholes)
-            tableView.reloadData()
-            tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
-        }
-        delegate?.updatedConnections()
+        saveConnection(connection, at: index)
     }
 }
 
 extension PreferencesViewController: PiholeV6SettingsViewControllerDelegate {
     func savePiholeV4Connection(_ connection: PiholeConnectionV4, at index: Int) {
+        saveConnection(connection, at: index)
+    }
+}
+
+extension PreferencesViewController: AdGuardHomeSettingsViewControllerDelegate {
+    func saveAdGuardHomeConnection(_ connection: PiholeConnectionV4, at index: Int) {
+        saveConnection(connection, at: index)
+    }
+}
+
+extension PreferencesViewController: BackendDetectionViewControllerDelegate {
+    func backendDetectionViewController(
+        _ controller: BackendDetectionViewController,
+        didDetect result: BackendDetectionResult,
+        draftConnection: PiholeConnectionV4
+    ) {
+        switch result.backendType {
+        case .piholeV5:
+            presentPiholeV5Sheet(connection: draftConnection, index: -1)
+        case .piholeV6:
+            presentPiholeV6Sheet(connection: draftConnection, index: -1)
+        case .adguardHome:
+            presentAdGuardHomeSheet(connection: draftConnection, index: -1)
+        }
+    }
+}
+
+private extension PreferencesViewController {
+    func saveConnection(_ connection: PiholeConnectionV4, at index: Int) {
         var piholes = Preferences.standard.piholes
         if index == -1 {
             piholes.append(connection)

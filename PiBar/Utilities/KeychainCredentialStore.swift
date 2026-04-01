@@ -26,7 +26,7 @@ final class KeychainCredentialStore {
 
     private var cache: [String: CachedValue] = [:]
 
-    init(service: String = Bundle.main.bundleIdentifier ?? "com.foosmith.PiBarEnhanced") {
+    init(service: String = Bundle.main.bundleIdentifier ?? "com.foosmith.PiGuard") {
         self.service = service
     }
 
