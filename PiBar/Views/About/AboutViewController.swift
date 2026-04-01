@@ -12,6 +12,8 @@
 import Cocoa
 
 class AboutViewController: NSViewController {
+    @IBOutlet private weak var versionLabel: NSTextField!
+
     @IBAction func aboutURLAction(_: NSButton) {
         let url = URL(string: "https://github.com/foosmith/pibar-enhanced")!
         NSWorkspace.shared.open(url)
@@ -19,5 +21,13 @@ class AboutViewController: NSViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        versionLabel.stringValue = Self.versionDisplayString()
+    }
+
+    private static func versionDisplayString() -> String {
+        let infoDictionary = Bundle.main.infoDictionary
+        let marketingVersion = infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+        let buildNumber = infoDictionary?["CFBundleVersion"] as? String ?? "?"
+        return "Version \(marketingVersion) (Beta 7, build \(buildNumber))"
     }
 }

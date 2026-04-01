@@ -95,8 +95,8 @@ Pi-hole® is a registered trademark of Pi-hole LLC.</string>
                                             </textFieldCell>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
-                                            <rect key="frame" x="61" y="110" width="109" height="14"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 6)" id="oRj-Vt-ZIN">
+                                            <rect key="frame" x="33" y="110" width="165" height="14"/>
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta 7, build 690)" id="oRj-Vt-ZIN">
                                                 <font key="font" metaFont="label" size="11"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
@@ -133,6 +133,7 @@ Pi-hole® is a registered trademark of Pi-hole LLC.</string>
                     </view>
                     <connections>
                         <outlet property="sda" destination="TtV-qo-CDH" id="ouZ-uE-lkf"/>
+                        <outlet property="versionLabel" destination="gPz-LR-6t6" id="cYy-f2-2Bq"/>
                     </connections>
                 </viewController>
                 <customObject id="IGy-iL-Pfb" userLabel="First Responder" customClass="NSResponder" sceneMemberID="firstResponder"/>
