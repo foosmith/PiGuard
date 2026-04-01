@@ -4,12 +4,6 @@ PiGuard is a macOS menu bar companion for DNS filtering servers. It keeps the im
 
 This fork builds on the original PiBar idea and pushes it toward modern home-lab DNS setups, especially networks running multiple filtering servers that need to stay aligned.
 
-## Interface Preview
-
-PiGuard brings together menu bar controls, connection management, backend-aware preferences, and built-in Pi-hole v6 sync tools in one native macOS app.
-
-![PiGuard interface preview](.github/product-screenshot-beta6.png)
-
 ## What PiGuard Does
 
 - Shows blocking status and DNS activity from the macOS menu bar
