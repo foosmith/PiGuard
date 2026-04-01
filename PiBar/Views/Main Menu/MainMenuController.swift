@@ -69,6 +69,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
     @IBOutlet var disableNetworkMenuItem: NSMenuItem!
     @IBOutlet var enableNetworkMenuItem: NSMenuItem!
     @IBOutlet var webAdminMenuItem: NSMenuItem!
+    @IBOutlet var syncSettingsMenuItem: NSMenuItem!
     @IBOutlet var syncNowMenuItem: NSMenuItem!
     @IBOutlet var updateGravityMenuItem: NSMenuItem!
 
@@ -642,6 +643,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
 
         guard let networkOverview = networkOverview else { return }
         let currentStatus = networkOverview.networkStatus
+        let backends = networkOverview.piholes.values.map(\.backendType)
+        let hasAdGuard = backends.contains(.adguardHome)
+        let v6Count = backends.filter { $0 == .piholeV6 }.count
+        let hasV6 = v6Count > 0
+        let isBusy = isSyncInProgress || isGravityUpdateInProgress
 
         if !networkOverview.canBeManaged {
             disableNetworkMenuItem.isEnabled = false
@@ -661,7 +667,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
             enableNetworkMenuItem.isEnabled = false
         }
 
-        let hasAdGuard = networkOverview.piholes.values.contains(where: \.isAdGuardHome)
         if hasAdGuard {
             disableNetworkMenuItem.title = "Disable Blocking"
             enableNetworkMenuItem.title = "Enable Blocking"
@@ -673,11 +678,22 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiBarMa
             enableNetworkMenuItem.title = "Enable Pi-hole"
         }
 
-        let hasV6 = networkOverview.piholes.values.contains(where: { $0.backendType == .piholeV6 })
-        let isBusy = isSyncInProgress || isGravityUpdateInProgress
+        if hasAdGuard && hasV6 {
+            updateGravityMenuItem.title = "Refresh Filters / Update Gravity"
+        } else if hasAdGuard {
+            updateGravityMenuItem.title = "Refresh Filters"
+        } else {
+            updateGravityMenuItem.title = "Update Gravity"
+        }
+
         let hasRefreshableBackend = hasV6 || hasAdGuard
+        let canSync = v6Count >= 2
+        updateGravityMenuItem.isHidden = !hasRefreshableBackend
         updateGravityMenuItem.isEnabled = hasRefreshableBackend && networkOverview.canBeManaged && !isBusy
-        syncNowMenuItem.isEnabled = Preferences.standard.syncEnabled && !isBusy
+
+        syncSettingsMenuItem.isHidden = !canSync
+        syncNowMenuItem.isHidden = !canSync
+        syncNowMenuItem.isEnabled = canSync && Preferences.standard.syncEnabled && !isBusy
     }
 }
 
