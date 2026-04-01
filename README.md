@@ -66,7 +66,7 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ## Download & Install
 
-### Current Public Build — beta 8 (build 691)
+### Current Public Build — beta 8 (build 692)
 
 **[⬇ Download current beta DMG](https://github.com/foosmith/pibar-enhanced/releases/download/v2.3-beta8/PiGuard-2.3-beta8-macOS.dmg)**
 
