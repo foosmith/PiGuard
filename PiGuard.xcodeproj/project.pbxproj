@@ -36,6 +36,7 @@
 		FBAA0013FBAA0013FBAA0013 /* UpdateAdGuardHomeOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */; };
 		FBAA0015FBAA0015FBAA0015 /* BackendDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0014FBAA0014FBAA0014 /* BackendDetector.swift */; };
 		FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */; };
+		FBAA0019FBAA0019FBAA0019 /* BackendDetectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0018FBAA0018FBAA0018 /* BackendDetectionViewController.swift */; };
 		FBAA0002FBAA0002FBAA0002 /* SyncPrimarySecondaryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */; };
 		FBAA0004FBAA0004FBAA0004 /* SyncProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */; };
 		FBAA0006FBAA0006FBAA0006 /* SyncSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */; };
@@ -68,7 +69,7 @@
 		4438184D247DE31A009D9B3F /* AboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewController.swift; sourceTree = "<group>"; };
 		4438184F247DE41B009D9B3F /* AboutWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutWindowController.swift; sourceTree = "<group>"; };
 		447CCB5B2D87FB9C00811F7C /* UpdatePiholeV6Operation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatePiholeV6Operation.swift; sourceTree = "<group>"; };
-		449395D22471ABD600FA0C34 /* PiBar-Enhanced.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PiBar-Enhanced.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		449395D22471ABD600FA0C34 /* PiGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PiGuard.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		449395D52471ABD600FA0C34 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		449395D92471ABD700FA0C34 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		449395DC2471ABD700FA0C34 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -86,6 +87,7 @@
 		FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAdGuardHomeOperation.swift; sourceTree = "<group>"; };
 		FBAA0014FBAA0014FBAA0014 /* BackendDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDetector.swift; sourceTree = "<group>"; };
 		FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeSettingsViewController.swift; sourceTree = "<group>"; };
+		FBAA0018FBAA0018FBAA0018 /* BackendDetectionViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackendDetectionViewController.swift; sourceTree = "<group>"; };
 		FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPrimarySecondaryOperation.swift; sourceTree = "<group>"; };
 		FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncProgress.swift; sourceTree = "<group>"; };
 		FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsViewController.swift; sourceTree = "<group>"; };
@@ -157,6 +159,7 @@
 			children = (
 				44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */,
 				FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */,
+				FBAA0018FBAA0018FBAA0018 /* BackendDetectionViewController.swift */,
 				442F6F8A24721523008F1101 /* PreferencesViewController.swift */,
 				449395EB2471B1EB00FA0C34 /* PreferencesWindowController.swift */,
 				44B6DAF1247C70F500D364EC /* PiholeSettingsViewController.swift */,
@@ -187,7 +190,7 @@
 		449395D32471ABD600FA0C34 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				449395D22471ABD600FA0C34 /* PiBar-Enhanced.app */,
+				449395D22471ABD600FA0C34 /* PiGuard.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -238,9 +241,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		449395D12471ABD600FA0C34 /* PiBar-Enhanced */ = {
+		449395D12471ABD600FA0C34 /* PiGuard */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 449395E22471ABD700FA0C34 /* Build configuration list for PBXNativeTarget "PiBar-Enhanced" */;
+			buildConfigurationList = 449395E22471ABD700FA0C34 /* Build configuration list for PBXNativeTarget "PiGuard" */;
 			buildPhases = (
 				449395CE2471ABD600FA0C34 /* Sources */,
 				449395CF2471ABD600FA0C34 /* Frameworks */,
@@ -252,13 +255,13 @@
 			);
 			dependencies = (
 			);
-			name = "PiBar-Enhanced";
+			name = PiGuard;
 			packageProductDependencies = (
 				44E390C12D877DDE002196DC /* HotKey */,
 				44E390C62D87C3E2002196DC /* LaunchAtLogin */,
 			);
-			productName = PiBar;
-			productReference = 449395D22471ABD600FA0C34 /* PiBar-Enhanced.app */;
+			productName = PiGuard;
+			productReference = 449395D22471ABD600FA0C34 /* PiGuard.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -294,7 +297,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				449395D12471ABD600FA0C34 /* PiBar-Enhanced */,
+				449395D12471ABD600FA0C34 /* PiGuard */,
 			);
 		};
 /* End PBXProject section */
@@ -353,6 +356,7 @@
 				449395D62471ABD600FA0C34 /* AppDelegate.swift in Sources */,
 				44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */,
 				FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */,
+				FBAA0019FBAA0019FBAA0019 /* BackendDetectionViewController.swift in Sources */,
 				44FFB092247627B100DCEDEC /* PiBarManager.swift in Sources */,
 				442F6F8B24721523008F1101 /* PreferencesViewController.swift in Sources */,
 				4415D73624747331009E0B31 /* Logging.swift in Sources */,
@@ -531,7 +535,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiBarEnhanced;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
+				PRODUCT_MODULE_NAME = PiBar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
@@ -560,7 +566,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 2.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiBarEnhanced;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
+				PRODUCT_MODULE_NAME = PiBar;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 			};
@@ -578,7 +586,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		449395E22471ABD700FA0C34 /* Build configuration list for PBXNativeTarget "PiBar-Enhanced" */ = {
+		449395E22471ABD700FA0C34 /* Build configuration list for PBXNativeTarget "PiGuard" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				449395E32471ABD700FA0C34 /* Debug */,

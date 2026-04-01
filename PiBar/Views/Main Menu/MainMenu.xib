@@ -25,9 +25,9 @@
         </customObject>
         <menu title="Main Menu" systemMenu="main" id="5KW-ob-Fg0">
             <items>
-                <menuItem title="PiBar" id="UmR-FA-2kg">
+                <menuItem title="PiGuard" id="UmR-FA-2kg">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="PiBar" systemMenu="apple" id="lHV-mp-y3W">
+                    <menu key="submenu" title="PiGuard" systemMenu="apple" id="lHV-mp-y3W">
                         <items>
                             <menuItem title="About Temp" id="yDt-VP-6Vv">
                                 <modifierMask key="keyEquivalentModifierMask"/>
@@ -370,13 +370,13 @@
                     </connections>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="Jp9-vn-utI"/>
-                <menuItem title="About PiBar-Enhanced" id="YMn-9f-Uru">
+                <menuItem title="About PiGuard" id="YMn-9f-Uru">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="aboutAction:" target="Ufk-kp-3MV" id="pAS-t6-Vla"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Quit PiBar-Enhanced" keyEquivalent="q" id="ETE-5r-Mpn">
+                <menuItem title="Quit PiGuard" keyEquivalent="q" id="ETE-5r-Mpn">
                     <connections>
                         <action selector="quitMenuBarAction:" target="Ufk-kp-3MV" id="BIl-j0-uBf"/>
                     </connections>

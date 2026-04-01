@@ -74,7 +74,7 @@ final class SyncSettingsViewController: NSViewController {
         let headerTitleLabel = NSTextField(labelWithString: "Sync Settings")
         headerTitleLabel.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
 
-        let headerDetailLabel = Self.makeHelperLabel("Choose how PiBar mirrors one Pi-hole into another, then monitor the sync state from the status band below.")
+        let headerDetailLabel = Self.makeHelperLabel("Choose how PiGuard mirrors one Pi-hole into another, then monitor the sync state from the status band below.")
         headerDetailLabel.maximumNumberOfLines = 2
 
         syncEnabledCheckbox.target = self
@@ -120,7 +120,7 @@ final class SyncSettingsViewController: NSViewController {
         setupCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 syncEnabledCheckbox,
-                helpText: "Turn this on when you want PiBar to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it. PiBar will only let you run sync after both ends are chosen and they are different systems."
+                helpText: "Turn this on when you want PiGuard to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it. PiGuard will only let you run sync after both ends are chosen and they are different systems."
             )
         )
         setupCard.stack.addArrangedSubview(makeSetupGrid())
@@ -131,7 +131,7 @@ final class SyncSettingsViewController: NSViewController {
         behaviorCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 dryRunCheckbox,
-                helpText: "Dry run lets you preview what PiBar would add, remove, or change on the secondary without writing anything. Use this first if you want to validate scope and connection choices before a live sync."
+                helpText: "Dry run lets you preview what PiGuard would add, remove, or change on the secondary without writing anything. Use this first if you want to validate scope and connection choices before a live sync."
             )
         )
 
@@ -139,7 +139,7 @@ final class SyncSettingsViewController: NSViewController {
         safetyCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 wipeSecondaryCheckbox,
-                helpText: "This clears the secondary adlist set before PiBar rebuilds it from the primary. Use it only when you want a hard reset, because blocking coverage on the secondary can drop until gravity finishes."
+                helpText: "This clears the secondary adlist set before PiGuard rebuilds it from the primary. Use it only when you want a hard reset, because blocking coverage on the secondary can drop until gravity finishes."
             )
         )
 
@@ -263,7 +263,7 @@ final class SyncSettingsViewController: NSViewController {
             [
                 makeSettingLabelRow(
                     intervalLabel,
-                    helpText: "This controls how often PiBar compares the primary and secondary and applies any needed changes. Shorter intervals keep the secondary closer to real time, but they also create more frequent network traffic and sync work."
+                    helpText: "This controls how often PiGuard compares the primary and secondary and applies any needed changes. Shorter intervals keep the secondary closer to real time, but they also create more frequent network traffic and sync work."
                 ),
                 intervalRow,
             ],
@@ -288,7 +288,7 @@ final class SyncSettingsViewController: NSViewController {
             [
                 makeSettingLabelRow(
                     scopeLabel,
-                    helpText: "These options decide which configuration areas PiBar reconciles from the primary onto the secondary. Turn off any category you want to manage independently on the secondary, because enabled categories are treated as managed by the primary."
+                    helpText: "These options decide which configuration areas PiGuard reconciles from the primary onto the secondary. Turn off any category you want to manage independently on the secondary, because enabled categories are treated as managed by the primary."
                 ),
                 scopeControls,
             ],
@@ -450,7 +450,7 @@ final class SyncSettingsViewController: NSViewController {
 
     private func readinessSummaryText() -> String {
         if isSyncInProgress {
-            return "Sync is currently running. PiBar will re-enable controls when the job completes."
+            return "Sync is currently running. PiGuard will re-enable controls when the job completes."
         }
 
         if v6Connections.count < 2 {
@@ -735,7 +735,7 @@ final class SyncSettingsViewController: NSViewController {
 
         let alert = NSAlert()
         alert.messageText = "Enable destructive pre-clean?"
-        alert.informativeText = "PiBar will remove or disable adlists on the secondary before rebuilding them from the primary, and gravity may take time to finish afterward."
+        alert.informativeText = "PiGuard will remove or disable adlists on the secondary before rebuilding them from the primary, and gravity may take time to finish afterward."
         alert.alertStyle = .warning
         alert.addButton(withTitle: "Enable")
         alert.addButton(withTitle: "Cancel")

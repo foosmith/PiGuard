@@ -51,7 +51,7 @@ open class Log {
 
     public static let logFileURL: URL = {
         let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Logs/PiBar")
+            .appendingPathComponent("Logs/PiGuard")
         return logsDir.appendingPathComponent("pibar.log")
     }()
 
