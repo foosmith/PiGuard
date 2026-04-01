@@ -8,8 +8,8 @@
         <customObject id="-2" userLabel="File's Owner"/>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customObject id="FU8-KO-8vo" userLabel="App Delegate" customClass="AppDelegate" customModule="PiBar" customModuleProvider="target"/>
-        <customObject id="Ufk-kp-3MV" customClass="MainMenuController" customModule="PiBar" customModuleProvider="target">
+        <customObject id="FU8-KO-8vo" userLabel="App Delegate" customClass="AppDelegate" customModule="PiGuard" customModuleProvider="target"/>
+        <customObject id="Ufk-kp-3MV" customClass="MainMenuController" customModule="PiGuard" customModuleProvider="target">
             <connections>
                 <outlet property="disableNetworkMenuItem" destination="kZY-sQ-RsG" id="phQ-zg-2b9"/>
                 <outlet property="enableNetworkMenuItem" destination="BI6-Ri-lBb" id="Gye-Na-1Ks"/>
@@ -307,14 +307,14 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="gzf-LJ-6hp"/>
-                <menuItem title="Enable Pi-hole" hidden="YES" enabled="NO" keyEquivalent="p" id="BI6-Ri-lBb">
+                <menuItem title="Enable Blocking" hidden="YES" enabled="NO" keyEquivalent="p" id="BI6-Ri-lBb">
                     <connections>
                         <action selector="enableMenuBarAction:" target="Ufk-kp-3MV" id="6rU-7E-Pgf"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Disable Pi-hole" enabled="NO" id="kZY-sQ-RsG">
+                <menuItem title="Disable Blocking" enabled="NO" id="kZY-sQ-RsG">
                     <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Disable Pi-hole" id="mSa-eh-NuK">
+                    <menu key="submenu" title="Disable Blocking" id="mSa-eh-NuK">
                         <items>
                             <menuItem title="10 Seconds" tag="10" enabled="NO" keyEquivalent="1" id="0Iq-7i-Fo4">
                                 <connections>
@@ -364,7 +364,7 @@
                         <action selector="syncNowAction:" target="Ufk-kp-3MV" id="FBM-S1-ACT"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Update Gravity" enabled="NO" id="FBM-G1-UPD">
+                <menuItem title="Refresh Filters / Update Gravity" enabled="NO" id="FBM-G1-UPD">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="updateGravityAction:" target="Ufk-kp-3MV" id="FBM-G1-ACT"/>

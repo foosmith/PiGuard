@@ -1,6 +1,6 @@
 //
 //  SyncProgress.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Codex on 3/12/26.
 //
@@ -8,15 +8,15 @@
 import Foundation
 
 extension Notification.Name {
-    static let piBarSyncProgress = Notification.Name("PiBar.Sync.Progress")
+    static let piGuardSyncProgress = Notification.Name("PiGuard.Sync.Progress")
     /// Posted on the main thread when a sync operation begins.
-    static let piBarSyncBegan = Notification.Name("PiBar.Sync.Began")
+    static let piGuardSyncBegan = Notification.Name("PiGuard.Sync.Began")
     /// Posted on the main thread when a sync operation ends (success, failure, or skip).
-    static let piBarSyncEnded = Notification.Name("PiBar.Sync.Ended")
+    static let piGuardSyncEnded = Notification.Name("PiGuard.Sync.Ended")
     /// Posted on the main thread when a gravity update begins.
-    static let piBarGravityBegan = Notification.Name("PiBar.Gravity.Began")
+    static let piGuardGravityBegan = Notification.Name("PiGuard.Gravity.Began")
     /// Posted on the main thread when a gravity update ends.
-    static let piBarGravityEnded = Notification.Name("PiBar.Gravity.Ended")
+    static let piGuardGravityEnded = Notification.Name("PiGuard.Gravity.Ended")
 }
 
 enum SyncProgress {
@@ -25,7 +25,7 @@ enum SyncProgress {
     static func report(_ message: String) {
         let userInfo: [String: Any] = [messageKey: message]
         DispatchQueue.main.async {
-            NotificationCenter.default.post(name: .piBarSyncProgress, object: nil, userInfo: userInfo)
+            NotificationCenter.default.post(name: .piGuardSyncProgress, object: nil, userInfo: userInfo)
         }
     }
 }

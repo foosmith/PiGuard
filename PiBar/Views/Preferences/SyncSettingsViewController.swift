@@ -1,6 +1,6 @@
 //
 //  SyncSettingsViewController.swift
-//  PiBar
+//  PiGuard
 //
 //  Created by Codex on 3/12/26.
 //
@@ -216,9 +216,9 @@ final class SyncSettingsViewController: NSViewController {
         super.viewDidLoad()
         title = "Sync Settings"
         preferredContentSize = NSSize(width: 940, height: 680)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piBarSyncProgress, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piBarSyncBegan, object: nil)
-        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piBarSyncEnded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piGuardSyncProgress, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
         refreshUI()
     }
 
