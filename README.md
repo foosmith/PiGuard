@@ -98,4 +98,5 @@ If you are running multiple DNS filtering servers and want a lightweight native 
 - Original PiBar created by [Brad Root](https://github.com/amiantos)
 - PiGuard is maintained in this repository by [foosmith](https://github.com/foosmith)
 - Pi-hole is a registered trademark of Pi-hole LLC
-- This project is independent and is not affiliated with Pi-hole LLC
+- AdGuard is a registered trademark of AdGuard Software Ltd
+- This project is independent and is not affiliated with either company
