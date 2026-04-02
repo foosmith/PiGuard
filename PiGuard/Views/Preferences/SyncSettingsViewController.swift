@@ -26,7 +26,7 @@ final class SyncSettingsViewController: NSViewController {
     private let intervalLabel = NSTextField(labelWithString: "Interval")
     private let intervalPresetPopup = NSPopUpButton()
     private let intervalField = NSTextField()
-    private let intervalUnitsLabel = NSTextField(labelWithString: "minutes")
+    private let intervalUnitsLabel = NSTextField(labelWithString: "min")
 
     private let scopeLabel = NSTextField(labelWithString: "What to sync")
     private let syncGroupsCheckbox = NSButton(checkboxWithTitle: "Groups", target: nil, action: nil)
@@ -565,7 +565,9 @@ final class SyncSettingsViewController: NSViewController {
 
     private func configureIntervalControls() {
         let interval = Preferences.standard.syncIntervalMinutes
-        if let presetIndex = presetIntervals.firstIndex(of: interval) {
+        let usesCustom = Preferences.standard.syncIntervalUsesCustom
+
+        if !usesCustom, let presetIndex = presetIntervals.firstIndex(of: interval) {
             intervalPresetPopup.selectItem(at: presetIndex)
             intervalField.isHidden = true
             intervalUnitsLabel.isHidden = true
@@ -685,6 +687,7 @@ final class SyncSettingsViewController: NSViewController {
         Preferences.standard.set(syncDryRunEnabled: dryRunCheckbox.state == .on)
         Preferences.standard.set(syncPrimaryIdentifier: selectedIdentifier(from: primaryPopup))
         Preferences.standard.set(syncSecondaryIdentifier: selectedIdentifier(from: secondaryPopup))
+        Preferences.standard.set(syncIntervalUsesCustom: intervalPresetPopup.indexOfSelectedItem >= presetIntervals.count)
         Preferences.standard.set(syncIntervalMinutes: max(5, resolvedIntervalMinutes()))
         delegate?.syncSettingsUpdated()
     }
@@ -708,7 +711,8 @@ final class SyncSettingsViewController: NSViewController {
         if intervalPresetPopup.indexOfSelectedItem < presetIntervals.count {
             intervalField.stringValue = ""
         } else if intervalField.stringValue.isEmpty {
-            intervalField.stringValue = "\(Preferences.standard.syncIntervalMinutes)"
+            intervalField.stringValue = "\(max(5, Preferences.standard.syncIntervalMinutes))"
+            view.window?.makeFirstResponder(intervalField)
         }
         persistSelections()
         refreshUI()
