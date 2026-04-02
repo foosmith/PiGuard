@@ -85,7 +85,7 @@ This project is not affiliated with either company.</string>
                                         </textField>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
                                             <rect key="frame" x="105" y="107" width="163" height="14"/>
-                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta, build 694)" id="oRj-Vt-ZIN">
+                                            <textFieldCell key="cell" lineBreakMode="clipping" title="Version 2.3 (Beta, build 695)" id="oRj-Vt-ZIN">
                                                 <font key="font" metaFont="label" size="11"/>
                                                 <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
