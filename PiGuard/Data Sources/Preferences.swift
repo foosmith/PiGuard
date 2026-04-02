@@ -28,6 +28,7 @@ struct Preferences {
         static let syncPrimaryIdentifier = "syncPrimaryIdentifier"
         static let syncSecondaryIdentifier = "syncSecondaryIdentifier"
         static let syncIntervalMinutes = "syncIntervalMinutes"
+        static let syncIntervalUsesCustom = "syncIntervalUsesCustom"
         static let syncSkipGroups = "syncSkipGroups"
         static let syncSkipAdlists = "syncSkipAdlists"
         static let syncSkipDomains = "syncSkipDomains"
@@ -57,6 +58,7 @@ struct Preferences {
             Key.syncPrimaryIdentifier: "",
             Key.syncSecondaryIdentifier: "",
             Key.syncIntervalMinutes: 15,
+            Key.syncIntervalUsesCustom: false,
             Key.syncSkipGroups: false,
             Key.syncSkipAdlists: false,
             Key.syncSkipDomains: false,
@@ -206,6 +208,9 @@ extension UserDefaults {
         return v >= 1 ? v : 15
     }
     func set(syncIntervalMinutes: Int) { set(syncIntervalMinutes, for: Preferences.Key.syncIntervalMinutes) }
+
+    var syncIntervalUsesCustom: Bool { bool(forKey: Preferences.Key.syncIntervalUsesCustom) }
+    func set(syncIntervalUsesCustom: Bool) { set(syncIntervalUsesCustom, for: Preferences.Key.syncIntervalUsesCustom) }
 
     var syncSkipGroups: Bool { bool(forKey: Preferences.Key.syncSkipGroups) }
     func set(syncSkipGroups: Bool) { set(syncSkipGroups, for: Preferences.Key.syncSkipGroups) }
