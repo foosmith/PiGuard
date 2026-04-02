@@ -28,6 +28,6 @@ class AboutViewController: NSViewController {
         let infoDictionary = Bundle.main.infoDictionary
         let marketingVersion = infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
         let buildNumber = infoDictionary?["CFBundleVersion"] as? String ?? "?"
-        return "Version \(marketingVersion) (Beta 9, build \(buildNumber))"
+        return "Version \(marketingVersion) (Beta, build \(buildNumber))"
     }
 }
