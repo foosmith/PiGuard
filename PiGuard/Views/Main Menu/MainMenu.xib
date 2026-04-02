@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="23504" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24765" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="23504"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner"/>
@@ -16,12 +16,12 @@
                 <outlet property="mainBlocklistMenuItem" destination="6lr-WP-jec" id="gfK-1e-FmL"/>
                 <outlet property="mainMenu" destination="aKJ-Vr-amD" id="W3G-ke-MuW"/>
                 <outlet property="mainNetworkStatusMenuItem" destination="p0e-fZ-XzR" id="ihg-ID-5O7"/>
-                <outlet property="syncSettingsMenuItem" destination="sYn-c1-SET" id="sYn-c1-OUT"/>
                 <outlet property="mainTotalBlockedMenuItem" destination="yIe-yf-Thr" id="Z4H-md-6lA"/>
                 <outlet property="mainTotalQueriesMenuItem" destination="WSh-qS-r63" id="aJQ-ta-NS1"/>
-                <outlet property="webAdminMenuItem" destination="3md-Pe-xgY" id="Syp-qg-PMb"/>
                 <outlet property="syncNowMenuItem" destination="FBM-S1-NOW" id="FBM-S1-OUT"/>
+                <outlet property="syncSettingsMenuItem" destination="sYn-c1-SET" id="sYn-c1-OUT"/>
                 <outlet property="updateGravityMenuItem" destination="FBM-G1-UPD" id="FBM-G1-OUT"/>
+                <outlet property="webAdminMenuItem" destination="3md-Pe-xgY" id="Syp-qg-PMb"/>
             </connections>
         </customObject>
         <menu title="Main Menu" systemMenu="main" id="5KW-ob-Fg0">
