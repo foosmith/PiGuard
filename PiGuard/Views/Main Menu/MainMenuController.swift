@@ -336,7 +336,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
 
         let image = NSImage(named: "icon")
-        image?.isTemplate = true
+        image?.isTemplate = false
         return image
     }
 
