@@ -296,6 +296,9 @@ extension QueryLogViewController: NSTableViewDelegate {
             ])
         }
 
+        // Reset color for reused cells
+        cell.textField?.textColor = .labelColor
+
         switch column.identifier.rawValue {
         case "time":
             cell.textField?.stringValue = timeFormatter.string(from: entry.timestamp)
