@@ -45,11 +45,6 @@ class PreferencesViewController: NSViewController {
         return controller
     }()
 
-    lazy var backendDetectionSheetController: BackendDetectionViewController = {
-        let controller = BackendDetectionViewController()
-        return controller
-    }()
-
     // MARK: - Outlets
 
     @IBOutlet var tableView: NSTableView!
@@ -76,38 +71,26 @@ class PreferencesViewController: NSViewController {
     @IBAction func addButtonActiom(_: NSButton) {
         let alert = NSAlert()
         alert.messageText = "Server Type"
-        alert.informativeText = "Auto-detect is recommended when you know the server address."
+        alert.informativeText = "Select the type of server you want to add."
         alert.alertStyle = .warning
-        
-        // Adding buttons
-        alert.addButton(withTitle: "Auto-Detect") // Index 0
-        alert.addButton(withTitle: "Pi-hole v6") // Index 1
-        alert.addButton(withTitle: "Pi-hole v5") // Index 2
-        alert.addButton(withTitle: "AdGuard Home") // Index 3
-        alert.addButton(withTitle: "Cancel")   // Index 4
 
-        // Display alert and handle response
+        alert.addButton(withTitle: "Pi-hole v6")    // Index 0
+        alert.addButton(withTitle: "Pi-hole v5")    // Index 1
+        alert.addButton(withTitle: "AdGuard Home")   // Index 2
+        alert.addButton(withTitle: "Cancel")          // Index 3
+
         let response = alert.runModal()
-        let adGuardResponse = NSApplication.ModalResponse(rawValue: NSApplication.ModalResponse.alertThirdButtonReturn.rawValue + 1)
-        
+
         switch response {
         case .alertFirstButtonReturn:
-            presentBackendDetectionSheet()
-        case .alertSecondButtonReturn:
             presentPiholeV6Sheet(connection: nil, index: -1)
-        case .alertThirdButtonReturn:
+        case .alertSecondButtonReturn:
             presentPiholeV5Sheet(connection: nil, index: -1)
-        case adGuardResponse:
+        case .alertThirdButtonReturn:
             presentAdGuardHomeSheet(connection: nil, index: -1)
         default:
             handleCancel()
         }
-    }
-
-    private func presentBackendDetectionSheet() {
-        let controller = backendDetectionSheetController
-        controller.delegate = self
-        presentAsSheet(controller)
     }
 
     private func presentPiholeV6Sheet(connection: PiholeConnectionV4?, index: Int) {
@@ -281,23 +264,6 @@ extension PreferencesViewController: PiholeV6SettingsViewControllerDelegate {
 extension PreferencesViewController: AdGuardHomeSettingsViewControllerDelegate {
     func saveAdGuardHomeConnection(_ connection: PiholeConnectionV4, at index: Int) {
         saveConnection(connection, at: index)
-    }
-}
-
-extension PreferencesViewController: BackendDetectionViewControllerDelegate {
-    func backendDetectionViewController(
-        _ controller: BackendDetectionViewController,
-        didDetect result: BackendDetectionResult,
-        draftConnection: PiholeConnectionV4
-    ) {
-        switch result.backendType {
-        case .piholeV5:
-            presentPiholeV5Sheet(connection: draftConnection, index: -1)
-        case .piholeV6:
-            presentPiholeV6Sheet(connection: draftConnection, index: -1)
-        case .adguardHome:
-            presentAdGuardHomeSheet(connection: draftConnection, index: -1)
-        }
     }
 }
 

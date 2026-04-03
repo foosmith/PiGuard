@@ -34,7 +34,7 @@
                     <window key="window" title="About PiGuard" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" frameAutosaveName="" animationBehavior="default" id="eLV-a3-iIv">
                         <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
                         <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
-                        <rect key="contentRect" x="425" y="461" width="480" height="270"/>
+                        <rect key="contentRect" x="425" y="461" width="560" height="270"/>
                         <rect key="screenRect" x="0.0" y="0.0" width="2560" height="1417"/>
                         <connections>
                             <outlet property="delegate" destination="gmV-ql-AU5" id="9K8-z3-n76"/>
@@ -52,14 +52,14 @@
         <scene sceneID="hDB-Cw-Vyc">
             <objects>
                 <viewController id="8lv-Nf-Li8" customClass="AboutViewController" customModule="PiGuard" customModuleProvider="target" sceneMemberID="viewController">
-                    <view key="view" misplaced="YES" id="4DW-02-72t">
-                        <rect key="frame" x="0.0" y="0.0" width="400" height="481"/>
+                    <view key="view" id="4DW-02-72t">
+                        <rect key="frame" x="0.0" y="0.0" width="520" height="481"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
-                            <box misplaced="YES" title="About" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="JNj-dj-3s6">
-                                <rect key="frame" x="20" y="20" width="360" height="441"/>
+                            <box title="About" titlePosition="noTitle" translatesAutoresizingMaskIntoConstraints="NO" id="JNj-dj-3s6">
+                                <rect key="frame" x="20" y="20" width="480" height="441"/>
                                 <view key="contentView" id="EhY-3x-KuI">
-                                    <rect key="frame" x="0.0" y="0.0" width="360" height="441"/>
+                                    <rect key="frame" x="0.0" y="0.0" width="480" height="441"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
                                         <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="59Q-Jm-Cbr">
@@ -107,23 +107,23 @@ This project is not affiliated with either company.</string>
                                         </button>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="59Q-Jm-Cbr" firstAttribute="leading" secondItem="EhY-3x-KuI" secondAttribute="leading" constant="20" id="2Rs-LP-WyE"/>
-                                        <constraint firstItem="59Q-Jm-Cbr" firstAttribute="top" secondItem="TtV-qo-CDH" secondAttribute="bottom" constant="11" id="71g-7H-sar"/>
-                                        <constraint firstItem="HRV-Iq-n3o" firstAttribute="top" secondItem="QQK-OP-L9S" secondAttribute="bottom" constant="7" id="Dvq-gD-VtN"/>
-                                        <constraint firstItem="HRV-Iq-n3o" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" id="FN8-cO-lrw"/>
-                                        <constraint firstItem="TtV-qo-CDH" firstAttribute="leading" secondItem="EhY-3x-KuI" secondAttribute="leading" constant="20" id="FUC-dk-MqT"/>
-                                        <constraint firstAttribute="bottom" secondItem="59Q-Jm-Cbr" secondAttribute="bottom" constant="16" id="GwW-Rw-Sxy"/>
-                                        <constraint firstAttribute="trailing" secondItem="59Q-Jm-Cbr" secondAttribute="trailing" constant="20" id="MnL-aM-uPl"/>
-                                        <constraint firstItem="gPz-LR-6t6" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" id="QVn-8V-UwT"/>
-                                        <constraint firstItem="gPz-LR-6t6" firstAttribute="top" secondItem="HRV-Iq-n3o" secondAttribute="bottom" id="YcA-64-RhE"/>
-                                        <constraint firstItem="TtV-qo-CDH" firstAttribute="top" secondItem="gPz-LR-6t6" secondAttribute="bottom" constant="9" id="hf5-ID-Jft"/>
-                                        <constraint firstItem="QQK-OP-L9S" firstAttribute="top" secondItem="EhY-3x-KuI" secondAttribute="top" constant="16" id="qmi-Ba-Xvx"/>
-                                        <constraint firstItem="QQK-OP-L9S" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" id="wop-ky-YwN"/>
-                                        <constraint firstAttribute="trailing" secondItem="TtV-qo-CDH" secondAttribute="trailing" constant="20" id="zdH-4q-oH7"/>
+                                        <constraint firstItem="59Q-Jm-Cbr" firstAttribute="leading" secondItem="EhY-3x-KuI" secondAttribute="leading" constant="5" id="2Rs-LP-WyE"/>
+                                        <constraint firstItem="59Q-Jm-Cbr" firstAttribute="top" secondItem="TtV-qo-CDH" secondAttribute="bottom" constant="8" id="71g-7H-sar"/>
+                                        <constraint firstItem="HRV-Iq-n3o" firstAttribute="top" secondItem="QQK-OP-L9S" secondAttribute="bottom" constant="8" id="Dvq-gD-VtN"/>
+                                        <constraint firstItem="HRV-Iq-n3o" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" constant="6.5" id="FN8-cO-lrw"/>
+                                        <constraint firstItem="TtV-qo-CDH" firstAttribute="leading" secondItem="EhY-3x-KuI" secondAttribute="leading" constant="70" id="FUC-dk-MqT"/>
+                                        <constraint firstAttribute="bottom" secondItem="59Q-Jm-Cbr" secondAttribute="bottom" constant="11" id="GwW-Rw-Sxy"/>
+                                        <constraint firstAttribute="trailing" secondItem="59Q-Jm-Cbr" secondAttribute="trailing" constant="6" id="MnL-aM-uPl"/>
+                                        <constraint firstItem="gPz-LR-6t6" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" constant="6.5" id="QVn-8V-UwT"/>
+                                        <constraint firstItem="gPz-LR-6t6" firstAttribute="top" secondItem="HRV-Iq-n3o" secondAttribute="bottom" constant="8" id="YcA-64-RhE"/>
+                                        <constraint firstItem="TtV-qo-CDH" firstAttribute="top" secondItem="gPz-LR-6t6" secondAttribute="bottom" constant="-4" id="hf5-ID-Jft"/>
+                                        <constraint firstItem="QQK-OP-L9S" firstAttribute="top" secondItem="EhY-3x-KuI" secondAttribute="top" constant="10" id="qmi-Ba-Xvx"/>
+                                        <constraint firstItem="QQK-OP-L9S" firstAttribute="centerX" secondItem="EhY-3x-KuI" secondAttribute="centerX" constant="6" id="wop-ky-YwN"/>
+                                        <constraint firstAttribute="trailing" secondItem="TtV-qo-CDH" secondAttribute="trailing" constant="58" id="zdH-4q-oH7"/>
                                     </constraints>
                                 </view>
                                 <constraints>
-                                    <constraint firstAttribute="width" constant="230" id="fGs-0n-AYg"/>
+                                    <constraint firstAttribute="width" constant="480" id="fGs-0n-AYg"/>
                                 </constraints>
                             </box>
                         </subviews>
@@ -381,18 +381,18 @@ This project is not affiliated with either company.</string>
                                     <subviews>
                                         <scrollView verticalHuggingPriority="249" misplaced="YES" autohidesScrollers="YES" horizontalLineScroll="19" horizontalPageScroll="10" verticalLineScroll="19" verticalPageScroll="10" hasHorizontalScroller="NO" usesPredominantAxisScrolling="NO" horizontalScrollElasticity="none" translatesAutoresizingMaskIntoConstraints="NO" id="7by-VC-c7V">
                                             <rect key="frame" x="20" y="53" width="331" height="333"/>
-                                            <clipView key="contentView" ambiguous="YES" id="7U0-rZ-cjX">
+                                            <clipView key="contentView" id="7U0-rZ-cjX">
                                                 <rect key="frame" x="1" y="1" width="329" height="331"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
-                                                    <tableView verticalHuggingPriority="750" ambiguous="YES" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="lI7-le-hIe" viewBased="YES" id="ILp-pd-N6u">
+                                                    <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="lI7-le-hIe" viewBased="YES" id="ILp-pd-N6u">
                                                         <rect key="frame" x="0.0" y="0.0" width="329" height="303"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                                         <tableColumns>
-                                                            <tableColumn width="190" minWidth="40" maxWidth="1000" id="6Az-AI-g5G">
+                                                            <tableColumn width="142" minWidth="40" maxWidth="1000" id="6Az-AI-g5G">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" title="Hostname">
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -405,11 +405,11 @@ This project is not affiliated with either company.</string>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                                 <prototypeCellViews>
                                                                     <tableCellView identifier="hostnameCell" id="TXu-ee-LVQ">
-                                                                        <rect key="frame" x="1" y="1" width="195" height="17"/>
+                                                                        <rect key="frame" x="1" y="1" width="147" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
                                                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="9dL-In-WC2">
-                                                                                <rect key="frame" x="0.0" y="0.0" width="195" height="17"/>
+                                                                                <rect key="frame" x="0.0" y="0.0" width="147" height="17"/>
                                                                                 <constraints>
                                                                                     <constraint firstAttribute="height" constant="17" id="fs9-rj-VQ2"/>
                                                                                 </constraints>
@@ -444,7 +444,7 @@ This project is not affiliated with either company.</string>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                                 <prototypeCellViews>
                                                                     <tableCellView identifier="portCell" id="dAY-Du-JhP">
-                                                                        <rect key="frame" x="199" y="1" width="57" height="17"/>
+                                                                        <rect key="frame" x="151" y="1" width="57" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
                                                                             <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="RbF-1c-Sbq" userLabel="Port">
@@ -483,7 +483,7 @@ This project is not affiliated with either company.</string>
                                                                 <tableColumnResizingMask key="resizingMask" resizeWithTable="YES" userResizable="YES"/>
                                                                 <prototypeCellViews>
                                                                     <tableCellView identifier="versionCell" id="INV-mK-htm">
-                                                                        <rect key="frame" x="259" y="1" width="68" height="17"/>
+                                                                        <rect key="frame" x="211" y="1" width="68" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
                                                                             <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="HSN-av-2Te">
