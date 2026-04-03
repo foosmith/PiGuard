@@ -292,6 +292,91 @@ class Pihole6API: NSObject {
         return try await performRaw(req)
     }
 
+    // MARK: - Top Items, Query Log, Allow/Block
+
+    func fetchTopBlocked() async -> [TopItem] {
+        do {
+            let data = try await getData("/stats/top_domains", queryItems: [URLQueryItem(name: "blocked", value: "true")])
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let domains = json["domains"] as? [[String: Any]] else { return [] }
+            return domains.prefix(10).compactMap { dict -> TopItem? in
+                guard let domain = dict["domain"] as? String,
+                      let count = dict["count"] as? Int else { return nil }
+                return TopItem(name: domain, count: count)
+            }
+        } catch {
+            return []
+        }
+    }
+
+    func fetchTopClients() async -> [TopItem] {
+        do {
+            let data = try await getData("/stats/top_clients")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let clients = json["clients"] as? [[String: Any]] else { return [] }
+            return clients.prefix(10).compactMap { dict -> TopItem? in
+                guard let count = dict["count"] as? Int else { return nil }
+                let name = (dict["name"] as? String).flatMap({ $0.isEmpty ? nil : $0 }) ?? (dict["ip"] as? String) ?? "unknown"
+                return TopItem(name: name, count: count)
+            }
+        } catch {
+            return []
+        }
+    }
+
+    func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
+        let blockedStatuses: Set<String> = [
+            "GRAVITY", "REGEX", "DENYLIST",
+            "EXTERNAL_BLOCKED_IP", "EXTERNAL_BLOCKED_NULL", "EXTERNAL_BLOCKED_NXRA",
+            "GRAVITY_CNAME", "REGEX_CNAME", "DENYLIST_CNAME", "EXTERNAL_BLOCKED_EDE15"
+        ]
+        do {
+            let data = try await getData("/queries", queryItems: [URLQueryItem(name: "length", value: "\(limit)")])
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let queries = json["queries"] as? [[String: Any]] else { return [] }
+            return queries.compactMap { q -> QueryLogEntry? in
+                guard let time = q["time"] as? Double,
+                      let domain = q["domain"] as? String,
+                      let status = q["status"] as? String else { return nil }
+                let clientDict = q["client"] as? [String: Any]
+                let clientName = (clientDict?["name"] as? String).flatMap({ $0.isEmpty ? nil : $0 }) ?? (clientDict?["ip"] as? String) ?? "unknown"
+                return QueryLogEntry(
+                    timestamp: Date(timeIntervalSince1970: time),
+                    domain: domain,
+                    client: clientName,
+                    status: blockedStatuses.contains(status) ? .blocked : .allowed,
+                    serverIdentifier: identifier,
+                    serverDisplayName: connection.endpointDisplayName
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    private struct DomainRuleRequest: Encodable {
+        let domain: String
+        let comment: String
+    }
+
+    func allowDomain(_ domain: String) async -> Bool {
+        do {
+            _ = try await postData("/domains/allow/exact", body: DomainRuleRequest(domain: domain, comment: "Added via PiGuard"))
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func blockDomain(_ domain: String) async -> Bool {
+        do {
+            _ = try await postData("/domains/deny/exact", body: DomainRuleRequest(domain: domain, comment: "Added via PiGuard"))
+            return true
+        } catch {
+            return false
+        }
+    }
+
     // Ugly Innards
 
     private func request(
