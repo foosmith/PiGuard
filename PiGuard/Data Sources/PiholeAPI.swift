@@ -104,6 +104,14 @@ class PiholeAPI: NSObject {
         }
     }
 
+    private func getAsync(_ endpoint: PiholeAPIEndpoint, argument: String? = nil) async -> String? {
+        await withCheckedContinuation { continuation in
+            get(endpoint, argument: argument) { result in
+                continuation.resume(returning: result)
+            }
+        }
+    }
+
     // MARK: - URLs
 
     private var baseURL: String {
@@ -153,6 +161,69 @@ class PiholeAPI: NSObject {
                 completion(string)
             }
         }
+    }
+
+    func fetchTopBlocked() async -> [TopItem] {
+        guard let string = await getAsync(Endpoints.topItems) else { return [] }
+        guard let data = string.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let topAds = json["top_ads"] as? [String: Int] else { return [] }
+        return topAds.map { TopItem(name: $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+            .prefix(10)
+            .map { $0 }
+    }
+
+    func fetchTopClients() async -> [TopItem] {
+        guard let string = await getAsync(Endpoints.topClients) else { return [] }
+        guard let data = string.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let topSources = json["top_sources"] as? [String: Int] else { return [] }
+        return topSources.map { TopItem(name: $0.key.components(separatedBy: "|").first ?? $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+            .prefix(10)
+            .map { $0 }
+    }
+
+    func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
+        let endpoint = PiholeAPIEndpoint(queryParameter: "getAllQueries=\(limit)", authorizationRequired: true)
+        guard let string = await getAsync(endpoint) else { return [] }
+        guard let data = string.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let rows = json["data"] as? [[Any]] else { return [] }
+
+        let blockedCodes: Set<Int> = [1, 4, 5, 6, 7, 8, 9, 10, 11]
+        return rows.compactMap { row -> QueryLogEntry? in
+            guard row.count >= 5,
+                  let timestampStr = row[0] as? String,
+                  let timestampInt = Int(timestampStr),
+                  let domain = row[2] as? String,
+                  let client = row[3] as? String,
+                  let statusCode = (row[4] as? Int) ?? Int(row[4] as? String ?? "") else { return nil }
+            let status: QueryLogStatus = blockedCodes.contains(statusCode) ? .blocked : .allowed
+            return QueryLogEntry(
+                timestamp: Date(timeIntervalSince1970: TimeInterval(timestampInt)),
+                domain: domain,
+                client: client,
+                status: status,
+                serverIdentifier: identifier,
+                serverDisplayName: connection.endpointDisplayName
+            )
+        }
+    }
+
+    func allowDomain(_ domain: String) async -> Bool {
+        guard let encoded = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return false }
+        let endpoint = PiholeAPIEndpoint(queryParameter: "list=white&add=\(encoded)", authorizationRequired: true)
+        let result = await getAsync(endpoint)
+        return result != nil
+    }
+
+    func blockDomain(_ domain: String) async -> Bool {
+        guard let encoded = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return false }
+        let endpoint = PiholeAPIEndpoint(queryParameter: "list=black&add=\(encoded)", authorizationRequired: true)
+        let result = await getAsync(endpoint)
+        return result != nil
     }
 
     func disable(seconds: Int? = nil, completion: @escaping (Bool) -> Void) {
