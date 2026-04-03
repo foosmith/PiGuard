@@ -40,10 +40,11 @@ final class SyncSettingsViewController: NSViewController {
 
     private let summaryLabel = NSTextField(labelWithString: "")
     private let lastSyncLabel = NSTextField(labelWithString: "")
-    private let logToggleCheckbox = NSButton(checkboxWithTitle: "Show activity log", target: nil, action: nil)
-    private let logScrollView = NSScrollView()
-    private let logTextView = NSTextView()
-    private var logHeightConstraint: NSLayoutConstraint?
+    private let logToggleCheckbox = NSButton(checkboxWithTitle: "Show activity log in separate window", target: nil, action: nil)
+    private let logHelperLabel = SyncSettingsViewController.makeHelperLabel("Open the sync log only when you need detailed output. It no longer takes space inside this window.")
+
+    private var activityLogLines: [String] = []
+    private var logWindowController: SyncActivityLogWindowController?
     private var isSyncInProgress = false
     private var activeHelpPopover: NSPopover?
 
@@ -51,7 +52,7 @@ final class SyncSettingsViewController: NSViewController {
     private let closeButton = NSButton(title: "Close", target: nil, action: nil)
 
     private let presetIntervals = [5, 15, 30, 60]
-    private let settingLabelWidth: CGFloat = 180
+    private let settingLabelWidth: CGFloat = 160
     private let helpPopoverWidth: CGFloat = 280
 
     private var v6Connections: [PiholeConnectionV4] {
@@ -63,22 +64,22 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 940, height: 680))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 760, height: 620))
         container.translatesAutoresizingMaskIntoConstraints = false
 
-        summaryLabel.translatesAutoresizingMaskIntoConstraints = false
-        summaryLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize + 2, weight: .semibold)
+        summaryLabel.font = NSFont.systemFont(ofSize: NSFont.systemFontSize + 3, weight: .semibold)
         summaryLabel.lineBreakMode = .byWordWrapping
-        summaryLabel.maximumNumberOfLines = 3
+        summaryLabel.maximumNumberOfLines = 4
 
         lastSyncLabel.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize)
-        lastSyncLabel.lineBreakMode = .byTruncatingTail
-        lastSyncLabel.maximumNumberOfLines = 2
+        lastSyncLabel.textColor = .secondaryLabelColor
+        lastSyncLabel.lineBreakMode = .byWordWrapping
+        lastSyncLabel.maximumNumberOfLines = 3
 
         let headerTitleLabel = NSTextField(labelWithString: "Sync Settings")
-        headerTitleLabel.font = NSFont.systemFont(ofSize: 22, weight: .semibold)
+        headerTitleLabel.font = NSFont.systemFont(ofSize: 23, weight: .semibold)
 
-        let headerDetailLabel = Self.makeHelperLabel("Choose how PiGuard mirrors one Pi-hole into another, then monitor the sync state from the status band below.")
+        let headerDetailLabel = Self.makeHelperLabel("A simpler setup flow: confirm status first, then choose source, destination, interval, and sync scope.")
         headerDetailLabel.maximumNumberOfLines = 2
 
         syncEnabledCheckbox.target = self
@@ -120,97 +121,97 @@ final class SyncSettingsViewController: NSViewController {
 
         intervalPresetPopup.addItems(withTitles: presetIntervals.map { "\($0) min" } + ["Custom"])
 
-        let setupCard = Self.makeSection(title: "Setup")
+        let overviewCard = Self.makeSection(title: "Overview")
+        overviewCard.stack.spacing = 12
+        overviewCard.stack.addArrangedSubview(summaryLabel)
+        overviewCard.stack.addArrangedSubview(lastSyncLabel)
+        overviewCard.stack.addArrangedSubview(makeOverviewActionsRow())
+
+        let setupCard = Self.makeSection(title: "Connection Setup")
+        setupCard.stack.addArrangedSubview(setupHelperLabel)
         setupCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 syncEnabledCheckbox,
-                helpText: "Turn this on when you want PiGuard to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it. PiGuard will only let you run sync after both ends are chosen and they are different systems."
+                helpText: "Turn this on when you want PiGuard to treat one Pi-hole as the source of truth and continuously reconcile a second Pi-hole to match it."
             )
         )
         setupCard.stack.addArrangedSubview(makeSetupGrid())
 
-        let behaviorCard = Self.makeSection(title: "Behavior")
+        let behaviorCard = Self.makeSection(title: "Sync Behavior")
+        behaviorCard.stack.addArrangedSubview(behaviorHelperLabel)
         behaviorCard.stack.addArrangedSubview(makeBehaviorGrid())
         behaviorCard.stack.addArrangedSubview(makeScopeRow())
         behaviorCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 dryRunCheckbox,
-                helpText: "Dry run lets you preview what PiGuard would add, remove, or change on the secondary without writing anything. Use this first if you want to validate scope and connection choices before a live sync."
+                helpText: "Dry run shows the planned changes without writing anything to the secondary."
             )
         )
 
         let safetyCard = Self.makeSection(title: "Safety")
+        safetyCard.stack.addArrangedSubview(safetyHelperLabel)
         safetyCard.stack.addArrangedSubview(
             makeCheckboxRow(
                 wipeSecondaryCheckbox,
-                helpText: "This clears the secondary adlist set before PiGuard rebuilds it from the primary. Use it only when you want a hard reset, because blocking coverage on the secondary can drop until gravity finishes."
+                helpText: "This clears the secondary adlist set before PiGuard rebuilds it from the primary."
             )
         )
 
-        let statusBand = Self.makeSection(title: "Sync Status")
-        let statusSpacer = NSView()
-        statusSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        statusSpacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        let statusHeaderRow = NSStackView(views: [summaryLabel, statusSpacer, logToggleCheckbox])
-        statusHeaderRow.orientation = .horizontal
-        statusHeaderRow.alignment = .firstBaseline
-        statusHeaderRow.spacing = 12
-        statusBand.stack.addArrangedSubview(statusHeaderRow)
-        statusBand.stack.addArrangedSubview(lastSyncLabel)
+        let logCard = Self.makeSection(title: "Activity Log")
+        logCard.stack.addArrangedSubview(logHelperLabel)
+        logCard.stack.addArrangedSubview(logToggleCheckbox)
 
-        configureLogView()
-        statusBand.stack.addArrangedSubview(logScrollView)
-
-        let headerTextStack = NSStackView(views: [headerTitleLabel, headerDetailLabel])
-        headerTextStack.orientation = .vertical
-        headerTextStack.spacing = 4
-        headerTextStack.translatesAutoresizingMaskIntoConstraints = false
+        let headerStack = NSStackView(views: [headerTitleLabel, headerDetailLabel])
+        headerStack.orientation = .vertical
+        headerStack.spacing = 4
+        headerStack.translatesAutoresizingMaskIntoConstraints = false
 
         let contentStack = NSStackView(views: [
+            overviewCard.box,
             setupCard.box,
             behaviorCard.box,
             safetyCard.box,
-            statusBand.box,
+            logCard.box,
         ])
         contentStack.orientation = .vertical
-        contentStack.spacing = 16
-        contentStack.alignment = .centerX
+        contentStack.spacing = 14
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let buttons = NSStackView(views: [syncNowButton, closeButton])
-        buttons.orientation = .horizontal
-        buttons.spacing = 10
-        buttons.alignment = .centerY
-        buttons.translatesAutoresizingMaskIntoConstraints = false
+        let footerLabel = Self.makeHelperLabel("Sync only works between Pi-hole v6 connections. Other backends remain available for monitoring and blocking control.")
+        footerLabel.maximumNumberOfLines = 2
+        footerLabel.translatesAutoresizingMaskIntoConstraints = false
 
-        container.addSubview(headerTextStack)
+        let footerButtons = NSStackView(views: [closeButton])
+        footerButtons.orientation = .horizontal
+        footerButtons.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(headerStack)
         container.addSubview(contentStack)
-        container.addSubview(buttons)
-
-        setupCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        behaviorCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        safetyCard.box.setContentCompressionResistancePriority(.defaultHigh, for: .vertical)
-        statusBand.box.setContentCompressionResistancePriority(.defaultLow, for: .vertical)
+        container.addSubview(footerLabel)
+        container.addSubview(footerButtons)
 
         NSLayoutConstraint.activate([
-            headerTextStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
-            headerTextStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
-            headerTextStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            headerStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 20),
+            headerStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            headerStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
 
-            contentStack.topAnchor.constraint(equalTo: headerTextStack.bottomAnchor, constant: 18),
+            contentStack.topAnchor.constraint(equalTo: headerStack.bottomAnchor, constant: 18),
             contentStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
             contentStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            contentStack.bottomAnchor.constraint(equalTo: buttons.topAnchor, constant: -18),
 
-            buttons.widthAnchor.constraint(greaterThanOrEqualToConstant: 170),
-            buttons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
-            buttons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
-
+            overviewCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
             setupCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
             behaviorCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
             safetyCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
-            statusBand.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
-            statusBand.box.heightAnchor.constraint(greaterThanOrEqualToConstant: 150),
+            logCard.box.widthAnchor.constraint(equalTo: contentStack.widthAnchor),
+
+            footerLabel.topAnchor.constraint(equalTo: contentStack.bottomAnchor, constant: 16),
+            footerLabel.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 20),
+            footerLabel.trailingAnchor.constraint(lessThanOrEqualTo: footerButtons.leadingAnchor, constant: -12),
+            footerLabel.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -22),
+
+            footerButtons.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -20),
+            footerButtons.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -20),
         ])
 
         view = container
@@ -219,7 +220,7 @@ final class SyncSettingsViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Sync Settings"
-        preferredContentSize = NSSize(width: 940, height: 680)
+        preferredContentSize = NSSize(width: 760, height: 620)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncProgress(_:)), name: .piGuardSyncProgress, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
@@ -238,21 +239,24 @@ final class SyncSettingsViewController: NSViewController {
         }
     }
 
+    override func viewWillDisappear() {
+        super.viewWillDisappear()
+        logWindowController?.close()
+        logWindowController = nil
+        logToggleCheckbox.state = .off
+    }
+
     private func makeSetupGrid() -> NSGridView {
         let grid = NSGridView(views: [
             [makeSettingLabelRow(primaryLabel), primaryPopup],
             [makeSettingLabelRow(secondaryLabel), secondaryPopup],
         ])
-        grid.translatesAutoresizingMaskIntoConstraints = false
         grid.rowSpacing = 10
         grid.columnSpacing = 12
         grid.xPlacement = .fill
         grid.column(at: 0).width = settingLabelWidth
         grid.column(at: 0).xPlacement = .leading
         grid.column(at: 1).xPlacement = .fill
-        [primaryPopup, secondaryPopup].forEach {
-            $0.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        }
         return grid
     }
 
@@ -263,16 +267,13 @@ final class SyncSettingsViewController: NSViewController {
         intervalRow.alignment = .centerY
         intervalField.widthAnchor.constraint(equalToConstant: 64).isActive = true
 
-        let grid = NSGridView(views: [
-            [
-                makeSettingLabelRow(
-                    intervalLabel,
-                    helpText: "This controls how often PiGuard compares the primary and secondary and applies any needed changes. Shorter intervals keep the secondary closer to real time, but they also create more frequent network traffic and sync work."
-                ),
-                intervalRow,
-            ],
-        ])
-        grid.translatesAutoresizingMaskIntoConstraints = false
+        let grid = NSGridView(views: [[
+            makeSettingLabelRow(
+                intervalLabel,
+                helpText: "This controls how often PiGuard compares the primary and secondary and applies any needed changes."
+            ),
+            intervalRow,
+        ]])
         grid.rowSpacing = 10
         grid.columnSpacing = 12
         grid.xPlacement = .fill
@@ -288,16 +289,13 @@ final class SyncSettingsViewController: NSViewController {
         scopeControls.spacing = 14
         scopeControls.alignment = .centerY
 
-        let grid = NSGridView(views: [
-            [
-                makeSettingLabelRow(
-                    scopeLabel,
-                    helpText: "These options decide which configuration areas PiGuard reconciles from the primary onto the secondary. Turn off any category you want to manage independently on the secondary, because enabled categories are treated as managed by the primary."
-                ),
-                scopeControls,
-            ],
-        ])
-        grid.translatesAutoresizingMaskIntoConstraints = false
+        let grid = NSGridView(views: [[
+            makeSettingLabelRow(
+                scopeLabel,
+                helpText: "Turn off any category you want to manage independently on the secondary."
+            ),
+            scopeControls,
+        ]])
         grid.columnSpacing = 12
         grid.xPlacement = .fill
         grid.column(at: 0).width = settingLabelWidth
@@ -307,8 +305,6 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     private func makeSettingLabelRow(_ label: NSTextField, helpText: String? = nil) -> NSView {
-        label.setContentHuggingPriority(.required, for: .horizontal)
-
         var views: [NSView] = [label]
         if let helpText {
             views.append(makeHelpButton(text: helpText))
@@ -317,13 +313,10 @@ final class SyncSettingsViewController: NSViewController {
         row.orientation = .horizontal
         row.spacing = 6
         row.alignment = .centerY
-        row.translatesAutoresizingMaskIntoConstraints = false
         return row
     }
 
     private func makeCheckboxRow(_ checkbox: NSButton, helpText: String? = nil) -> NSView {
-        checkbox.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
         var views: [NSView] = [checkbox]
         if let helpText {
             views.append(makeHelpButton(text: helpText))
@@ -337,13 +330,23 @@ final class SyncSettingsViewController: NSViewController {
         row.orientation = .horizontal
         row.spacing = 8
         row.alignment = .centerY
-        row.translatesAutoresizingMaskIntoConstraints = false
+        return row
+    }
+
+    private func makeOverviewActionsRow() -> NSView {
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
+        spacer.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
+
+        let row = NSStackView(views: [spacer, syncNowButton])
+        row.orientation = .horizontal
+        row.alignment = .centerY
+        row.spacing = 10
         return row
     }
 
     private func makeHelpButton(text: String) -> NSButton {
         let button = NSButton(title: "", target: self, action: #selector(helpButtonPressed(_:)))
-        button.translatesAutoresizingMaskIntoConstraints = false
         button.bezelStyle = .regularSquare
         button.isBordered = false
         button.image = NSImage(systemSymbolName: "questionmark.circle", accessibilityDescription: "More information")
@@ -353,10 +356,8 @@ final class SyncSettingsViewController: NSViewController {
         button.toolTip = "More information"
         button.setButtonType(.momentaryPushIn)
         button.identifier = NSUserInterfaceItemIdentifier(text)
-        NSLayoutConstraint.activate([
-            button.widthAnchor.constraint(equalToConstant: 18),
-            button.heightAnchor.constraint(equalToConstant: 18),
-        ])
+        button.widthAnchor.constraint(equalToConstant: 18).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 18).isActive = true
         return button
     }
 
@@ -390,23 +391,6 @@ final class SyncSettingsViewController: NSViewController {
         popover.contentViewController = viewController
         popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
         activeHelpPopover = popover
-    }
-
-    private func configureLogView() {
-        logTextView.isEditable = false
-        logTextView.isSelectable = true
-        logTextView.font = NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
-        logTextView.textContainerInset = NSSize(width: 6, height: 6)
-
-        logScrollView.translatesAutoresizingMaskIntoConstraints = false
-        logScrollView.documentView = logTextView
-        logScrollView.hasVerticalScroller = true
-        logScrollView.borderType = .bezelBorder
-        logScrollView.drawsBackground = false
-
-        logHeightConstraint = logScrollView.heightAnchor.constraint(equalToConstant: 0)
-        logHeightConstraint?.isActive = true
-        logScrollView.isHidden = true
     }
 
     private func refreshUI() {
@@ -513,9 +497,31 @@ final class SyncSettingsViewController: NSViewController {
     }
 
     private func updateLogVisibility() {
-        let showLog = logToggleCheckbox.state == .on
-        logScrollView.isHidden = !showLog
-        logHeightConstraint?.constant = showLog ? 220 : 0
+        if logToggleCheckbox.state == .on {
+            showLogWindow()
+        } else {
+            logWindowController?.close()
+            logWindowController = nil
+        }
+    }
+
+    private func showLogWindow() {
+        if let controller = logWindowController {
+            controller.showWindow(self)
+            controller.window?.makeKeyAndOrderFront(self)
+            controller.replaceLog(with: activityLogLines)
+            return
+        }
+
+        let controller = SyncActivityLogWindowController()
+        controller.onClose = { [weak self] in
+            self?.logWindowController = nil
+            self?.logToggleCheckbox.state = .off
+        }
+        controller.replaceLog(with: activityLogLines)
+        controller.showWindow(self)
+        controller.window?.makeKeyAndOrderFront(self)
+        logWindowController = controller
     }
 
     private func compactLastSyncMessage(_ message: String) -> String {
@@ -658,24 +664,24 @@ final class SyncSettingsViewController: NSViewController {
 
     @objc private func handleSyncBegan() {
         isSyncInProgress = true
-        appendLog("— sync started —")
+        appendLog("sync started")
         refreshUI()
     }
 
     @objc private func handleSyncEnded() {
         isSyncInProgress = false
-        appendLog("— sync ended —")
+        appendLog("sync ended")
         refreshUI()
     }
 
     private func appendLog(_ line: String) {
-        let prefix = logTextView.string.isEmpty ? "" : "\n"
-        logTextView.string += "\(prefix)\(line)"
-        logTextView.scrollToEndOfDocument(nil)
+        activityLogLines.append(line)
+        logWindowController?.replaceLog(with: activityLogLines)
     }
 
     private func clearLog() {
-        logTextView.string = ""
+        activityLogLines.removeAll()
+        logWindowController?.replaceLog(with: activityLogLines)
     }
 
     private func persistSelections() {
@@ -786,7 +792,10 @@ final class SyncSettingsViewController: NSViewController {
         box.title = title
         box.titlePosition = .atTop
         box.boxType = .custom
-        box.cornerRadius = 8
+        box.cornerRadius = 10
+        box.borderWidth = 1
+        box.borderColor = NSColor.separatorColor
+        box.fillColor = NSColor.windowBackgroundColor
         box.translatesAutoresizingMaskIntoConstraints = false
 
         let stack = NSStackView()
@@ -796,10 +805,10 @@ final class SyncSettingsViewController: NSViewController {
         box.contentView?.addSubview(stack)
 
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: box.contentView!.topAnchor, constant: 12),
-            stack.leadingAnchor.constraint(equalTo: box.contentView!.leadingAnchor, constant: 12),
-            stack.trailingAnchor.constraint(equalTo: box.contentView!.trailingAnchor, constant: -12),
-            stack.bottomAnchor.constraint(equalTo: box.contentView!.bottomAnchor, constant: -12),
+            stack.topAnchor.constraint(equalTo: box.contentView!.topAnchor, constant: 14),
+            stack.leadingAnchor.constraint(equalTo: box.contentView!.leadingAnchor, constant: 14),
+            stack.trailingAnchor.constraint(equalTo: box.contentView!.trailingAnchor, constant: -14),
+            stack.bottomAnchor.constraint(equalTo: box.contentView!.bottomAnchor, constant: -14),
         ])
 
         return (box, stack)
@@ -818,5 +827,60 @@ final class SyncSettingsViewController: NSViewController {
         let label = makeHelperLabel(string)
         label.textColor = .systemOrange
         return label
+    }
+}
+
+private final class SyncActivityLogWindowController: NSWindowController, NSWindowDelegate {
+    private let logTextView = NSTextView()
+    var onClose: (() -> Void)?
+
+    init() {
+        let viewController = NSViewController()
+        let contentView = NSView(frame: NSRect(x: 0, y: 0, width: 640, height: 360))
+
+        let scrollView = NSScrollView()
+        scrollView.translatesAutoresizingMaskIntoConstraints = false
+        scrollView.hasVerticalScroller = true
+        scrollView.borderType = .bezelBorder
+        scrollView.drawsBackground = false
+
+        logTextView.isEditable = false
+        logTextView.isSelectable = true
+        logTextView.font = NSFont.monospacedSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
+        logTextView.textContainerInset = NSSize(width: 8, height: 8)
+        scrollView.documentView = logTextView
+
+        contentView.addSubview(scrollView)
+
+        NSLayoutConstraint.activate([
+            scrollView.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 12),
+            scrollView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            scrollView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            scrollView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -12),
+        ])
+
+        viewController.view = contentView
+
+        let window = NSWindow(contentViewController: viewController)
+        window.title = "Sync Activity Log"
+        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+        window.setContentSize(NSSize(width: 640, height: 360))
+        window.minSize = NSSize(width: 480, height: 240)
+
+        super.init(window: window)
+        window.delegate = self
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+
+    func replaceLog(with lines: [String]) {
+        logTextView.string = lines.joined(separator: "\n")
+        logTextView.scrollToEndOfDocument(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        onClose?()
     }
 }

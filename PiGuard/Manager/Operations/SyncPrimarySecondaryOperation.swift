@@ -92,27 +92,19 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                     )
                 }
 
-                // Phase 4: Domains — run all 4 buckets in parallel
+                // Phase 4: Domains
                 var domainsSummary = "Domains: skipped"
                 if !skipDomains {
-                    typealias BucketResult = (bucket: DomainBucket, created: Int, updated: Int, deleted: Int)
                     var bucketResults: [BucketResult] = []
-                    try await withThrowingTaskGroup(of: BucketResult.self) { group in
-                        for bucket in DomainBucket.allCases {
-                            group.addTask {
-                                let (c, u, d) = try await self.syncDomainBucket(
-                                    bucket: bucket,
-                                    primary: primary, secondary: secondary,
-                                    primaryIdToName: primaryIdToName,
-                                    secondaryNameToId: secondaryNameToId,
-                                    dryRun: isDryRun
-                                )
-                                return (bucket, c, u, d)
-                            }
-                        }
-                        for try await result in group {
-                            bucketResults.append(result)
-                        }
+                    for bucket in DomainBucket.allCases {
+                        let (created, updated, deleted) = try await self.syncDomainBucket(
+                            bucket: bucket,
+                            primary: primary, secondary: secondary,
+                            primaryIdToName: primaryIdToName,
+                            secondaryNameToId: secondaryNameToId,
+                            dryRun: isDryRun
+                        )
+                        bucketResults.append((bucket, created, updated, deleted))
                     }
                     let domainParts = DomainBucket.allCases.compactMap { bucket -> String? in
                         guard let r = bucketResults.first(where: { $0.bucket == bucket }) else { return nil }
@@ -156,6 +148,8 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     }
 
     // MARK: - Models
+
+    private typealias BucketResult = (bucket: DomainBucket, created: Int, updated: Int, deleted: Int)
 
     private struct Group {
         let id: Int
@@ -256,9 +250,8 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         skip: Bool
     ) async throws -> (summary: String, primaryIdToName: [Int: String], secondaryNameToId: [String: Int]) {
 
-        async let pg = fetchGroups(api: primary)
-        async let sg = fetchGroups(api: secondary)
-        let (primaryGroups, secondaryGroups) = try await (pg, sg)
+        let primaryGroups = try await fetchGroups(api: primary)
+        let secondaryGroups = try await fetchGroups(api: secondary)
 
         let pgByName = Dictionary(primaryGroups.map { ($0.name, $0) }, uniquingKeysWith: { a, _ in a })
         let sgByName = Dictionary(secondaryGroups.map { ($0.name, $0) }, uniquingKeysWith: { a, _ in a })
@@ -385,9 +378,8 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         dryRun: Bool
     ) async throws -> String {
         SyncProgress.report("Sync: fetching adlists…")
-        async let primaryLists = fetchAdlists(api: primary)
-        async let secondaryListsRaw = fetchAdlists(api: secondary)
-        let (pl, slRaw) = try await (primaryLists, secondaryListsRaw)
+        let pl = try await fetchAdlists(api: primary)
+        let slRaw = try await fetchAdlists(api: secondary)
 
         // Only sanitise percent-encoded URLs when we can actually write fixes.
         let sl = dryRun ? slRaw : (try await sanitizeSecondaryPercentEncodedLists(secondary: secondary, lists: slRaw))
@@ -680,9 +672,8 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
 
         SyncProgress.report("Sync: \(dryRun ? "[dry run] " : "")syncing \(bucket.label)…")
 
-        async let pd = fetchDomains(api: primary, bucket: bucket)
-        async let sd = fetchDomains(api: secondary, bucket: bucket)
-        let (primaryDomains, secondaryDomains) = try await (pd, sd)
+        let primaryDomains = try await fetchDomains(api: primary, bucket: bucket)
+        let secondaryDomains = try await fetchDomains(api: secondary, bucket: bucket)
 
         let primaryByDomain = Dictionary(primaryDomains.map { ($0.domain, $0) }, uniquingKeysWith: { a, _ in a })
         let secondaryByDomain = Dictionary(secondaryDomains.map { ($0.domain, $0) }, uniquingKeysWith: { a, _ in a })

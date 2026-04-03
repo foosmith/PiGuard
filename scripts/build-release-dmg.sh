@@ -69,11 +69,6 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-if [[ -z "$SIGN_IDENTITY" ]]; then
-    echo "--sign-identity is required for DMG releases." >&2
-    exit 1
-fi
-
 function read_project_setting() {
     local key="$1"
     rg -m 1 -N "^[[:space:]]*${key} = " "$ROOT_DIR/PiGuard.xcodeproj/project.pbxproj" \
@@ -131,11 +126,19 @@ rm -f "$DMG_PATH"
     -format UDZO \
     "$DMG_PATH" >/dev/null
 
-echo "Signing DMG with ${SIGN_IDENTITY}..."
-/usr/bin/codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG_PATH"
-run_codesign_verify "$DMG_PATH"
+if [[ -n "$SIGN_IDENTITY" ]]; then
+    echo "Signing DMG with ${SIGN_IDENTITY}..."
+    /usr/bin/codesign --force --sign "$SIGN_IDENTITY" --timestamp "$DMG_PATH"
+    run_codesign_verify "$DMG_PATH"
+else
+    echo "No --sign-identity provided; leaving DMG unsigned for local use."
+fi
 
 if [[ -n "$NOTARY_PROFILE" ]]; then
+    if [[ -z "$SIGN_IDENTITY" ]]; then
+        echo "--notary-profile requires --sign-identity." >&2
+        exit 1
+    fi
     echo "Submitting ${DMG_PATH} for notarization with profile ${NOTARY_PROFILE}..."
     xcrun notarytool submit "$DMG_PATH" \
         --keychain-profile "$NOTARY_PROFILE" \
