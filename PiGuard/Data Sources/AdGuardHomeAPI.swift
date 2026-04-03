@@ -46,6 +46,11 @@ struct AdGuardHomeProtectionRequest: Encodable {
     let duration: Int?
 }
 
+struct AdGuardHomeFullStatsResponse {
+    let topBlockedDomains: [TopItem]
+    let topClients: [TopItem]
+}
+
 final class AdGuardHomeAPI {
     let connection: PiholeConnectionV4
 
@@ -98,6 +103,142 @@ final class AdGuardHomeAPI {
 
     func testConnection() async throws -> AdGuardHomeStatusResponse {
         try await fetchStatus()
+    }
+
+    // MARK: - Top Items
+
+    private func parseTopItems(from array: [[String: Int]]) -> [TopItem] {
+        array.prefix(10).compactMap { dict in
+            guard let (name, count) = dict.first else { return nil }
+            return TopItem(name: name, count: count)
+        }
+    }
+
+    func fetchFullStats() async -> AdGuardHomeFullStatsResponse? {
+        guard let url = URL(string: "\(baseURL)/control/stats") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return nil }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+
+            let topBlocked = (json["top_blocked_domains"] as? [[String: Int]]).map(parseTopItems) ?? []
+            let topClients = (json["top_clients"] as? [[String: Int]]).map(parseTopItems) ?? []
+            return AdGuardHomeFullStatsResponse(topBlockedDomains: topBlocked, topClients: topClients)
+        } catch {
+            return nil
+        }
+    }
+
+    func fetchTopBlocked() async -> [TopItem] {
+        await fetchFullStats()?.topBlockedDomains ?? []
+    }
+
+    func fetchTopClients() async -> [TopItem] {
+        await fetchFullStats()?.topClients ?? []
+    }
+
+    // MARK: - Query Log
+
+    func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
+        let blockedReasons: Set<String> = [
+            "FilteredBlackList", "FilteredBlockedService",
+            "FilteredParental", "FilteredSafeBrowsing", "FilteredSafeSearch"
+        ]
+
+        guard let url = URL(string: "\(baseURL)/control/querylog?limit=\(limit)") else { return [] }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return [] }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let entries = json["data"] as? [[String: Any]] else { return [] }
+
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+            return entries.compactMap { entry -> QueryLogEntry? in
+                guard let domain = entry["QH"] as? String,
+                      let client = entry["IP"] as? String,
+                      let reason = entry["reason"] as? String,
+                      let timeStr = entry["time"] as? String else { return nil }
+                let timestamp = formatter.date(from: timeStr) ?? Date()
+                return QueryLogEntry(
+                    timestamp: timestamp,
+                    domain: domain,
+                    client: client,
+                    status: blockedReasons.contains(reason) ? .blocked : .allowed,
+                    serverIdentifier: identifier,
+                    serverDisplayName: connection.endpointDisplayName
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    // MARK: - User Rules
+
+    private func fetchUserRules() async -> [String]? {
+        guard let url = URL(string: "\(baseURL)/control/filtering/status") else { return nil }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return nil }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let rules = json["user_rules"] as? [String] else { return nil }
+            return rules
+        } catch {
+            return nil
+        }
+    }
+
+    private func setUserRules(_ rules: [String]) async -> Bool {
+        guard let url = URL(string: "\(baseURL)/control/filtering/set_rules") else { return false }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+        // AdGuard Home expects rules as a single newline-joined string, not an array
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["rules": rules.joined(separator: "\n")])
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return false }
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    func allowDomain(_ domain: String) async -> Bool {
+        guard var rules = await fetchUserRules() else { return false }
+        let rule = "@@||\(domain)^"
+        if !rules.contains(rule) { rules.append(rule) }
+        return await setUserRules(rules)
+    }
+
+    func blockDomain(_ domain: String) async -> Bool {
+        guard var rules = await fetchUserRules() else { return false }
+        let rule = "||\(domain)^"
+        if !rules.contains(rule) { rules.append(rule) }
+        return await setUserRules(rules)
     }
 
     private func request<T: Decodable>(
