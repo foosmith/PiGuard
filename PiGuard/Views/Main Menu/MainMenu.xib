@@ -22,6 +22,9 @@
                 <outlet property="syncSettingsMenuItem" destination="sYn-c1-SET" id="sYn-c1-OUT"/>
                 <outlet property="updateGravityMenuItem" destination="FBM-G1-UPD" id="FBM-G1-OUT"/>
                 <outlet property="webAdminMenuItem" destination="3md-Pe-xgY" id="Syp-qg-PMb"/>
+                <outlet property="topBlockedMenuItem" destination="FBM-TB-001" id="FBM-TB-OUT"/>
+                <outlet property="topClientsMenuItem" destination="FBM-TC-001" id="FBM-TC-OUT"/>
+                <outlet property="queryLogMenuItem" destination="FBM-QL-001" id="FBM-QL-OUT"/>
             </connections>
         </customObject>
         <menu title="Main Menu" systemMenu="main" id="5KW-ob-Fg0">
@@ -306,6 +309,34 @@
                 <menuItem title="Blocklist: 0" id="6lr-WP-jec">
                     <modifierMask key="keyEquivalentModifierMask"/>
                 </menuItem>
+                <menuItem title="Top Blocked" id="FBM-TB-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Top Blocked" id="FBM-TB-MNU">
+                        <items>
+                            <menuItem title="Loading..." enabled="NO" id="FBM-TB-LDG">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Top Clients" id="FBM-TC-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Top Clients" id="FBM-TC-MNU">
+                        <items>
+                            <menuItem title="Loading..." enabled="NO" id="FBM-TC-LDG">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="FBM-SP-001"/>
+                <menuItem title="Query Log..." id="FBM-QL-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="queryLogAction:" target="Ufk-kp-3MV" id="FBM-QL-ACT"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="FBM-SP-002"/>
                 <menuItem isSeparatorItem="YES" id="gzf-LJ-6hp"/>
                 <menuItem title="Enable Blocking" hidden="YES" enabled="NO" keyEquivalent="p" id="BI6-Ri-lBb">
                     <connections>
