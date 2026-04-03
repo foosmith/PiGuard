@@ -31,6 +31,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private var isFetchingTopItems = false
     private var cachedTopBlocked: [String: [TopItem]] = [:]
     private var cachedTopClients: [String: [TopItem]] = [:]
+    private var queryLogWindowController: QueryLogWindowController?
 
     // MARK: - Internal Views
 
@@ -135,8 +136,14 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     }
 
     @IBAction func queryLogAction(_: NSMenuItem) {
-        // Query Log window will be implemented in Task 6
-        Log.debug("Query Log action triggered")
+        guard let networkOverview = networkOverview else { return }
+        if queryLogWindowController?.window?.isVisible == true {
+            queryLogWindowController?.window?.makeKeyAndOrderFront(self)
+        } else {
+            queryLogWindowController = QueryLogWindowController(piholes: networkOverview.piholes)
+            queryLogWindowController?.showWindow(self)
+        }
+        NSApp.activate(ignoringOtherApps: true)
     }
 
     // MARK: - View Lifecycle

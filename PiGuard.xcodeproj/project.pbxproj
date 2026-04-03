@@ -41,6 +41,8 @@
 		FBAA0008FBAA0008FBAA0008 /* KeychainCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0007FBAA0007FBAA0007 /* KeychainCredentialStore.swift */; };
 		FBAA0021FBAA0021FBAA0021 /* TopItemsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0020FBAA0020FBAA0020 /* TopItemsProvider.swift */; };
 		FBAA0023FBAA0023FBAA0023 /* QueryLogProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0022FBAA0022FBAA0022 /* QueryLogProvider.swift */; };
+		QLC0000002QLC0000002QLC2 /* QueryLogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */; };
+		QLC0000004QLC0000004QLC4 /* QueryLogViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -93,6 +95,8 @@
 		FBAA0009FBAA0009FBAA0009 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		FBAA0020FBAA0020FBAA0020 /* TopItemsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopItemsProvider.swift; sourceTree = "<group>"; };
 		FBAA0022FBAA0022FBAA0022 /* QueryLogProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogProvider.swift; sourceTree = "<group>"; };
+		QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogWindowController.swift; sourceTree = "<group>"; };
+		QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogViewController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,8 +133,18 @@
 				449395E92471B10500FA0C34 /* Main Menu */,
 				442F6F8C24723D60008F1101 /* Preferences */,
 				44381851247DE467009D9B3F /* About */,
+				QLC0000005QLC0000005QLC5 /* QueryLog */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		QLC0000005QLC0000005QLC5 /* QueryLog */ = {
+			isa = PBXGroup;
+			children = (
+				QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */,
+				QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */,
+			);
+			path = QueryLog;
 			sourceTree = "<group>";
 		};
 		441E78B1247E3ECB00FBC7A0 /* Operations */ = {
@@ -370,6 +384,8 @@
 				FBAA0008FBAA0008FBAA0008 /* KeychainCredentialStore.swift in Sources */,
 				FBAA0021FBAA0021FBAA0021 /* TopItemsProvider.swift in Sources */,
 				FBAA0023FBAA0023FBAA0023 /* QueryLogProvider.swift in Sources */,
+				QLC0000002QLC0000002QLC2 /* QueryLogWindowController.swift in Sources */,
+				QLC0000004QLC0000004QLC4 /* QueryLogViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
