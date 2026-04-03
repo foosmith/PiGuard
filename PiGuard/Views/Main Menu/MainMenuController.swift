@@ -28,6 +28,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private var isGravityUpdateInProgress = false
     private var menuBarActivityTimer: Timer?
     private var menuBarActivityFrame = 0
+    private var isFetchingTopItems = false
+    private var cachedTopBlocked: [String: [TopItem]] = [:]
+    private var cachedTopClients: [String: [TopItem]] = [:]
 
     // MARK: - Internal Views
 
@@ -72,6 +75,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     @IBOutlet var syncSettingsMenuItem: NSMenuItem!
     @IBOutlet var syncNowMenuItem: NSMenuItem!
     @IBOutlet var updateGravityMenuItem: NSMenuItem!
+    @IBOutlet var topBlockedMenuItem: NSMenuItem!
+    @IBOutlet var topClientsMenuItem: NSMenuItem!
+    @IBOutlet var queryLogMenuItem: NSMenuItem!
 
 
     // MARK: - Sub-menus for Multi-hole Setups
@@ -126,6 +132,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     @IBAction func updateGravityAction(_: NSMenuItem) {
         manager.updateGravityOnNetwork()
+    }
+
+    @IBAction func queryLogAction(_: NSMenuItem) {
+        // Query Log window will be implemented in Task 6
+        Log.debug("Query Log action triggered")
     }
 
     // MARK: - View Lifecycle
@@ -195,6 +206,49 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         DispatchQueue.main.async {
             self.setupWebAdminMenus()
         }
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        guard menu == mainMenu, !isFetchingTopItems else { return }
+        isFetchingTopItems = true
+
+        guard let networkOverview = networkOverview else {
+            isFetchingTopItems = false
+            return
+        }
+
+        Task {
+            var allTopBlocked: [String: [TopItem]] = [:]
+            var allTopClients: [String: [TopItem]] = [:]
+
+            for pihole in networkOverview.piholes.values {
+                if let api = pihole.api {
+                    allTopBlocked[pihole.identifier] = await api.fetchTopBlocked()
+                    allTopClients[pihole.identifier] = await api.fetchTopClients()
+                } else if let api6 = pihole.api6 {
+                    allTopBlocked[pihole.identifier] = await api6.fetchTopBlocked()
+                    allTopClients[pihole.identifier] = await api6.fetchTopClients()
+                } else if let apiAdguard = pihole.apiAdguard {
+                    if let stats = await apiAdguard.fetchFullStats() {
+                        allTopBlocked[pihole.identifier] = stats.topBlockedDomains
+                        allTopClients[pihole.identifier] = stats.topClients
+                    }
+                }
+            }
+
+            await MainActor.run {
+                self.cachedTopBlocked = allTopBlocked
+                self.cachedTopClients = allTopClients
+                self.rebuildTopBlockedSubmenu()
+                self.rebuildTopClientsSubmenu()
+                self.isFetchingTopItems = false
+            }
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        guard menu == mainMenu else { return }
+        isFetchingTopItems = false
     }
 
     // MARK: - Functions
@@ -625,6 +679,80 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
     }
 
+    private func rebuildTopBlockedSubmenu() {
+        guard let submenu = topBlockedMenuItem.submenu else { return }
+        submenu.removeAllItems()
+
+        guard let networkOverview = networkOverview else {
+            submenu.addItem(NSMenuItem(title: "Unavailable", action: nil, keyEquivalent: ""))
+            return
+        }
+
+        let sortedPiholes = networkOverview.piholes.values.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+        let showServerNames = sortedPiholes.count > 1
+
+        for (index, pihole) in sortedPiholes.enumerated() {
+            if showServerNames {
+                if index > 0 { submenu.addItem(NSMenuItem.separator()) }
+                let header = NSMenuItem(title: pihole.displayName, action: nil, keyEquivalent: "")
+                header.isEnabled = false
+                submenu.addItem(header)
+            }
+
+            let items = cachedTopBlocked[pihole.identifier] ?? []
+            if items.isEmpty {
+                let empty = NSMenuItem(title: "No data", action: nil, keyEquivalent: "")
+                empty.isEnabled = false
+                submenu.addItem(empty)
+            } else {
+                for item in items {
+                    let menuItem = NSMenuItem(title: "\(item.name)  (\(item.count.string))", action: nil, keyEquivalent: "")
+                    menuItem.isEnabled = false
+                    submenu.addItem(menuItem)
+                }
+            }
+        }
+    }
+
+    private func rebuildTopClientsSubmenu() {
+        guard let submenu = topClientsMenuItem.submenu else { return }
+        submenu.removeAllItems()
+
+        guard let networkOverview = networkOverview else {
+            submenu.addItem(NSMenuItem(title: "Unavailable", action: nil, keyEquivalent: ""))
+            return
+        }
+
+        let sortedPiholes = networkOverview.piholes.values.sorted {
+            $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending
+        }
+        let showServerNames = sortedPiholes.count > 1
+
+        for (index, pihole) in sortedPiholes.enumerated() {
+            if showServerNames {
+                if index > 0 { submenu.addItem(NSMenuItem.separator()) }
+                let header = NSMenuItem(title: pihole.displayName, action: nil, keyEquivalent: "")
+                header.isEnabled = false
+                submenu.addItem(header)
+            }
+
+            let items = cachedTopClients[pihole.identifier] ?? []
+            if items.isEmpty {
+                let empty = NSMenuItem(title: "No data", action: nil, keyEquivalent: "")
+                empty.isEnabled = false
+                submenu.addItem(empty)
+            } else {
+                for item in items {
+                    let menuItem = NSMenuItem(title: "\(item.name)  (\(item.count.string))", action: nil, keyEquivalent: "")
+                    menuItem.isEnabled = false
+                    submenu.addItem(menuItem)
+                }
+            }
+        }
+    }
+
     // MARK: - Sync Settings Delegate
 
     private func clearSubmenus() {
@@ -660,6 +788,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
         webAdminMenuItem.action = nil
         webAdminMenuItem.isEnabled = false
+
+        cachedTopBlocked.removeAll()
+        cachedTopClients.removeAll()
     }
 
     private func updateMenuButtons() {
