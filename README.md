@@ -60,19 +60,19 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ## Download & Install
 
-### Current Public Build — Beta (build 695)
+### Current Public Build (build 696)
 
-**[⬇ Download current beta DMG](https://github.com/foosmith/PiGuard/releases/download/v2.3-beta/PiGuard-beta-macOS.dmg)**
+**[⬇ Download current macOS DMG](https://github.com/foosmith/PiGuard/releases/download/v2.3/PiGuard-2.3-696-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-beta-macOS.dmg**
+1. Download **PiGuard-2.3-696-macOS.dmg**
 2. Open the DMG. A window will appear showing the app and an Applications shortcut.
 3. Drag the app into the **Applications** folder.
 4. Eject the DMG (drag it to Trash or right-click → Eject)
 5. Open **Launchpad** or your **Applications** folder and launch PiGuard. It will appear in your menu bar.
 
-> **Gatekeeper on first launch:** This beta is signed and notarized, so macOS should open it normally after you drag it into **Applications**. If Finder still warns due to quarantine caching, eject the DMG, reopen it, and launch the copied app from **Applications**.
+> **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it normally after you drag it into **Applications**. If Finder still warns due to quarantine caching, eject the DMG, reopen it, and launch the copied app from **Applications**.
 
 All releases are listed on the [Releases page](https://github.com/foosmith/PiGuard/releases).
 

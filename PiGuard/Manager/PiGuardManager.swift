@@ -285,39 +285,54 @@ class PiGuardManager: NSObject {
     @objc private func updatePiholes() {
         Log.debug("Manager: Updating Pi-holes")
 
-        let completionOperation = BlockOperation {
-            // If we don't sleep here we run into some weird timing issues with dictionaries
-            sleep(1)
-            self.updateNetworkOverview()
-        }
+        var legacyOperations: [UpdatePiholeOperation] = []
+        var v6Operations: [UpdatePiholeV6Operation] = []
+        var adguardOperations: [UpdateAdGuardHomeOperation] = []
 
         for pihole in piholes.values {
             switch pihole.backendType {
             case .piholeV6:
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeV6Operation(pihole)
-                operation.completionBlock = { [unowned operation] in
-                    self.piholes[pihole.identifier] = operation.pihole
-                }
-                completionOperation.addDependency(operation)
-                operationQueue.addOperation(operation)
+                v6Operations.append(operation)
             case .piholeV5:
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdatePiholeOperation(pihole)
-                operation.completionBlock = { [unowned operation] in
-                    self.piholes[pihole.identifier] = operation.pihole
-                }
-                completionOperation.addDependency(operation)
-                operationQueue.addOperation(operation)
+                legacyOperations.append(operation)
             case .adguardHome:
                 Log.debug("Creating operation for \(pihole.identifier)")
                 let operation = UpdateAdGuardHomeOperation(pihole)
-                operation.completionBlock = { [unowned operation] in
-                    self.piholes[pihole.identifier] = operation.pihole
-                }
-                completionOperation.addDependency(operation)
-                operationQueue.addOperation(operation)
+                adguardOperations.append(operation)
             }
+        }
+
+        let completionOperation = BlockOperation { [weak self, legacyOperations, v6Operations, adguardOperations] in
+            guard let self else { return }
+
+            for operation in legacyOperations {
+                self.piholes[operation.pihole.identifier] = operation.pihole
+            }
+            for operation in v6Operations {
+                self.piholes[operation.pihole.identifier] = operation.pihole
+            }
+            for operation in adguardOperations {
+                self.piholes[operation.pihole.identifier] = operation.pihole
+            }
+
+            self.updateNetworkOverview()
+        }
+
+        for operation in legacyOperations {
+            completionOperation.addDependency(operation)
+            operationQueue.addOperation(operation)
+        }
+        for operation in v6Operations {
+            completionOperation.addDependency(operation)
+            operationQueue.addOperation(operation)
+        }
+        for operation in adguardOperations {
+            completionOperation.addDependency(operation)
+            operationQueue.addOperation(operation)
         }
 
         operationQueue.addOperation(completionOperation)

@@ -165,7 +165,7 @@ class Pihole6API: NSObject {
     }
 
     private let path: String = "/api"
-    private let timeout: Int = 2
+    private let timeout: TimeInterval = 5
 
     override init() {
         connection = PiholeConnectionV4(
@@ -196,39 +196,28 @@ class Pihole6API: NSObject {
     var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/PiGuard"
 
     var admin: URL {
-        return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!
+        let prefix = connection.useSSL ? "https" : "http"
+        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")!
     }
-    
+
     func checkPassword(password: String, totp: Int?) async throws -> PiholeV6PasswordResponse {
-        do {
-            return try await post("/auth", responseType: PiholeV6PasswordResponse.self, body: PiholeV6PasswordRequest(password: password, totp: totp))
-        } catch URLError.timedOut {
-            throw APIError.requestTimedOut
-        }
+        try await post("/auth", responseType: PiholeV6PasswordResponse.self, body: PiholeV6PasswordRequest(password: password, totp: totp))
     }
-    
+
     func fetchSummary() async throws -> Pihole6APISummary {
-        do {
-            return try await get("/stats/summary", responseType: Pihole6APISummary.self, apiKey: try await sessionToken())
-        }
+        try await get("/stats/summary", responseType: Pihole6APISummary.self, apiKey: try await sessionToken())
     }
-    
+
     func fetchBlockingStatus() async throws -> Pihole6APIBlockingStatus {
-        do {
-            return try await get("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken())
-        }
+        try await get("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken())
     }
-    
+
     func disable(seconds: Int?) async throws -> Pihole6APIBlockingStatus {
-        do {
-            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: false, timer: seconds))
-        }
+        try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: false, timer: seconds))
     }
-    
+
     func enable() async throws -> Pihole6APIBlockingStatus {
-        do {
-            return try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: true, timer: nil))
-        }
+        try await post("/dns/blocking", responseType: Pihole6APIBlockingStatus.self, apiKey: try await sessionToken(), body: PiholeV6BlockingRequest(blocking: true, timer: nil))
     }
 
     func triggerGravityUpdate() async throws {
@@ -253,19 +242,23 @@ class Pihole6API: NSObject {
     }
 
     private func performRaw(_ req: URLRequest) async throws -> Data {
-        let (data, response) = try await URLSession.shared.data(for: req)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            switch http.statusCode {
-            case 401: throw APIError.unauthorized
-            case 403: throw APIError.forbidden
-            default:
-                throw APIError.invalidResponse(
-                    statusCode: http.statusCode,
-                    content: String(data: data, encoding: .utf8) ?? ""
-                )
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+                switch http.statusCode {
+                case 401: throw APIError.unauthorized
+                case 403: throw APIError.forbidden
+                default:
+                    throw APIError.invalidResponse(
+                        statusCode: http.statusCode,
+                        content: String(data: data, encoding: .utf8) ?? ""
+                    )
+                }
             }
+            return data
+        } catch {
+            throw normalizeError(error)
         }
-        return data
     }
 
     func getData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem]? = nil) async throws -> Data {
@@ -385,6 +378,7 @@ class Pihole6API: NSObject {
     ) -> URLRequest {
         var request = URLRequest(url: url)
         request.httpMethod = method
+        request.timeoutInterval = timeout
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         if let apiKey {
@@ -392,7 +386,6 @@ class Pihole6API: NSObject {
         }
         if let body {
             request.httpBody = try? JSONEncoder().encode(body)
-            request.timeoutInterval = 5
         }
         return request
     }
@@ -420,34 +413,36 @@ class Pihole6API: NSObject {
                 throw APIError.decodingFailed
             }
         } catch {
-            throw APIError.requestFailed(error)
+            throw normalizeError(error)
         }
     }
 
     private func get<T: Decodable>(
         _ path: String, responseType: T.Type, apiKey: String? = nil
     ) async throws -> T {
-        do {
-            let request = request(
-                for: URL(string: "\(baseURL)\(path)")!, apiKey: apiKey)
-            return try await perform(request, responseType: T.self)
-        } catch {
-            throw APIError.requestFailed(error)
-        }
+        let request = request(
+            for: URL(string: "\(baseURL)\(path)")!, apiKey: apiKey)
+        return try await perform(request, responseType: T.self)
     }
 
     private func post<T: Decodable>(
         _ path: String, responseType: T.Type, apiKey: String? = nil,
         body: Encodable? = nil
     ) async throws -> T {
-        do {
-            let request = request(
-                for: URL(string: "\(baseURL)\(path)")!, method: "POST",
-                apiKey: apiKey, body: body)
-            return try await perform(request, responseType: T.self)
-        } catch {
-            throw APIError.requestFailed(error)
+        let request = request(
+            for: URL(string: "\(baseURL)\(path)")!, method: "POST",
+            apiKey: apiKey, body: body)
+        return try await perform(request, responseType: T.self)
+    }
+
+    private func normalizeError(_ error: Error) -> APIError {
+        if let apiError = error as? APIError {
+            return apiError
         }
+        if let urlError = error as? URLError, urlError.code == .timedOut {
+            return .requestTimedOut
+        }
+        return .requestFailed(error)
     }
 
     private func sessionToken() async throws -> String? {

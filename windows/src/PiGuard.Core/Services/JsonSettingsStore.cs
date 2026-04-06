@@ -33,7 +33,11 @@ public sealed class JsonSettingsStore : ISettingsStore
 
     public async Task SaveAsync(AppPreferences preferences, CancellationToken cancellationToken = default)
     {
-        Directory.CreateDirectory(Path.GetDirectoryName(_settingsPath)!);
+        var directory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrWhiteSpace(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
 
         await using var stream = File.Create(_settingsPath);
         await JsonSerializer.SerializeAsync(stream, preferences, SerializerOptions, cancellationToken);
