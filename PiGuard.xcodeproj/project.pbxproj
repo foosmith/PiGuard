@@ -347,7 +347,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILT_PRODUCTS_DIR}/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources/copy-helper-swiftpm.sh\"\n";
+			shellScript = "# Type a script or drag a script file from your workspace to insert its path.\n\"${BUILT_PRODUCTS_DIR}/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources/copy-helper-swiftpm.sh\"\n\nhelper_path=\"${TARGET_BUILD_DIR}/${CONTENTS_FOLDER_PATH}/Library/LoginItems/LaunchAtLoginHelper.app\"\nsigning_identity=\"${EXPANDED_CODE_SIGN_IDENTITY:-${CODE_SIGN_IDENTITY:-}}\"\nif [ -d \"$helper_path\" ] && [ -n \"$signing_identity\" ]; then\n\t/usr/bin/codesign --force --sign \"$signing_identity\" --preserve-metadata=entitlements \"$helper_path\"\nfi\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -537,7 +537,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 696;
+				CURRENT_PROJECT_VERSION = 697;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -568,7 +568,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 696;
+				CURRENT_PROJECT_VERSION = 697;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
 				ENABLE_HARDENED_RUNTIME = YES;
