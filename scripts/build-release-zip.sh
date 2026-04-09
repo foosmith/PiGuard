@@ -170,6 +170,16 @@ if [[ -n "$SIGN_IDENTITY" ]]; then
         run_codesign_verify "$LOGIN_HELPER_APP_PATH"
     fi
 
+    echo "Re-signing embedded frameworks..."
+    find "$APP_PATH/Contents/Frameworks" -name "*.dylib" -o -name "*.framework" 2>/dev/null | while read -r item; do
+        /usr/bin/codesign \
+            --force \
+            --sign "$SIGN_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$item"
+    done
+
     echo "Re-signing ${APP_NAME}.app with release entitlements..."
     /usr/bin/codesign \
         --force \

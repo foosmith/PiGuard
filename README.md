@@ -60,13 +60,13 @@ This is aimed at real-world failover and mirrored DNS setups where keeping two P
 
 ## Download & Install
 
-### Current Public Build (build 696)
+### Current Public Build (build 699)
 
-**[⬇ Download current macOS DMG](https://github.com/foosmith/PiGuard/releases/download/v2.3/PiGuard-2.3-696-macOS.dmg)**
+**[⬇ Download current macOS DMG](https://github.com/foosmith/PiGuard/releases/download/v3.1/PiGuard-3.1-699-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-2.3-696-macOS.dmg**
+1. Download **PiGuard-3.1-699-macOS.dmg**
 2. Open the DMG. A window will appear showing the app and an Applications shortcut.
 3. Drag the app into the **Applications** folder.
 4. Eject the DMG (drag it to Trash or right-click → Eject)

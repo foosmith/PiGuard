@@ -155,8 +155,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     override func awakeFromNib() {
         if let statusBarButton = statusBarItem.button {
-            statusBarButton.image = menuBarImage()
-            statusBarButton.imagePosition = .imageLeading
+            let image = menuBarImage()
+            statusBarButton.image = image
+            statusBarButton.imagePosition = image == nil ? .noImage : .imageLeading
             statusBarButton.title = "Initializing"
         }
         statusBarItem.menu = mainMenu
@@ -326,8 +327,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             DispatchQueue.main.async {
                 let image = self.menuBarImage()
                 statusBarButton.image = image
-                if title.isEmpty || image == nil {
-                    statusBarButton.imagePosition = image == nil ? .noImage : .imageOnly
+                if image == nil {
+                    statusBarButton.imagePosition = .noImage
+                    statusBarButton.title = title
+                } else if title.isEmpty {
+                    statusBarButton.imagePosition = .imageOnly
                 } else {
                     statusBarButton.imagePosition = .imageLeading
                     statusBarButton.title = title
