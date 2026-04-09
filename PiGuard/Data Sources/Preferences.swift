@@ -38,6 +38,7 @@ struct Preferences {
         static let syncLastStatus = "syncLastStatus"
         static let syncLastMessage = "syncLastMessage"
         static let enableLogging = "enableLogging"
+        static let hideMenuBarIcon = "hideMenuBarIcon"
     }
 
     static var standard: UserDefaults {
@@ -67,6 +68,7 @@ struct Preferences {
             Key.syncLastStatus: "",
             Key.syncLastMessage: "",
             Key.enableLogging: false,
+            Key.hideMenuBarIcon: false,
         ])
 
         return database
@@ -240,6 +242,11 @@ extension UserDefaults {
 
     var enableLogging: Bool { bool(forKey: Preferences.Key.enableLogging) }
     func set(enableLogging: Bool) { set(enableLogging, for: Preferences.Key.enableLogging) }
+
+    // MARK: - Menu Bar
+
+    var hideMenuBarIcon: Bool { bool(forKey: Preferences.Key.hideMenuBarIcon) }
+    func set(hideMenuBarIcon: Bool) { set(hideMenuBarIcon, for: Preferences.Key.hideMenuBarIcon) }
 }
 
 private extension UserDefaults {

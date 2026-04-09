@@ -46,6 +46,14 @@ struct AdGuardHomeProtectionRequest: Encodable {
     let duration: Int?
 }
 
+struct AdGuardHomeFilterRefreshRequest: Encodable {
+    let whitelist: Bool
+}
+
+struct AdGuardHomeFilterRefreshResponse: Decodable {
+    let updated: Int
+}
+
 struct AdGuardHomeFullStatsResponse {
     let topBlockedDomains: [TopItem]
     let topClients: [TopItem]
@@ -94,10 +102,11 @@ final class AdGuardHomeAPI {
     }
 
     func refreshFilters() async throws {
-        let _: AdGuardHomeStatusResponse = try await request(
+        let _: AdGuardHomeFilterRefreshResponse = try await request(
             path: "/control/filtering/refresh",
             method: "POST",
-            responseType: AdGuardHomeStatusResponse.self
+            responseType: AdGuardHomeFilterRefreshResponse.self,
+            body: AdGuardHomeFilterRefreshRequest(whitelist: false)
         )
     }
 
@@ -145,6 +154,12 @@ final class AdGuardHomeAPI {
 
     // MARK: - Query Log
 
+    private static let queryLogDateFormatter: ISO8601DateFormatter = {
+        let f = ISO8601DateFormatter()
+        f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return f
+    }()
+
     func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
         let blockedReasons: Set<String> = [
             "FilteredBlackList", "FilteredBlockedService",
@@ -164,15 +179,13 @@ final class AdGuardHomeAPI {
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let entries = json["data"] as? [[String: Any]] else { return [] }
 
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
             return entries.compactMap { entry -> QueryLogEntry? in
-                guard let domain = entry["QH"] as? String,
-                      let client = entry["IP"] as? String,
+                guard let question = entry["question"] as? [String: Any],
+                      let domain = question["name"] as? String,
+                      let client = entry["client"] as? String,
                       let reason = entry["reason"] as? String,
                       let timeStr = entry["time"] as? String else { return nil }
-                let timestamp = formatter.date(from: timeStr) ?? Date()
+                let timestamp = Self.queryLogDateFormatter.date(from: timeStr) ?? Date()
                 return QueryLogEntry(
                     timestamp: timestamp,
                     domain: domain,
@@ -215,8 +228,7 @@ final class AdGuardHomeAPI {
         req.timeoutInterval = 5
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
         req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
-        // AdGuard Home expects rules as a single newline-joined string, not an array
-        req.httpBody = try? JSONSerialization.data(withJSONObject: ["rules": rules.joined(separator: "\n")])
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["rules": rules])
 
         do {
             let (_, response) = try await URLSession.shared.data(for: req)

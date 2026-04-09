@@ -66,6 +66,12 @@ class PreferencesViewController: NSViewController {
     @IBOutlet var enableLoggingCheckbox: NSButton!
     @IBOutlet var showLogFileButton: NSButton!
 
+    private lazy var hideMenuBarIconCheckbox: NSButton = {
+        let cb = NSButton(checkboxWithTitle: "Hide menu bar icon", target: self, action: #selector(checkboxAction(_:)))
+        cb.toolTip = "Removes the PiGuard shield icon from the menu bar, showing only text stats"
+        return cb
+    }()
+
     // MARK: - Actions
 
     @IBAction func addButtonActiom(_: NSButton) {
@@ -175,6 +181,27 @@ class PreferencesViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
+        // Insert "Hide menu bar icon" between the shortcut checkbox and Launch at Login.
+        // The storyboard pins launchAtLogin.top to shortcutEnabled.bottom — find and
+        // remove that constraint, then re-pin with our new checkbox in the middle.
+        if let parent = shortcutEnabledCheckbox.superview {
+            let existing = parent.constraints.first(where: {
+                ($0.firstItem as? NSView) == launchAtLogincheckbox &&
+                $0.firstAttribute == .top &&
+                ($0.secondItem as? NSView) == shortcutEnabledCheckbox &&
+                $0.secondAttribute == .bottom
+            })
+            existing?.isActive = false
+
+            hideMenuBarIconCheckbox.translatesAutoresizingMaskIntoConstraints = false
+            parent.addSubview(hideMenuBarIconCheckbox)
+            NSLayoutConstraint.activate([
+                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
+                launchAtLogincheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+            ])
+        }
+
         updateUI()
 
         shortcutEnabledCheckbox.toolTip = "This shortcut lets you quickly enable or disable blocking on your configured servers"
@@ -193,6 +220,7 @@ class PreferencesViewController: NSViewController {
         showLabelsCheckbox.state = Preferences.standard.showLabels ? .on : .off
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
         shortcutEnabledCheckbox.state = Preferences.standard.shortcutEnabled ? .on : .off
+        hideMenuBarIconCheckbox.state = Preferences.standard.hideMenuBarIcon ? .on : .off
 
         if !Preferences.standard.showTitle {
             showLabelsCheckbox.isEnabled = false
@@ -242,6 +270,7 @@ class PreferencesViewController: NSViewController {
 
         Preferences.standard.set(enableLogging: enableLoggingCheckbox.state == .on)
         delegate?.applyLoggingPreference()
+        Preferences.standard.set(hideMenuBarIcon: hideMenuBarIconCheckbox.state == .on)
 
         delegate?.updatedPreferences()
 

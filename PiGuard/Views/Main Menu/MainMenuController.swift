@@ -324,9 +324,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
         if let statusBarButton = statusBarItem.button {
             DispatchQueue.main.async {
-                statusBarButton.image = self.menuBarImage()
-                if title.isEmpty {
-                    statusBarButton.imagePosition = .imageOnly
+                let image = self.menuBarImage()
+                statusBarButton.image = image
+                if title.isEmpty || image == nil {
+                    statusBarButton.imagePosition = image == nil ? .noImage : .imageOnly
                 } else {
                     statusBarButton.imagePosition = .imageLeading
                     statusBarButton.title = title
@@ -394,6 +395,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             )
             image?.isTemplate = true
             return image
+        }
+
+        if Preferences.standard.hideMenuBarIcon {
+            return nil
         }
 
         let image = NSImage(named: "icon")

@@ -27,8 +27,12 @@ final class AdGuardHomeSettingsViewController: NSViewController {
     private let saveAndCloseButton = NSButton(title: "Save", target: nil, action: nil)
     private let closeButton = NSButton(title: "Cancel", target: nil, action: nil)
 
+    // Maps each help button to the text shown in its popover
+    private var helpTexts: [ObjectIdentifier: String] = [:]
+    private var helpPopover: NSPopover?
+
     override func loadView() {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 520, height: 320))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 560, height: 420))
         container.translatesAutoresizingMaskIntoConstraints = false
 
         let titleLabel = NSTextField(labelWithString: "AdGuard Home")
@@ -37,11 +41,18 @@ final class AdGuardHomeSettingsViewController: NSViewController {
         let subtitleLabel = NSTextField(labelWithString: "Connect to an AdGuard Home admin endpoint.")
         subtitleLabel.textColor = .secondaryLabelColor
 
+        // Make all text fields tall and full-width stretching
         [hostnameTextField, portTextField, usernameTextField, passwordTextField, adminURLTextField].forEach {
             $0.translatesAutoresizingMaskIntoConstraints = false
             $0.target = self
             $0.action = #selector(textFieldDidChange)
+            $0.heightAnchor.constraint(equalToConstant: 32).isActive = true
+            $0.setContentHuggingPriority(.defaultLow, for: .horizontal)
+            $0.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
         }
+        // Port gets a fixed narrow width; hostname expands to fill the rest
+        portTextField.widthAnchor.constraint(equalToConstant: 80).isActive = true
+        portTextField.setContentHuggingPriority(.required, for: .horizontal)
 
         hostnameTextField.placeholderString = "adguard.local"
         portTextField.placeholderString = "3000"
@@ -60,18 +71,44 @@ final class AdGuardHomeSettingsViewController: NSViewController {
         closeButton.action = #selector(closeButtonAction(_:))
         saveAndCloseButton.isEnabled = false
 
-        testConnectionLabel.alignment = .right
+        testConnectionLabel.alignment = .left
         testConnectionLabel.textColor = .secondaryLabelColor
+        testConnectionLabel.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        // Hostname + Port side by side, hostname stretches
+        let hostPortRow = NSStackView(views: [
+            labeledColumn(label: "Hostname", field: hostnameTextField,
+                help: "The IP address or domain name of your AdGuard Home server.\n\nExamples:\n• 192.168.1.100\n• adguard.local\n• adguard.example.com"),
+            labeledColumn(label: "Port", field: portTextField,
+                help: "The port number for the AdGuard Home web interface.\n\nDefaults:\n• 3000 — plain HTTP\n• 443 — HTTPS (when Use SSL is on)\n• 80 — if hosted behind a reverse proxy")
+        ])
+        hostPortRow.orientation = .horizontal
+        hostPortRow.alignment = .bottom
+        hostPortRow.spacing = 12
+        hostPortRow.distribution = .fill
+        hostPortRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let sslHelpBtn = makeHelpButton(
+            text: "Enable if AdGuard Home is configured with HTTPS. The port will automatically switch between 3000 and 443 when toggled.\n\nLeave off for standard local network setups without a certificate.")
+        let sslRow = NSStackView(views: [useSSLCheckbox, sslHelpBtn])
+        sslRow.orientation = .horizontal
+        sslRow.alignment = .centerY
+        sslRow.spacing = 6
+
+        let usernameCol = labeledColumn(label: "Username", field: usernameTextField)
+        let passwordCol = labeledColumn(label: "Password", field: passwordTextField)
+        let adminURLCol = labeledColumn(label: "Admin URL", field: adminURLTextField,
+            help: "The full URL to the AdGuard Home admin panel. Auto-generated from hostname, port, and SSL settings above.\n\nOverride only if you use a reverse proxy or a non-standard path.\n\nExample: https://adguard.example.com/admin")
 
         let formStack = NSStackView(views: [
-            labeledRow(label: "Hostname", field: hostnameTextField),
-            labeledRow(label: "Port", field: portTextField),
-            labeledRow(label: "", field: useSSLCheckbox),
-            labeledRow(label: "Username", field: usernameTextField),
-            labeledRow(label: "Password", field: passwordTextField),
-            labeledRow(label: "Admin URL", field: adminURLTextField)
+            hostPortRow,
+            sslRow,
+            usernameCol,
+            passwordCol,
+            adminURLCol
         ])
         formStack.orientation = .vertical
+        formStack.alignment = .leading
         formStack.spacing = 12
         formStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -83,6 +120,7 @@ final class AdGuardHomeSettingsViewController: NSViewController {
 
         let rootStack = NSStackView(views: [titleLabel, subtitleLabel, formStack, buttonRow])
         rootStack.orientation = .vertical
+        rootStack.alignment = .leading
         rootStack.spacing = 16
         rootStack.translatesAutoresizingMaskIntoConstraints = false
 
@@ -91,7 +129,15 @@ final class AdGuardHomeSettingsViewController: NSViewController {
             rootStack.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 24),
             rootStack.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -24),
             rootStack.topAnchor.constraint(equalTo: container.topAnchor, constant: 24),
-            rootStack.bottomAnchor.constraint(lessThanOrEqualTo: container.bottomAnchor, constant: -24)
+            rootStack.bottomAnchor.constraint(equalTo: container.bottomAnchor, constant: -24),
+
+            // Stretch all full-width rows to fill the available width
+            formStack.trailingAnchor.constraint(equalTo: rootStack.trailingAnchor),
+            hostPortRow.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
+            usernameCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
+            passwordCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
+            adminURLCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
+            buttonRow.trailingAnchor.constraint(equalTo: rootStack.trailingAnchor),
         ])
 
         view = container
@@ -278,18 +324,85 @@ final class AdGuardHomeSettingsViewController: NSViewController {
         return "Unable to connect"
     }
 
-    private func labeledRow(label: String, field: NSView) -> NSStackView {
-        let labelField = NSTextField(labelWithString: label)
-        labelField.alignment = .right
-        labelField.font = NSFont.systemFont(ofSize: NSFont.systemFontSize)
-        labelField.translatesAutoresizingMaskIntoConstraints = false
-        labelField.widthAnchor.constraint(equalToConstant: 90).isActive = true
+    private func makeHelpButton(text: String) -> NSButton {
+        let btn = NSButton()
+        btn.image = NSImage(systemSymbolName: "questionmark.circle", accessibilityDescription: "Help")
+        btn.imagePosition = .imageOnly
+        btn.isBordered = false
+        btn.contentTintColor = .tertiaryLabelColor
+        btn.translatesAutoresizingMaskIntoConstraints = false
+        btn.target = self
+        btn.action = #selector(helpButtonClicked(_:))
+        helpTexts[ObjectIdentifier(btn)] = text
+        return btn
+    }
 
-        let row = NSStackView(views: [labelField, field])
-        row.orientation = .horizontal
-        row.alignment = .centerY
-        row.spacing = 12
-        row.translatesAutoresizingMaskIntoConstraints = false
-        return row
+    @objc private func helpButtonClicked(_ sender: NSButton) {
+        guard let text = helpTexts[ObjectIdentifier(sender)] else { return }
+
+        helpPopover?.close()
+
+        let label = NSTextField(wrappingLabelWithString: text)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        label.preferredMaxLayoutWidth = 260
+
+        let contentView = NSView()
+        contentView.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(label)
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 12),
+            label.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -12),
+            label.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 10),
+            label.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -10),
+            contentView.widthAnchor.constraint(equalToConstant: 284),
+        ])
+
+        let vc = NSViewController()
+        vc.view = contentView
+        vc.preferredContentSize = contentView.fittingSize
+
+        let popover = NSPopover()
+        popover.contentViewController = vc
+        popover.behavior = .transient
+        popover.show(relativeTo: sender.bounds, of: sender, preferredEdge: .maxY)
+        helpPopover = popover
+    }
+
+    private func labeledColumn(label: String, field: NSView, help: String? = nil) -> NSStackView {
+        let labelField = NSTextField(labelWithString: label)
+        labelField.font = NSFont.systemFont(ofSize: NSFont.smallSystemFontSize, weight: .medium)
+        labelField.textColor = .secondaryLabelColor
+        labelField.translatesAutoresizingMaskIntoConstraints = false
+
+        let labelRow: NSView
+        if let help {
+            let helpBtn = makeHelpButton(text: help)
+            let row = NSStackView(views: [labelField, helpBtn])
+            row.orientation = .horizontal
+            row.alignment = .centerY
+            row.spacing = 4
+            row.translatesAutoresizingMaskIntoConstraints = false
+            labelRow = row
+        } else {
+            labelRow = labelField
+        }
+
+        // Field should fill the column's full width
+        field.translatesAutoresizingMaskIntoConstraints = false
+        field.setContentHuggingPriority(.defaultLow, for: .horizontal)
+
+        let col = NSStackView(views: [labelRow, field])
+        col.orientation = .vertical
+        col.alignment = .leading
+        col.spacing = 4
+        col.translatesAutoresizingMaskIntoConstraints = false
+
+        // Pin field trailing to column trailing so it stretches
+        NSLayoutConstraint.activate([
+            field.trailingAnchor.constraint(equalTo: col.trailingAnchor),
+            labelRow.trailingAnchor.constraint(lessThanOrEqualTo: col.trailingAnchor),
+        ])
+
+        return col
     }
 }
