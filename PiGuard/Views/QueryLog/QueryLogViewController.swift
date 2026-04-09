@@ -56,10 +56,14 @@ final class QueryLogViewController: NSViewController {
         refreshButton.action = #selector(refreshAction)
         refreshButton.bezelStyle = .rounded
 
+        searchField.target = self
+        searchField.action = #selector(searchChanged(_:))
+        searchField.placeholderString = "Search"
+
         statusLabel.textColor = .secondaryLabelColor
 
         // Toolbar row
-        let toolbar = NSStackView(views: [serverFilterPopup, NSView(), statusLabel, refreshButton])
+        let toolbar = NSStackView(views: [searchField, serverFilterPopup, NSView(), statusLabel, refreshButton])
         toolbar.orientation = .horizontal
         toolbar.alignment = .centerY
         toolbar.spacing = 8
@@ -181,6 +185,10 @@ final class QueryLogViewController: NSViewController {
 
     @objc private func refreshAction() {
         fetchQueryLog()
+    }
+
+    @objc private func searchChanged(_ sender: NSSearchField) {
+        // TODO: Implement search filtering in Task 5
     }
 
     // MARK: - Allow / Block
