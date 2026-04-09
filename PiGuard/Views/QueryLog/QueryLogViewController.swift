@@ -86,6 +86,10 @@ final class QueryLogViewController: NSViewController {
         serverCol.title = "Server"
         serverCol.width = 150
 
+        domainCol.sortDescriptorPrototype = NSSortDescriptor(key: "domain", ascending: true, selector: nil)
+        clientCol.sortDescriptorPrototype = NSSortDescriptor(key: "client", ascending: true, selector: nil)
+        statusCol.sortDescriptorPrototype = NSSortDescriptor(key: "status", ascending: true, selector: nil)
+
         tableView.addTableColumn(timeCol)
         tableView.addTableColumn(domainCol)
         tableView.addTableColumn(clientCol)
