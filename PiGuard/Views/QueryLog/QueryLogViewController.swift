@@ -160,7 +160,6 @@ final class QueryLogViewController: NSViewController {
             await MainActor.run {
                 self.entries = allEntries
                 self.applyFilter()
-                self.statusLabel.stringValue = "\(self.filteredEntries.count) queries"
                 self.refreshButton.isEnabled = true
                 self.isLoading = false
             }
@@ -170,17 +169,50 @@ final class QueryLogViewController: NSViewController {
     private func applyFilter() {
         let selectedIdentifier = serverFilterPopup.selectedItem?.representedObject as? String
 
+        // Step 1: filter by server
+        var result: [QueryLogEntry]
         if let selectedIdentifier {
-            filteredEntries = entries.filter { $0.serverIdentifier == selectedIdentifier }
+            result = entries.filter { $0.serverIdentifier == selectedIdentifier }
         } else {
-            filteredEntries = entries
+            result = entries
         }
+
+        // Step 2: filter by search text
+        if !searchText.isEmpty {
+            result = result.filter { entry in
+                entry.domain.localizedCaseInsensitiveContains(searchText) ||
+                entry.client.localizedCaseInsensitiveContains(searchText) ||
+                entry.status.rawValue.localizedCaseInsensitiveContains(searchText) ||
+                entry.serverDisplayName.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+
+        // Step 3: sort (first descriptor only; switch on key to avoid KVC on Swift struct)
+        if let descriptor = currentSortDescriptors.first {
+            result.sort { a, b in
+                let ascending: Bool
+                switch descriptor.key {
+                case "domain":
+                    ascending = a.domain.localizedCaseInsensitiveCompare(b.domain) == .orderedAscending
+                case "client":
+                    ascending = a.client.localizedCaseInsensitiveCompare(b.client) == .orderedAscending
+                case "status":
+                    ascending = a.status.rawValue < b.status.rawValue
+                default:
+                    ascending = false
+                }
+                return descriptor.ascending ? ascending : !ascending
+            }
+        }
+
+        filteredEntries = result
 
         // Show/hide server column
         let serverCol = tableView.tableColumns.first { $0.identifier.rawValue == "server" }
         serverCol?.isHidden = selectedIdentifier != nil
 
         tableView.reloadData()
+        statusLabel.stringValue = "\(filteredEntries.count) queries"
     }
 
     @objc private func filterChanged() {
