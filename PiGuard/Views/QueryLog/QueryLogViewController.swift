@@ -9,6 +9,9 @@ final class QueryLogViewController: NSViewController {
     private let piholes: [String: Pihole]
     private var entries: [QueryLogEntry] = []
     private var filteredEntries: [QueryLogEntry] = []
+    private let searchField = NSSearchField()
+    private var searchText: String = ""
+    private var currentSortDescriptors: [NSSortDescriptor] = []
 
     private let serverFilterPopup = NSPopUpButton()
     private let refreshButton = NSButton(title: "Refresh", target: nil, action: nil)
