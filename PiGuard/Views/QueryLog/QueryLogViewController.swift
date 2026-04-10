@@ -159,6 +159,10 @@ final class QueryLogViewController: NSViewController {
 
             await MainActor.run {
                 self.entries = allEntries
+                self.searchText = ""
+                self.searchField.stringValue = ""
+                self.currentSortDescriptors = []
+                self.tableView.sortDescriptors = []
                 self.applyFilter()
                 self.refreshButton.isEnabled = true
                 self.isLoading = false
@@ -224,7 +228,8 @@ final class QueryLogViewController: NSViewController {
     }
 
     @objc private func searchChanged(_ sender: NSSearchField) {
-        // TODO: Implement search filtering in Task 5
+        searchText = sender.stringValue
+        applyFilter()
     }
 
     // MARK: - Allow / Block
@@ -320,6 +325,11 @@ extension QueryLogViewController: NSTableViewDataSource {
 }
 
 extension QueryLogViewController: NSTableViewDelegate {
+    func tableView(_ tableView: NSTableView, sortDescriptorsDidChange oldDescriptors: [NSSortDescriptor]) {
+        currentSortDescriptors = tableView.sortDescriptors
+        applyFilter()
+    }
+
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
         guard row < filteredEntries.count, let column = tableColumn else { return nil }
         let entry = filteredEntries[row]
