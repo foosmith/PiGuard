@@ -6,7 +6,7 @@ This is a fork of the original [PiBar](https://github.com/amiantos/pibar) projec
 
 ## Screenshots
 
-<img src="docs/screenshots/menu-bar.png" width="220" alt="Menu bar dropdown"> <img src="docs/screenshots/preferences.png" width="340" alt="Preferences"> <img src="docs/screenshots/sync-settings.png" width="340" alt="Sync Settings"> <img src="docs/screenshots/about.png" width="260" alt="About">
+![PiGuard screenshots showing the menu bar, preferences, sync settings, and about window](docs/screenshots/piguard-readme-collage.png)
 
 ## Pi-hole Features
 
