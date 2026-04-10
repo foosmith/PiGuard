@@ -1,98 +1,90 @@
 # PiGuard for macOS
 
-PiGuard is a macOS menu bar companion for DNS filtering servers. It keeps the important controls one click away, adds a practical Primary → Secondary sync workflow for Pi-hole v6, and is being extended to work across mixed Pi-hole and AdGuard Home environments.
+PiGuard is a native macOS menu bar app for managing DNS filtering servers. It puts the controls you reach for most — blocking toggle, filter refresh, query log — one click away, and adds practical tools for home-lab setups running multiple servers.
 
-This fork builds on the original PiBar idea and pushes it toward modern home-lab DNS setups, especially networks running multiple filtering servers that need to stay aligned.
+This is a fork of the original [PiBar](https://github.com/amiantos/pibar) project, extended to support Pi-hole v6, AdGuard Home, and mixed-backend environments.
 
-## What PiGuard Does
+## Pi-hole Features
 
-- Shows blocking status and DNS activity from the macOS menu bar
-- Supports multiple server connections
-- Supports Pi-hole v5 and older
-- Supports Pi-hole v6
-- Adds AdGuard Home integration work for mixed-backend deployments
-- Lets you enable or disable blocking without opening the web UI
-- Refreshes Pi-hole gravity or AdGuard Home filters from the menu bar
-- Includes optional Primary → Secondary sync for Pi-hole v6 environments
-- Supports launch at login and a global keyboard shortcut for quick control
-- Lets you tune refresh behavior with a configurable polling interval
-- Includes opt-in diagnostic logging to a local log file for troubleshooting
-- Includes a searchable, sortable Query Log window
+- Connect to one or more Pi-hole servers (v5 and v6)
+- Toggle blocking on or off from the menu bar
+- Refresh Pi-hole gravity from the menu bar
+- Pi-hole v6 connections authenticate with the app password flow and persist correctly across restarts
 
-## AdGuard Home Status
+### Primary → Secondary Sync (Pi-hole v6)
 
-PiGuard is the branch and product direction for bringing AdGuard Home into the app alongside Pi-hole.
+PiGuard includes a built-in sync flow for keeping two Pi-hole v6 nodes in sync — useful for failover and mirrored DNS setups where manually clicking through two web UIs is not practical.
 
-Current AdGuard Home work in this repo includes:
-
-- backend detection support
-- an AdGuard Home API client
-- polling and status normalization
-- blocking enable or disable actions
-- filter refresh support
-- connection settings UI
-- mixed-backend menu wording updates
-
-The remaining work is validation, polish, and finishing the broader rename and packaging sweep around the new PiGuard identity.
-
-## Sync Features
-
-PiGuard includes a built-in Primary → Secondary sync flow for Pi-hole v6.
-
-- Choose a primary Pi-hole and a secondary Pi-hole
-- Run sync on demand or on an interval
+- Choose a primary and a secondary Pi-hole
+- Sync on demand or on a schedule
 - Sync groups, adlists, and domains
 - Preview changes with dry run mode before writing anything
-- Optionally wipe secondary adlists before rebuilding from the primary
-- Review recent sync status and activity from the app
+- Optionally wipe secondary adlists before rebuilding from primary
+- Review sync status and activity log from within the app
+- Visual in-progress indicator in the menu bar during sync
 
-This is aimed at real-world failover and mirrored DNS setups where keeping two Pi-hole v6 nodes in sync matters more than manually clicking through the web UI.
+## AdGuard Home Features
 
-## Usability Improvements
+- Connect to AdGuard Home alongside or instead of Pi-hole
+- Toggle blocking on or off from the menu bar
+- Refresh AdGuard Home filters from the menu bar
+- Backend-aware connection settings with per-server configuration
 
-- Pi-hole v6 connections now persist using the proper app password flow instead of an expired session token
-- AdGuard Home connections can be modeled with their own backend-aware settings flow
-- Launch at login is wired directly into preferences
-- Keyboard shortcut preferences load and save correctly
-- Polling preferences are easier to manage
-- Sync Settings now uses a taller full-width layout with a bottom status band, wider activity log, and inline help popovers for advanced settings
-- The menu bar now shows a visual in-progress indicator during sync and refresh operations
-- Public macOS builds are packaged as signed and notarized `.dmg` downloads
+AdGuard Home support is functional for the core workflow. The remaining work is validation, polish, and broader packaging cleanup as the app settles into its PiGuard identity.
+
+## Query Log
+
+PiGuard includes a searchable, sortable Query Log window.
+
+- View recent DNS queries across all connected servers
+- **Search** — type to filter rows instantly across domain, client, status, and server
+- **Sort** — click the Domain, Client, or Status column header to sort; click again to reverse
+- **Block or allow** from the query log without opening the web UI
+
+## General
+
+- Supports multiple server connections across Pi-hole and AdGuard Home
+- Mixed-backend menu wording adapts to whichever servers are connected
+- Launch at login, configurable from Preferences
+- Global keyboard shortcut for quick menu bar access
+- Configurable polling interval
+- Opt-in diagnostic logging to a local log file
 
 ## Download & Install
 
 ### Current Public Build (build 700)
 
-**[⬇ Download current macOS DMG](https://github.com/foosmith/PiGuard/releases/download/v3.2/PiGuard-3.2-700-macOS.dmg)**
+**[⬇ Download PiGuard-3.2-700-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.2/PiGuard-3.2-700-macOS.dmg)**
 
 Requires macOS 13 or later.
 
 1. Download **PiGuard-3.2-700-macOS.dmg**
-2. Open the DMG. A window will appear showing the app and an Applications shortcut.
-3. Drag the app into the **Applications** folder.
-4. Eject the DMG (drag it to Trash or right-click → Eject)
-5. Open **Launchpad** or your **Applications** folder and launch PiGuard. It will appear in your menu bar.
+2. Open the DMG — a window will appear showing the app and an Applications shortcut
+3. Drag the app into the **Applications** folder
+4. Eject the DMG
+5. Open PiGuard from **Launchpad** or **Applications** — it will appear in your menu bar
 
-> **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it normally after you drag it into **Applications**. If Finder still warns due to quarantine caching, eject the DMG, reopen it, and launch the copied app from **Applications**.
+> **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
 
 ### What's New in v3.2
 
-- **Query Log search** — type to filter rows instantly across domain, client, status, and server
-- **Query Log sort** — click the Domain, Client, or Status column header to sort; click again to reverse
+- **Query Log search** — filter rows instantly across domain, client, status, and server
+- **Query Log sort** — click column headers to sort; click again to reverse
+- **Pi-hole v6 sync** — fixed Windows tray actions and corrected sync payload key casing
 
-All releases are listed on the [Releases page](https://github.com/foosmith/PiGuard/releases).
+All releases: [GitHub Releases](https://github.com/foosmith/PiGuard/releases)
 
 ## About This Fork
 
-PiGuard reflects the work I have been doing to evolve PiBar into a broader macOS control point for current DNS filtering deployments. The focus of this repo is straightforward:
+PiGuard is shaped around a few specific goals:
 
-- better Pi-hole v6 support
-- practical sync tools for paired Pi-hole instances
-- first-class mixed-network support for Pi-hole and AdGuard Home
-- fewer setup annoyances
-- cleaner release packaging for macOS users
+- First-class Pi-hole v6 support, including persistent auth and sync
+- Practical tools for paired Pi-hole instances
+- Mixed-network support for Pi-hole and AdGuard Home side by side
+- Fewer setup annoyances
+- Signed and notarized macOS builds
 
-If you are running multiple DNS filtering servers and want a lightweight native macOS control point, that is exactly what this project is being shaped for.
+If you are running multiple DNS filtering servers and want a lightweight native macOS control point, that is what this project is built for.
 
 ## Feedback
 
@@ -102,7 +94,7 @@ If you are running multiple DNS filtering servers and want a lightweight native 
 ## Credits
 
 - Original PiBar created by [Brad Root](https://github.com/amiantos)
-- PiGuard is maintained in this repository by [foosmith](https://github.com/foosmith)
+- PiGuard is maintained by [foosmith](https://github.com/foosmith)
 - Pi-hole is a registered trademark of Pi-hole LLC
 - AdGuard is a registered trademark of AdGuard Software Ltd
 - This project is independent and is not affiliated with either company
