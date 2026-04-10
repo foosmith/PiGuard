@@ -63,7 +63,9 @@ final class QueryLogViewController: NSViewController {
         statusLabel.textColor = .secondaryLabelColor
 
         // Toolbar row
-        let toolbar = NSStackView(views: [searchField, serverFilterPopup, NSView(), statusLabel, refreshButton])
+        let spacer = NSView()
+        spacer.setContentHuggingPriority(.defaultLow - 1, for: .horizontal)
+        let toolbar = NSStackView(views: [searchField, serverFilterPopup, spacer, statusLabel, refreshButton])
         toolbar.orientation = .horizontal
         toolbar.alignment = .centerY
         toolbar.spacing = 8
