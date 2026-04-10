@@ -13,6 +13,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
     private static readonly Lock SessionCacheLock = new();
     private static readonly Dictionary<string, SessionCacheEntry> SessionCache = [];
