@@ -62,7 +62,7 @@
                                     <rect key="frame" x="0.0" y="0.0" width="480" height="441"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="59Q-Jm-Cbr">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="59Q-Jm-Cbr">
                                             <rect key="frame" x="3" y="11" width="353" height="60"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="center" id="WN0-cg-lqh">
                                                 <font key="font" metaFont="label" size="11"/>
@@ -75,7 +75,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HRV-Iq-n3o">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="HRV-Iq-n3o">
                                             <rect key="frame" x="129" y="129" width="115" height="38"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="PiGuard" id="ryo-yk-Q62">
                                                 <font key="font" metaFont="system" size="32"/>
@@ -83,7 +83,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gPz-LR-6t6">
                                             <rect key="frame" x="105" y="107" width="163" height="14"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Version" id="oRj-Vt-ZIN">
                                                 <font key="font" metaFont="label" size="11"/>
@@ -95,7 +95,7 @@ This project is not affiliated with either company.</string>
                                             <rect key="frame" x="26" y="175" width="320" height="256"/>
                                             <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="proportionallyDown" image="logoImage" id="ISi-XG-hOU"/>
                                         </imageView>
-                                        <button verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" focusRingType="none" id="TtV-qo-CDH" userLabel="GitHub URL">
+                                        <button verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="TtV-qo-CDH" userLabel="GitHub URL">
                                             <rect key="frame" x="70" y="79" width="232" height="32"/>
                                             <buttonCell key="cell" type="bevel" title="github.com/foosmith/PiGuard" bezelStyle="rounded" alignment="center" imageScaling="proportionallyDown" inset="2" id="5B4-TG-p0I">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
@@ -151,7 +151,7 @@ This project is not affiliated with either company.</string>
                         <rect key="frame" x="0.0" y="0.0" width="630" height="498"/>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="J44-eX-Cmj">
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="J44-eX-Cmj">
                                 <rect key="frame" x="18" y="450" width="304" height="32"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Servers" id="1au-rN-a6J">
                                     <font key="font" metaFont="system"/>
@@ -159,7 +159,7 @@ This project is not affiliated with either company.</string>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iau-X6-RVt">
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="iau-X6-RVt">
                                 <rect key="frame" x="386" y="466" width="274" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Preferences" id="KWY-Db-no8">
                                     <font key="font" metaFont="system"/>
@@ -173,7 +173,7 @@ This project is not affiliated with either company.</string>
                                     <rect key="frame" x="0.0" y="0.0" width="222" height="394"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="u9t-W8-YCX">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="u9t-W8-YCX">
                                             <rect key="frame" x="18" y="364" width="234" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Menu Bar Stats" id="sk4-gL-hKh">
                                                 <font key="font" metaFont="system"/>
@@ -211,7 +211,7 @@ This project is not affiliated with either company.</string>
                                                 </connections>
                                             </buttonCell>
                                         </button>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fhh-w3-SVx">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="fhh-w3-SVx">
                                             <rect key="frame" x="18" y="264" width="234" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Menu Bar Labels" id="l9j-oo-af3">
                                                 <font key="font" metaFont="system"/>
@@ -219,7 +219,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pm7-2a-Lcf">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pm7-2a-Lcf">
                                             <rect key="frame" x="18" y="188" width="234" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Other" id="fvi-02-uIF">
                                                 <font key="font" metaFont="system"/>
@@ -227,7 +227,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="V5k-NI-f2s">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="V5k-NI-f2s">
                                             <rect key="frame" x="18" y="112" width="234" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Polling Rate" id="uIp-y1-oZg">
                                                 <font key="font" metaFont="system"/>
@@ -265,7 +265,7 @@ This project is not affiliated with either company.</string>
                                                 </connections>
                                             </buttonCell>
                                         </button>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" verticalCompressionResistancePriority="751" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gxv-8Y-s1p">
+                                        <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="751" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gxv-8Y-s1p">
                                             <rect key="frame" x="20" y="80" width="65" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="3" drawsBackground="YES" id="hPe-ED-ESL">
                                                 <font key="font" metaFont="system"/>
@@ -306,7 +306,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="showLogFileButtonAction:" target="GTm-9k-36S" id="FBL-E0-006"/>
                                             </connections>
                                         </button>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LiH-xW-Xt3">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="LiH-xW-Xt3">
                                             <rect key="frame" x="101" y="84" width="56" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="seconds" id="qdc-h7-FH9">
                                                 <font key="font" metaFont="system"/>
@@ -408,7 +408,7 @@ This project is not affiliated with either company.</string>
                                                                         <rect key="frame" x="1" y="1" width="147" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
-                                                                            <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="9dL-In-WC2">
+                                                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="9dL-In-WC2">
                                                                                 <rect key="frame" x="0.0" y="0.0" width="147" height="17"/>
                                                                                 <constraints>
                                                                                     <constraint firstAttribute="height" constant="17" id="fs9-rj-VQ2"/>
@@ -447,7 +447,7 @@ This project is not affiliated with either company.</string>
                                                                         <rect key="frame" x="151" y="1" width="57" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
-                                                                            <textField focusRingType="none" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="RbF-1c-Sbq" userLabel="Port">
+                                                                            <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="RbF-1c-Sbq" userLabel="Port">
                                                                                 <rect key="frame" x="0.0" y="0.0" width="57" height="17"/>
                                                                                 <constraints>
                                                                                     <constraint firstAttribute="height" constant="17" id="a6a-Xt-gEO"/>
@@ -486,7 +486,7 @@ This project is not affiliated with either company.</string>
                                                                         <rect key="frame" x="211" y="1" width="68" height="17"/>
                                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                                         <subviews>
-                                                                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="HSN-av-2Te">
+                                                                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="HSN-av-2Te">
                                                                                 <rect key="frame" x="0.0" y="1" width="68" height="16"/>
                                                                                 <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="&gt;=6" id="UI8-We-iFR">
                                                                                     <font key="font" usesAppearanceFont="YES"/>
@@ -541,7 +541,7 @@ This project is not affiliated with either company.</string>
                                             </connections>
                                         </button>
                                         <button horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="tFg-7b-Rry">
-                                            <rect key="frame" x="207" y="20" width="73" height="24"/>
+                                            <rect key="frame" x="208" y="20" width="72" height="24"/>
                                             <buttonCell key="cell" type="push" title="Remove" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="6ay-sO-FV9">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -551,7 +551,7 @@ This project is not affiliated with either company.</string>
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="UaV-nP-7Dw">
-                                            <rect key="frame" x="91" y="20" width="95" height="24"/>
+                                            <rect key="frame" x="90" y="20" width="96" height="24"/>
                                             <buttonCell key="cell" type="push" title="Edit" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="bLq-nZ-MXL">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -629,7 +629,7 @@ This project is not affiliated with either company.</string>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <button horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vRR-BU-YIk">
-                                <rect key="frame" x="371" y="20" width="59" height="24"/>
+                                <rect key="frame" x="372" y="20" width="58" height="24"/>
                                 <buttonCell key="cell" type="push" title="Close" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="zIe-00-a3j">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
@@ -639,7 +639,7 @@ This project is not affiliated with either company.</string>
                                 </connections>
                             </button>
                             <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="vfb-vc-iXD">
-                                <rect key="frame" x="239" y="20" width="112" height="24"/>
+                                <rect key="frame" x="239" y="20" width="113" height="24"/>
                                 <buttonCell key="cell" type="push" title="Save &amp; Close" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="5bc-6L-W4D">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
@@ -654,7 +654,7 @@ This project is not affiliated with either company.</string>
                                     <rect key="frame" x="0.0" y="0.0" width="410" height="196"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DfX-5W-cje">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="DfX-5W-cje">
                                             <rect key="frame" x="99" y="152" width="108" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="pi.hole" drawsBackground="YES" id="OnA-u0-rmY">
                                                 <font key="font" usesAppearanceFont="YES"/>
@@ -665,7 +665,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="textFieldDidChangeAction:" target="JhG-OK-RWV" id="BpX-6c-kNL"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i4e-zs-pkU">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="i4e-zs-pkU">
                                             <rect key="frame" x="253" y="152" width="48" height="24"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" priority="250" constant="48" id="rt7-vm-50T"/>
@@ -679,7 +679,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="textFieldDidChangeAction:" target="JhG-OK-RWV" id="mWk-HY-sxy"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MAW-Ao-XAm">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MAW-Ao-XAm">
                                             <rect key="frame" x="18" y="158" width="75" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Hostname:" id="gtZ-N9-HyG">
                                                 <font key="font" metaFont="system"/>
@@ -687,7 +687,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ut9-zN-gOe">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="ut9-zN-gOe">
                                             <rect key="frame" x="213" y="158" width="34" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Port:" id="1id-2a-G2U">
                                                 <font key="font" metaFont="system"/>
@@ -705,7 +705,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="useSSLCheckboxAction:" target="JhG-OK-RWV" id="h1g-Lw-zVD"/>
                                             </connections>
                                         </button>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gNv-Mk-yT2">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="gNv-Mk-yT2">
                                             <rect key="frame" x="18" y="117" width="75" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="API Token:" id="i0I-aw-SzO">
                                                 <font key="font" metaFont="system"/>
@@ -713,7 +713,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bHH-DP-Aad">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bHH-DP-Aad">
                                             <rect key="frame" x="99" y="108" width="259" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="Leave blank if no password" drawsBackground="YES" id="Dz6-14-hXD">
                                                 <font key="font" metaFont="system"/>
@@ -734,7 +734,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="testConnectionButtonAction:" target="JhG-OK-RWV" id="YvV-zm-GeY"/>
                                             </connections>
                                         </button>
-                                        <textField focusRingType="none" horizontalHuggingPriority="249" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3yj-eZ-X0Q">
+                                        <textField horizontalHuggingPriority="249" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="3yj-eZ-X0Q">
                                             <rect key="frame" x="18" y="23" width="235" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" id="qJD-6U-lOR">
                                                 <font key="font" metaFont="system"/>
@@ -742,7 +742,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Pmr-bw-vTK">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Pmr-bw-vTK">
                                             <rect key="frame" x="99" y="64" width="291" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="zmA-hX-b4k">
                                                 <font key="font" metaFont="system"/>
@@ -753,7 +753,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="textFieldDidChangeAction:" target="JhG-OK-RWV" id="kCV-pe-4mU"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PT9-i1-RMA">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="PT9-i1-RMA">
                                             <rect key="frame" x="18" y="76" width="75" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Admin URL:" id="sRK-zn-AHQ">
                                                 <font key="font" metaFont="system"/>
@@ -808,7 +808,7 @@ This project is not affiliated with either company.</string>
                                     </constraints>
                                 </view>
                             </box>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dnY-PR-vdq">
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="dnY-PR-vdq">
                                 <rect key="frame" x="18" y="268" width="414" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Pi-hole v5 and earlier" id="hHW-QN-ohW">
                                     <font key="font" metaFont="system"/>
@@ -857,7 +857,7 @@ This project is not affiliated with either company.</string>
                         <autoresizingMask key="autoresizingMask"/>
                         <subviews>
                             <button horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KV7-hP-ia0">
-                                <rect key="frame" x="371" y="20" width="59" height="24"/>
+                                <rect key="frame" x="372" y="20" width="58" height="24"/>
                                 <buttonCell key="cell" type="push" title="Close" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="qF2-K4-cNN">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
@@ -867,7 +867,7 @@ This project is not affiliated with either company.</string>
                                 </buttonCell>
                             </button>
                             <button verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="KrW-yq-3ix">
-                                <rect key="frame" x="239" y="50" width="112" height="24"/>
+                                <rect key="frame" x="239" y="50" width="113" height="24"/>
                                 <buttonCell key="cell" type="push" title="Save &amp; Close" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="n0c-8l-PtW">
                                     <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                     <font key="font" metaFont="system"/>
@@ -882,7 +882,7 @@ This project is not affiliated with either company.</string>
                                     <rect key="frame" x="0.0" y="0.0" width="410" height="256"/>
                                     <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                     <subviews>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zoi-sT-FJT">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="zoi-sT-FJT">
                                             <rect key="frame" x="95" y="212" width="116" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" placeholderString="pi.hole" drawsBackground="YES" id="H4C-Bw-duK">
                                                 <font key="font" usesAppearanceFont="YES"/>
@@ -893,7 +893,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="textFieldDidChangeAction:" target="DCw-Ag-BHe" id="0U7-pw-639"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pg1-9N-tHV">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="pg1-9N-tHV">
                                             <rect key="frame" x="253" y="212" width="48" height="24"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" priority="250" constant="48" id="naz-Tf-wUu"/>
@@ -907,7 +907,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="textFieldDidChangeAction:" target="DCw-Ag-BHe" id="C77-ef-8bm"/>
                                             </connections>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qhp-qS-rFd">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="qhp-qS-rFd">
                                             <rect key="frame" x="18" y="218" width="66" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="right" title="Host / IP" id="l52-nW-qrX">
                                                 <font key="font" metaFont="system"/>
@@ -915,7 +915,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bTz-Vl-KSW">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="bTz-Vl-KSW">
                                             <rect key="frame" x="217" y="218" width="30" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Port" id="7X2-8P-Itf">
                                                 <font key="font" metaFont="system"/>
@@ -934,7 +934,7 @@ This project is not affiliated with either company.</string>
                                             </connections>
                                         </button>
                                         <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="L4G-cQ-STM">
-                                            <rect key="frame" x="169" y="20" width="73" height="24"/>
+                                            <rect key="frame" x="169" y="20" width="72" height="24"/>
                                             <buttonCell key="cell" type="push" title="Validate" bezelStyle="rounded" alignment="center" borderStyle="border" imageScaling="proportionallyDown" inset="2" id="xAs-7y-ClD">
                                                 <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
                                                 <font key="font" metaFont="system"/>
@@ -943,7 +943,7 @@ This project is not affiliated with either company.</string>
                                                 <action selector="authenticateRequestAction:" target="DCw-Ag-BHe" id="v5d-mz-gBk"/>
                                             </connections>
                                         </button>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MYH-IG-W5N">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="MYH-IG-W5N">
                                             <rect key="frame" x="95" y="169" width="295" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" id="vmg-nd-SVi">
                                                 <font key="font" metaFont="system"/>
@@ -951,7 +951,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eJc-qE-ZRT">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="eJc-qE-ZRT">
                                             <rect key="frame" x="18" y="178" width="71" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Admin URL" id="kIL-AW-bXO">
                                                 <font key="font" metaFont="system"/>
@@ -959,7 +959,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <secureTextField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AKM-Pr-fbO">
+                                        <secureTextField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="AKM-Pr-fbO">
                                             <rect key="frame" x="114" y="60" width="157" height="24"/>
                                             <secureTextFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" drawsBackground="YES" usesSingleLineMode="YES" id="djE-vA-VMR">
                                                 <font key="font" metaFont="system"/>
@@ -977,7 +977,7 @@ This project is not affiliated with either company.</string>
                                                 <constraint firstAttribute="height" constant="5" id="arP-Yz-8eH"/>
                                             </constraints>
                                         </box>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="TqR-XM-Ulg">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="TqR-XM-Ulg">
                                             <rect key="frame" x="17" y="64" width="91" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" title="App Password" id="af7-TK-wb8">
                                                 <font key="font" metaFont="system"/>
@@ -985,7 +985,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VS1-Ob-nwy">
+                                        <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="VS1-Ob-nwy">
                                             <rect key="frame" x="333" y="60" width="57" height="24"/>
                                             <constraints>
                                                 <constraint firstAttribute="width" constant="57" id="L1G-vC-aaT"/>
@@ -996,7 +996,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="z4d-uC-sjd">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="z4d-uC-sjd">
                                             <rect key="frame" x="117" y="122" width="177" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Use a Pi-hole app password" id="C7C-fh-Xsd">
                                                 <font key="font" metaFont="systemMedium" size="13"/>
@@ -1004,7 +1004,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Cr-n8-Pai">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="1Cr-n8-Pai">
                                             <rect key="frame" x="289" y="64" width="38" height="16"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="TOTP" id="bcC-ug-cDe">
                                                 <font key="font" metaFont="system"/>
@@ -1012,7 +1012,7 @@ This project is not affiliated with either company.</string>
                                                 <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                             </textFieldCell>
                                         </textField>
-                                        <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ggy-V6-ryy">
+                                        <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="ggy-V6-ryy">
                                             <rect key="frame" x="29" y="106" width="345" height="14"/>
                                             <textFieldCell key="cell" lineBreakMode="clipping" title="Leave the app password blank only if your Pi-hole does not require authentication." id="Fn5-Yh-UVQ">
                                                 <font key="font" metaFont="smallSystem"/>
@@ -1060,7 +1060,7 @@ This project is not affiliated with either company.</string>
                                     </constraints>
                                 </view>
                             </box>
-                            <textField focusRingType="none" horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KKx-ek-P7y">
+                            <textField horizontalHuggingPriority="251" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="KKx-ek-P7y">
                                 <rect key="frame" x="18" y="328" width="414" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" title="Pi-hole v6 and later" id="xvz-0j-gRA">
                                     <font key="font" metaFont="system"/>
@@ -1068,7 +1068,7 @@ This project is not affiliated with either company.</string>
                                     <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
                                 </textFieldCell>
                             </textField>
-                            <textField focusRingType="none" horizontalHuggingPriority="249" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Uy-Bk-len">
+                            <textField horizontalHuggingPriority="249" verticalHuggingPriority="750" ambiguous="YES" translatesAutoresizingMaskIntoConstraints="NO" id="7Uy-Bk-len">
                                 <rect key="frame" x="18" y="37" width="215" height="16"/>
                                 <textFieldCell key="cell" lineBreakMode="clipping" alignment="left" id="Mav-NM-6sR">
                                     <font key="font" metaFont="system"/>
