@@ -4,6 +4,16 @@ PiGuard is a native macOS menu bar app for managing DNS filtering servers. It pu
 
 This is a fork of the original [PiBar](https://github.com/amiantos/pibar) project, extended to support Pi-hole v6, AdGuard Home, and mixed-backend environments.
 
+## Screenshots
+
+| Menu Bar | Preferences |
+|----------|-------------|
+| ![Menu bar dropdown showing status, controls, and refresh options](docs/screenshots/menu-bar.png) | ![Preferences window with server list and menu bar settings](docs/screenshots/preferences.png) |
+
+| Sync Settings | About |
+|---------------|-------|
+| ![Sync Settings window with primary/secondary configuration and activity log](docs/screenshots/sync-settings.png) | ![About window showing version and app identity](docs/screenshots/about.png) |
+
 ## Pi-hole Features
 
 - Connect to one or more Pi-hole servers (v5 and v6)
