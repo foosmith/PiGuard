@@ -42,6 +42,12 @@ public interface IPollingService
     Task RefreshNowAsync(CancellationToken cancellationToken = default);
 }
 
+public interface INetworkCommandService
+{
+    Task<OperationExecutionResult> EnableNetworkAsync(CancellationToken cancellationToken = default);
+    Task<OperationExecutionResult> DisableNetworkAsync(int? seconds = null, CancellationToken cancellationToken = default);
+}
+
 public interface ISyncService
 {
     event EventHandler<SyncStatusSnapshot>? SyncStatusChanged;

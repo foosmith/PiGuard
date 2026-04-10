@@ -13,22 +13,38 @@ public sealed class TrayHost : IDisposable
     private readonly ICredentialStore _credentialStore;
     private readonly IStartupService _startupService;
     private readonly IPollingService _pollingService;
+    private readonly INetworkCommandService _networkCommandService;
+    private readonly ISyncService _syncService;
     private readonly Forms.NotifyIcon _notifyIcon = new();
     private readonly Forms.ToolStripMenuItem _statusMenuItem = new() { Enabled = false };
     private readonly Forms.ToolStripMenuItem _queriesMenuItem = new() { Enabled = false };
     private readonly Forms.ToolStripMenuItem _blockedMenuItem = new() { Enabled = false };
     private readonly Forms.ToolStripMenuItem _blocklistMenuItem = new() { Enabled = false };
+    private readonly Forms.ToolStripMenuItem _enableMenuItem = new("Enable Blocking");
+    private readonly Forms.ToolStripMenuItem _disableMenuItem = new("Disable Blocking");
+    private readonly Forms.ToolStripMenuItem _gravityMenuItem = new("Update Gravity");
+    private readonly Forms.ToolStripMenuItem _syncMenuItem = new("Sync Now");
 
     private PreferencesWindow? _preferencesWindow;
     private SyncSettingsWindow? _syncSettingsWindow;
     private AboutWindow? _aboutWindow;
+    private PiholeNetworkOverview _lastOverview = new(PiholeNetworkStatus.Initializing, false, 0, 0, 0, 0, []);
+    private SyncStatusSnapshot _lastSyncStatus = new(null, null, string.Empty, false, false, []);
 
-    public TrayHost(ISettingsStore settingsStore, ICredentialStore credentialStore, IStartupService startupService, IPollingService pollingService)
+    public TrayHost(
+        ISettingsStore settingsStore,
+        ICredentialStore credentialStore,
+        IStartupService startupService,
+        IPollingService pollingService,
+        INetworkCommandService networkCommandService,
+        ISyncService syncService)
     {
         _settingsStore = settingsStore;
         _credentialStore = credentialStore;
         _startupService = startupService;
         _pollingService = pollingService;
+        _networkCommandService = networkCommandService;
+        _syncService = syncService;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -41,6 +57,11 @@ public sealed class TrayHost : IDisposable
             _blocklistMenuItem,
             new Forms.ToolStripSeparator(),
         ]);
+        menu.Items.Add(_enableMenuItem);
+        menu.Items.Add(_disableMenuItem);
+        menu.Items.Add(_gravityMenuItem);
+        menu.Items.Add(_syncMenuItem);
+        menu.Items.Add(new Forms.ToolStripSeparator());
         menu.Items.Add("Refresh Now", null, async (_, _) => await RefreshNowAsync());
         menu.Items.Add("Preferences", null, (_, _) => ShowPreferences());
         menu.Items.Add("Sync Settings", null, (_, _) => ShowSyncSettings());
@@ -53,9 +74,14 @@ public sealed class TrayHost : IDisposable
         _notifyIcon.ContextMenuStrip = menu;
         _notifyIcon.Visible = true;
         _notifyIcon.DoubleClick += (_, _) => ShowPreferences();
+        _enableMenuItem.Click += async (_, _) => await EnableNetworkAsync();
+        _disableMenuItem.Click += async (_, _) => await DisableNetworkAsync();
+        _gravityMenuItem.Click += async (_, _) => await TriggerGravityUpdateAsync();
+        _syncMenuItem.Click += async (_, _) => await TriggerSyncNowAsync();
 
         ApplyNetworkOverview(new PiholeNetworkOverview(PiholeNetworkStatus.Initializing, false, 0, 0, 0, 0, []));
         _pollingService.NetworkOverviewUpdated += HandleNetworkOverviewUpdated;
+        _syncService.SyncStatusChanged += HandleSyncStatusChanged;
         await _pollingService.StartAsync(cancellationToken);
     }
 
@@ -67,7 +93,7 @@ public sealed class TrayHost : IDisposable
     private void ShowSyncSettings() => ShowWindow(
         () => _syncSettingsWindow,
         window => _syncSettingsWindow = window,
-        () => new SyncSettingsWindow(_settingsStore));
+        () => new SyncSettingsWindow(_settingsStore, _syncService));
 
     private void ShowAbout() => ShowWindow(
         () => _aboutWindow,
@@ -109,6 +135,7 @@ public sealed class TrayHost : IDisposable
     public void Dispose()
     {
         _pollingService.NetworkOverviewUpdated -= HandleNetworkOverviewUpdated;
+        _syncService.SyncStatusChanged -= HandleSyncStatusChanged;
         _pollingService.StopAsync().GetAwaiter().GetResult();
         _notifyIcon.Dispose();
     }
@@ -137,8 +164,20 @@ public sealed class TrayHost : IDisposable
         _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(() => ApplyNetworkOverview(overview));
     }
 
+    private void HandleSyncStatusChanged(object? sender, SyncStatusSnapshot status)
+    {
+        if (System.Windows.Application.Current.Dispatcher.CheckAccess())
+        {
+            ApplySyncStatus(status);
+            return;
+        }
+
+        _ = System.Windows.Application.Current.Dispatcher.InvokeAsync(() => ApplySyncStatus(status));
+    }
+
     private void ApplyNetworkOverview(PiholeNetworkOverview overview)
     {
+        _lastOverview = overview;
         _statusMenuItem.Text = $"Status: {FormatStatus(overview.Status)}";
         _queriesMenuItem.Text = $"Queries: {overview.TotalQueriesToday:N0}";
         _blockedMenuItem.Text = $"Blocked: {overview.AdsBlockedToday:N0} ({overview.AdsPercentageToday:F1}%)";
@@ -156,6 +195,67 @@ public sealed class TrayHost : IDisposable
         };
 
         _notifyIcon.Text = trayText.Length <= 63 ? trayText : trayText[..63];
+        UpdateActionState();
+    }
+
+    private void ApplySyncStatus(SyncStatusSnapshot status)
+    {
+        _lastSyncStatus = status;
+        UpdateActionState();
+    }
+
+    private void UpdateActionState()
+    {
+        var canManage = _lastOverview.CanBeManaged;
+        var isBusy = _lastSyncStatus.IsGravityUpdateInProgress || _lastSyncStatus.IsSyncInProgress;
+        var v6Count = _lastOverview.Nodes.Count(node => node.IsV6);
+
+        _enableMenuItem.Enabled = canManage &&
+            !isBusy &&
+            _lastOverview.Status is PiholeNetworkStatus.Disabled;
+        _disableMenuItem.Enabled = canManage &&
+            !isBusy &&
+            _lastOverview.Status is PiholeNetworkStatus.Enabled or PiholeNetworkStatus.PartiallyEnabled;
+        _gravityMenuItem.Enabled = canManage && !isBusy && v6Count > 0;
+        _syncMenuItem.Enabled = !isBusy && v6Count >= 2;
+    }
+
+    private async Task EnableNetworkAsync()
+    {
+        _statusMenuItem.Text = "Status: Enabling...";
+        var result = await _networkCommandService.EnableNetworkAsync();
+        _statusMenuItem.Text = BuildCommandSummary("Enabled", result);
+    }
+
+    private async Task DisableNetworkAsync()
+    {
+        _statusMenuItem.Text = "Status: Disabling...";
+        var result = await _networkCommandService.DisableNetworkAsync();
+        _statusMenuItem.Text = BuildCommandSummary("Disabled", result);
+    }
+
+    private async Task TriggerGravityUpdateAsync()
+    {
+        _statusMenuItem.Text = "Status: Updating gravity...";
+        await _syncService.TriggerGravityUpdateAsync();
+        _statusMenuItem.Text = "Status: Gravity update finished";
+    }
+
+    private async Task TriggerSyncNowAsync()
+    {
+        _statusMenuItem.Text = "Status: Running sync...";
+        await _syncService.TriggerSyncNowAsync();
+        _statusMenuItem.Text = "Status: Sync finished";
+    }
+
+    private static string BuildCommandSummary(string verb, OperationExecutionResult result)
+    {
+        if (!result.HasAnyWork && result.Skipped > 0)
+        {
+            return $"Status: {verb} skipped";
+        }
+
+        return $"Status: {verb} {result.Succeeded}, failed {result.Failed}, skipped {result.Skipped}";
     }
 
     private static string FormatStatus(PiholeNetworkStatus status) => status switch

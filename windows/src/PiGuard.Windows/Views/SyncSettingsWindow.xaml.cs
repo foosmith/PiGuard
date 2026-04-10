@@ -8,14 +8,18 @@ namespace PiGuard.Windows.Views;
 public partial class SyncSettingsWindow : Window
 {
     private readonly ISettingsStore _settingsStore;
+    private readonly ISyncService _syncService;
     private AppPreferences _preferences = new();
     private List<ConnectionOption> _v6Connections = [];
+    private SyncStatusSnapshot _runtimeStatus = new(null, null, string.Empty, false, false, []);
 
-    public SyncSettingsWindow(ISettingsStore settingsStore)
+    public SyncSettingsWindow(ISettingsStore settingsStore, ISyncService syncService)
     {
         _settingsStore = settingsStore;
+        _syncService = syncService;
         InitializeComponent();
         Loaded += SyncSettingsWindow_Loaded;
+        Closed += SyncSettingsWindow_Closed;
     }
 
     private async void SyncSettingsWindow_Loaded(object sender, RoutedEventArgs e)
@@ -26,6 +30,8 @@ public partial class SyncSettingsWindow : Window
 
     private async Task LoadAsync()
     {
+        _syncService.SyncStatusChanged -= SyncService_SyncStatusChanged;
+        _syncService.SyncStatusChanged += SyncService_SyncStatusChanged;
         _preferences = await _settingsStore.LoadAsync();
         _v6Connections = _preferences.Connections
             .Where(connection => connection.Version == ConnectionVersion.V6)
@@ -80,8 +86,8 @@ public partial class SyncSettingsWindow : Window
         };
 
         await _settingsStore.SaveAsync(_preferences);
-        UpdateStatusPanel("Sync requested. Execution wiring is the next implementation step.");
-        StatusTextBlock.Text = "Sync request recorded in settings. Live sync execution is not wired yet.";
+        StatusTextBlock.Text = "Sync requested.";
+        await _syncService.TriggerSyncNowAsync();
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
@@ -146,6 +152,7 @@ public partial class SyncSettingsWindow : Window
         ReadinessTextBlock.Text = overrideReadiness ?? BuildReadinessText();
         LastRunTextBlock.Text = BuildLastRunText();
         ActivityTextBox.Text = BuildActivityText();
+        SyncNowButton.IsEnabled = !_runtimeStatus.IsSyncInProgress && !_runtimeStatus.IsGravityUpdateInProgress;
     }
 
     private string BuildReadinessText()
@@ -181,29 +188,68 @@ public partial class SyncSettingsWindow : Window
 
     private string BuildLastRunText()
     {
-        if (_preferences.Sync.LastRunAt is null)
+        var lastRunAt = _runtimeStatus.LastRunAt ?? _preferences.Sync.LastRunAt;
+        var lastStatus = _runtimeStatus.LastStatus ?? _preferences.Sync.LastStatus;
+        var lastSummary = string.IsNullOrWhiteSpace(_runtimeStatus.LastSummary)
+            ? _preferences.Sync.LastSummary
+            : _runtimeStatus.LastSummary;
+
+        if (lastRunAt is null)
         {
             return "No sync has been recorded yet.";
         }
 
-        var timestamp = _preferences.Sync.LastRunAt.Value.ToLocalTime().ToString("g");
-        var status = _preferences.Sync.LastStatus?.ToString() ?? "Unknown";
-        var summary = string.IsNullOrWhiteSpace(_preferences.Sync.LastSummary) ? string.Empty : $"  {_preferences.Sync.LastSummary}";
+        var timestamp = lastRunAt.Value.ToLocalTime().ToString("g");
+        var status = lastStatus?.ToString() ?? "Unknown";
+        var summary = string.IsNullOrWhiteSpace(lastSummary) ? string.Empty : $"  {lastSummary}";
         return $"Last sync: {timestamp} ({status}){summary}";
     }
 
     private string BuildActivityText()
     {
-        if (_preferences.Sync.Activity.Count == 0)
+        var activity = _runtimeStatus.Activity.Count > 0
+            ? _runtimeStatus.Activity
+            : _preferences.Sync.Activity;
+
+        if (activity.Count == 0)
         {
             return "No sync activity recorded yet.";
         }
 
         return string.Join(
             Environment.NewLine,
-            _preferences.Sync.Activity
+            activity
                 .OrderByDescending(entry => entry.Timestamp)
                 .Select(entry => $"{entry.Timestamp.ToLocalTime():g}  {entry.Message}"));
+    }
+
+    private void SyncSettingsWindow_Closed(object? sender, EventArgs e)
+    {
+        _syncService.SyncStatusChanged -= SyncService_SyncStatusChanged;
+    }
+
+    private void SyncService_SyncStatusChanged(object? sender, SyncStatusSnapshot status)
+    {
+        if (Dispatcher.CheckAccess())
+        {
+            ApplyRuntimeStatus(status);
+            return;
+        }
+
+        _ = Dispatcher.InvokeAsync(() => ApplyRuntimeStatus(status));
+    }
+
+    private void ApplyRuntimeStatus(SyncStatusSnapshot status)
+    {
+        _runtimeStatus = status;
+        UpdateStatusPanel();
+        StatusTextBlock.Text = status.IsSyncInProgress
+            ? "Sync is running..."
+            : status.IsGravityUpdateInProgress
+                ? "Gravity update is running..."
+                : string.IsNullOrWhiteSpace(status.LastSummary)
+                    ? StatusTextBlock.Text
+                    : status.LastSummary;
     }
 
     private void SelectConnection(System.Windows.Controls.ComboBox comboBox, string id)

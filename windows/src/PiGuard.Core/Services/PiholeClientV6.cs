@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Web;
 using PiGuard.Core.Abstractions;
 using PiGuard.Core.Models;
 
@@ -13,6 +14,8 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     {
         PropertyNameCaseInsensitive = true,
     };
+    private static readonly Lock SessionCacheLock = new();
+    private static readonly Dictionary<string, SessionCacheEntry> SessionCache = [];
 
     private readonly ConnectionConfig _connection;
     private readonly HttpClient _httpClient;
@@ -58,6 +61,67 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     public Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default) =>
         PostAsync("/action/gravity", body: null, cancellationToken);
 
+    public async Task<JsonDocument> GetJsonDocumentAsync(
+        string path,
+        IEnumerable<KeyValuePair<string, string?>>? queryParameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync(path, HttpMethod.Get, cancellationToken, queryParameters: queryParameters);
+        using var response = await SendAsync(request, cancellationToken);
+        var content = await response.Content.ReadAsStringAsync(cancellationToken);
+        try
+        {
+            return JsonDocument.Parse(content);
+        }
+        catch (JsonException exception)
+        {
+            throw new PiholeApiException("Failed to decode Pi-hole v6 JSON response.", (int)response.StatusCode, content, exception);
+        }
+    }
+
+    public async Task PostJsonAsync<TBody>(
+        string path,
+        TBody body,
+        IEnumerable<KeyValuePair<string, string?>>? queryParameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync(path, HttpMethod.Post, cancellationToken, body, queryParameters);
+        using var response = await SendAsync(request, cancellationToken);
+        if (response.Content.Headers.ContentLength is > 0)
+        {
+            _ = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+    }
+
+    public async Task PutJsonAsync<TBody>(
+        string path,
+        TBody body,
+        IEnumerable<KeyValuePair<string, string?>>? queryParameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync(path, HttpMethod.Put, cancellationToken, body, queryParameters);
+        using var response = await SendAsync(request, cancellationToken);
+        if (response.Content.Headers.ContentLength is > 0)
+        {
+            _ = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+    }
+
+    public async Task DeleteAsync(
+        string path,
+        IEnumerable<KeyValuePair<string, string?>>? queryParameters = null,
+        CancellationToken cancellationToken = default)
+    {
+        var request = await CreateRequestAsync(path, HttpMethod.Delete, cancellationToken, queryParameters: queryParameters);
+        using var response = await SendAsync(request, cancellationToken);
+        if (response.Content.Headers.ContentLength is > 0)
+        {
+            _ = await response.Content.ReadAsStringAsync(cancellationToken);
+        }
+    }
+
+    public static string EncodePathComponent(string value) => Uri.EscapeDataString(value);
+
     private async Task<T> GetAsync<T>(string path, CancellationToken cancellationToken)
     {
         var request = await CreateRequestAsync(path, HttpMethod.Get, cancellationToken);
@@ -75,9 +139,14 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         }
     }
 
-    private async Task<HttpRequestMessage> CreateRequestAsync(string path, HttpMethod method, CancellationToken cancellationToken, object? body = null)
+    private async Task<HttpRequestMessage> CreateRequestAsync(
+        string path,
+        HttpMethod method,
+        CancellationToken cancellationToken,
+        object? body = null,
+        IEnumerable<KeyValuePair<string, string?>>? queryParameters = null)
     {
-        var request = new HttpRequestMessage(method, BuildUri(path));
+        var request = new HttpRequestMessage(method, BuildUri(path, queryParameters));
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
         request.Headers.UserAgent.ParseAdd("PiGuard.Windows/0.1");
 
@@ -102,6 +171,15 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         if (!_connection.PasswordProtected)
         {
             return null;
+        }
+
+        var sessionCacheKey = BuildSessionCacheKey();
+        var cachedSession = GetCachedSession(sessionCacheKey);
+        if (cachedSession is not null)
+        {
+            _sessionId = cachedSession.SessionId;
+            _sessionExpiry = cachedSession.ExpiresAt;
+            return _sessionId;
         }
 
         if (!string.IsNullOrWhiteSpace(_sessionId) && _sessionExpiry is not null && _sessionExpiry > DateTimeOffset.UtcNow)
@@ -133,6 +211,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         _sessionExpiry = auth.Session.Validity > 0
             ? DateTimeOffset.UtcNow.AddSeconds(Math.Max(auth.Session.Validity - 5, 0))
             : null;
+        SetCachedSession(sessionCacheKey, _sessionId, _sessionExpiry);
 
         return _sessionId;
     }
@@ -187,11 +266,63 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         throw new PiholeApiException(message, (int)response.StatusCode, content);
     }
 
-    private Uri BuildUri(string path)
+    private Uri BuildUri(string path, IEnumerable<KeyValuePair<string, string?>>? queryParameters = null)
     {
         var scheme = _connection.UseSsl ? "https" : "http";
-        return new Uri($"{scheme}://{_connection.Hostname}:{_connection.Port}/api{path}");
+        var builder = new UriBuilder($"{scheme}://{_connection.Hostname}:{_connection.Port}/api{path}");
+        if (queryParameters is not null)
+        {
+            var query = HttpUtility.ParseQueryString(string.Empty);
+            foreach (var parameter in queryParameters)
+            {
+                query[parameter.Key] = parameter.Value;
+            }
+
+            builder.Query = query.ToString() ?? string.Empty;
+        }
+
+        return builder.Uri;
     }
 
     private string BuildDisplayName() => $"{_connection.Hostname}:{_connection.Port}";
+
+    private string BuildSessionCacheKey()
+    {
+        var scheme = _connection.UseSsl ? "https" : "http";
+        return $"{scheme}://{_connection.Hostname}:{_connection.Port}|{_appPassword}";
+    }
+
+    private static SessionCacheEntry? GetCachedSession(string cacheKey)
+    {
+        lock (SessionCacheLock)
+        {
+            if (!SessionCache.TryGetValue(cacheKey, out var entry))
+            {
+                return null;
+            }
+
+            if (entry.ExpiresAt is not null && entry.ExpiresAt <= DateTimeOffset.UtcNow)
+            {
+                SessionCache.Remove(cacheKey);
+                return null;
+            }
+
+            return entry;
+        }
+    }
+
+    private static void SetCachedSession(string cacheKey, string? sessionId, DateTimeOffset? expiresAt)
+    {
+        if (string.IsNullOrWhiteSpace(sessionId))
+        {
+            return;
+        }
+
+        lock (SessionCacheLock)
+        {
+            SessionCache[cacheKey] = new SessionCacheEntry(sessionId, expiresAt);
+        }
+    }
+
+    private sealed record SessionCacheEntry(string SessionId, DateTimeOffset? ExpiresAt);
 }

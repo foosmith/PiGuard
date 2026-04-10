@@ -14,6 +14,7 @@ public partial class PreferencesWindow : Window
     private AppPreferences _preferences = new();
     private readonly List<ConnectionEditorItem> _connections = [];
     private readonly HashSet<string> _removedCredentialIds = new(StringComparer.Ordinal);
+    private ConnectionEditorItem? _editingConnection;
 
     public PreferencesWindow(ISettingsStore settingsStore, ICredentialStore credentialStore, IStartupService startupService)
     {
@@ -35,6 +36,7 @@ public partial class PreferencesWindow : Window
         _preferences = await _settingsStore.LoadAsync();
         _connections.Clear();
         _removedCredentialIds.Clear();
+        _editingConnection = null;
 
         foreach (var connection in _preferences.Connections)
         {
@@ -66,6 +68,7 @@ public partial class PreferencesWindow : Window
     {
         if (ConnectionsListView.SelectedItem is ConnectionEditorItem connection)
         {
+            _editingConnection = connection;
             PopulateEditor(connection);
         }
     }
@@ -74,8 +77,10 @@ public partial class PreferencesWindow : Window
     {
         var item = new ConnectionEditorItem();
         _connections.Add(item);
+        _editingConnection = item;
         RefreshConnections();
         ConnectionsListView.SelectedItem = item;
+        PopulateEditor(item);
         StatusTextBlock.Text = "New connection draft created.";
     }
 
@@ -101,7 +106,7 @@ public partial class PreferencesWindow : Window
 
     private async void SaveChangesButton_Click(object sender, RoutedEventArgs e)
     {
-        var selected = ConnectionsListView.SelectedItem as ConnectionEditorItem;
+        var selected = ConnectionsListView.SelectedItem as ConnectionEditorItem ?? _editingConnection;
         if (selected is null && _connections.Count > 0)
         {
             selected = _connections[0];
@@ -176,13 +181,21 @@ public partial class PreferencesWindow : Window
         _removedCredentialIds.Clear();
         SecretPasswordBox.Password = string.Empty;
         RefreshConnections();
-        StatusTextBlock.Text = "Preferences saved.";
+        if (selected is not null)
+        {
+            _editingConnection = selected;
+            ConnectionsListView.SelectedItem = selected;
+            PopulateEditor(selected);
+        }
+
+        StatusTextBlock.Text = $"Preferences saved. {normalizedConnections.Count} connection(s) stored.";
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
     private void PopulateEditor(ConnectionEditorItem connection)
     {
+        _editingConnection = connection;
         HostnameTextBox.Text = connection.Hostname;
         PortTextBox.Text = connection.Port.ToString();
         VersionComboBox.SelectedIndex = connection.Version == ConnectionVersion.V6 ? 1 : 0;

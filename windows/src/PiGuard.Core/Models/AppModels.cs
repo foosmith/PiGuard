@@ -65,6 +65,15 @@ public sealed record SyncStatusSnapshot(
     bool IsGravityUpdateInProgress,
     IReadOnlyList<SyncActivityEntry> Activity);
 
+public sealed record OperationExecutionResult(
+    int Succeeded,
+    int Failed,
+    int Skipped,
+    IReadOnlyList<string> Messages)
+{
+    public bool HasAnyWork => Succeeded > 0 || Failed > 0;
+}
+
 public sealed record AppPreferences
 {
     public List<ConnectionConfig> Connections { get; init; } = [];

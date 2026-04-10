@@ -23,6 +23,15 @@ public sealed class SyncActivityFeed
         }
     }
 
+    public void Load(IEnumerable<SyncActivityEntry> entries)
+    {
+        lock (_gate)
+        {
+            _entries.Clear();
+            _entries.AddRange(entries.OrderBy(entry => entry.Timestamp));
+        }
+    }
+
     public void Clear()
     {
         lock (_gate)

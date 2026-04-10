@@ -8,6 +8,7 @@ namespace PiGuard.Windows;
 public partial class App : System.Windows.Application
 {
     private TrayHost? _trayHost;
+    private SyncOrchestrationService? _syncService;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -23,14 +24,26 @@ public partial class App : System.Windows.Application
         var credentialStore = new WindowsCredentialStore(appDataRoot);
         var startupService = new WindowsStartupService("PiGuard", "PiGuard.Windows.exe");
         var pollingService = new PiholePollingService(settingsStore, credentialStore);
+        var networkCommandService = new NetworkCommandService(settingsStore, credentialStore, pollingService);
+        _syncService = new SyncOrchestrationService(settingsStore, credentialStore, pollingService);
 
-        _trayHost = new TrayHost(settingsStore, credentialStore, startupService, pollingService);
+        await _syncService.StartAsync();
+
+        _trayHost = new TrayHost(
+            settingsStore,
+            credentialStore,
+            startupService,
+            pollingService,
+            networkCommandService,
+            _syncService);
         await _trayHost.InitializeAsync();
     }
 
     protected override void OnExit(ExitEventArgs e)
     {
         _trayHost?.Dispose();
+        _syncService?.StopAsync().GetAwaiter().GetResult();
+        _syncService?.Dispose();
         base.OnExit(e);
     }
 }
