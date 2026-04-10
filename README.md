@@ -6,13 +6,7 @@ This is a fork of the original [PiBar](https://github.com/amiantos/pibar) projec
 
 ## Screenshots
 
-| Menu Bar | Preferences |
-|----------|-------------|
-| ![Menu bar dropdown showing status, controls, and refresh options](docs/screenshots/menu-bar.png) | ![Preferences window with server list and menu bar settings](docs/screenshots/preferences.png) |
-
-| Sync Settings | About |
-|---------------|-------|
-| ![Sync Settings window with primary/secondary configuration and activity log](docs/screenshots/sync-settings.png) | ![About window showing version and app identity](docs/screenshots/about.png) |
+<img src="docs/screenshots/menu-bar.png" width="220" alt="Menu bar dropdown"> <img src="docs/screenshots/preferences.png" width="340" alt="Preferences"> <img src="docs/screenshots/sync-settings.png" width="340" alt="Sync Settings"> <img src="docs/screenshots/about.png" width="260" alt="About">
 
 ## Pi-hole Features
 
