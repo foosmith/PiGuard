@@ -9,6 +9,11 @@
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock FontSize="28" FontWeight="SemiBold" TextAlignment="Center" Text="PiGuard" />
             <TextBlock Margin="0,8,0,0" FontSize="14" TextAlignment="Center" Text="Windows Port Foundation" />
+            <TextBlock x:Name="VersionTextBlock"
+                       Margin="0,8,0,0"
+                       FontSize="13"
+                       Foreground="#FF666666"
+                       TextAlignment="Center" />
             <TextBlock Margin="0,20,0,0"
                        TextAlignment="Center"
                        TextWrapping="Wrap"

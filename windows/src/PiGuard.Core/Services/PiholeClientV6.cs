@@ -62,6 +62,108 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     public Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default) =>
         PostAsync("/action/gravity", body: null, cancellationToken);
 
+    public async Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default)
+    {
+        using var document = await GetJsonDocumentAsync(
+            "/stats/top_domains",
+            [new KeyValuePair<string, string?>("blocked", "true")],
+            cancellationToken);
+        return EnumerateArray(document.RootElement, "domains")
+            .Select(item =>
+            {
+                if (!TryGetString(item, "domain", out var domain) || !TryGetInt(item, "count", out var count))
+                {
+                    return null;
+                }
+
+                return new TopItem(domain, count);
+            })
+            .Where(item => item is not null)
+            .Cast<TopItem>()
+            .Take(10)
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<TopItem>> FetchTopClientsAsync(CancellationToken cancellationToken = default)
+    {
+        using var document = await GetJsonDocumentAsync("/stats/top_clients", cancellationToken: cancellationToken);
+        return EnumerateArray(document.RootElement, "clients")
+            .Select(item =>
+            {
+                if (!TryGetInt(item, "count", out var count))
+                {
+                    return null;
+                }
+
+                var name = GetNullableString(item, "name");
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    name = GetNullableString(item, "ip") ?? "unknown";
+                }
+
+                return new TopItem(name, count);
+            })
+            .Where(item => item is not null)
+            .Cast<TopItem>()
+            .Take(10)
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(
+        string serverDisplayName,
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        using var document = await GetJsonDocumentAsync(
+            "/queries",
+            [new KeyValuePair<string, string?>("length", limit.ToString())],
+            cancellationToken);
+        var blockedStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "GRAVITY", "REGEX", "DENYLIST",
+            "EXTERNAL_BLOCKED_IP", "EXTERNAL_BLOCKED_NULL", "EXTERNAL_BLOCKED_NXRA",
+            "GRAVITY_CNAME", "REGEX_CNAME", "DENYLIST_CNAME", "EXTERNAL_BLOCKED_EDE15",
+        };
+
+        return EnumerateArray(document.RootElement, "queries")
+            .Select(item =>
+            {
+                if (!TryGetDouble(item, "time", out var time) ||
+                    !TryGetString(item, "domain", out var domain) ||
+                    !TryGetString(item, "status", out var status))
+                {
+                    return null;
+                }
+
+                var clientName = "unknown";
+                if (item.TryGetProperty("client", out var clientElement) && clientElement.ValueKind == JsonValueKind.Object)
+                {
+                    clientName = GetNullableString(clientElement, "name");
+                    if (string.IsNullOrWhiteSpace(clientName))
+                    {
+                        clientName = GetNullableString(clientElement, "ip") ?? "unknown";
+                    }
+                }
+
+                return new QueryLogEntry(
+                    DateTimeOffset.FromUnixTimeSeconds((long)time),
+                    domain,
+                    clientName,
+                    blockedStatuses.Contains(status) ? QueryLogStatus.Blocked : QueryLogStatus.Allowed,
+                    ConnectionId,
+                    serverDisplayName);
+            })
+            .Where(item => item is not null)
+            .Cast<QueryLogEntry>()
+            .ToArray();
+    }
+
+    public Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default) =>
+        PostJsonAsync("/domains/allow/exact", new DomainRuleRequest(domain, "Added via PiGuard"), cancellationToken: cancellationToken);
+
+    public Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default) =>
+        PostJsonAsync("/domains/deny/exact", new DomainRuleRequest(domain, "Added via PiGuard"), cancellationToken: cancellationToken);
+
     public async Task<JsonDocument> GetJsonDocumentAsync(
         string path,
         IEnumerable<KeyValuePair<string, string?>>? queryParameters = null,
@@ -325,5 +427,57 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         }
     }
 
+    private static IEnumerable<JsonElement> EnumerateArray(JsonElement root, string propertyName)
+    {
+        if (root.ValueKind == JsonValueKind.Object &&
+            root.TryGetProperty(propertyName, out var property) &&
+            property.ValueKind == JsonValueKind.Array)
+        {
+            return property.EnumerateArray().ToArray();
+        }
+
+        return [];
+    }
+
+    private static bool TryGetString(JsonElement element, string propertyName, out string value)
+    {
+        if (element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String)
+        {
+            value = property.GetString() ?? string.Empty;
+            return true;
+        }
+
+        value = string.Empty;
+        return false;
+    }
+
+    private static string? GetNullableString(JsonElement element, string propertyName) =>
+        element.TryGetProperty(propertyName, out var property) && property.ValueKind == JsonValueKind.String
+            ? property.GetString()
+            : null;
+
+    private static bool TryGetInt(JsonElement element, string propertyName, out int value)
+    {
+        if (element.TryGetProperty(propertyName, out var property) && property.TryGetInt32(out value))
+        {
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
+    private static bool TryGetDouble(JsonElement element, string propertyName, out double value)
+    {
+        if (element.TryGetProperty(propertyName, out var property) && property.TryGetDouble(out value))
+        {
+            return true;
+        }
+
+        value = 0;
+        return false;
+    }
+
     private sealed record SessionCacheEntry(string SessionId, DateTimeOffset? ExpiresAt);
+    private sealed record DomainRuleRequest(string Domain, string Comment);
 }

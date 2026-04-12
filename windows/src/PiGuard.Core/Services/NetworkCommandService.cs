@@ -42,44 +42,19 @@ public sealed class NetworkCommandService : INetworkCommandService
             return new OperationExecutionResult(0, 0, 1, ["No Pi-hole connections are configured."]);
         }
 
-        var messages = new List<string>();
-        var succeeded = 0;
-        var failed = 0;
-        var skipped = 0;
+        var results = await Task.WhenAll(
+            preferences.Connections.Select((connection, index) =>
+                ExecuteForConnectionAsync(connection, index, actionLabel, executor, cancellationToken)));
 
-        foreach (var connection in preferences.Connections)
-        {
-            var displayName = $"{connection.Hostname}:{connection.Port}";
-            var secret = await _credentialStore.ReadSecretAsync(connection.Id, cancellationToken);
-            if (connection.PasswordProtected && string.IsNullOrWhiteSpace(secret))
-            {
-                skipped++;
-                messages.Add($"{displayName}: skipped because no secret is stored.");
-                continue;
-            }
-
-            try
-            {
-                if (connection.Version == ConnectionVersion.V6)
-                {
-                    var client = new PiholeClientV6(connection, secret);
-                    await executor(null, client, cancellationToken);
-                }
-                else
-                {
-                    var client = new PiholeClientV5(connection, secret);
-                    await executor(client, null, cancellationToken);
-                }
-
-                succeeded++;
-                messages.Add($"{displayName}: {actionLabel} succeeded.");
-            }
-            catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
-            {
-                failed++;
-                messages.Add($"{displayName}: {actionLabel} failed. {exception.Message}");
-            }
-        }
+        var orderedResults = results
+            .OrderBy(result => result.Index)
+            .ToArray();
+        var messages = orderedResults
+            .Select(result => result.Message)
+            .ToArray();
+        var succeeded = orderedResults.Count(result => result.Status == ExecutionStatus.Succeeded);
+        var failed = orderedResults.Count(result => result.Status == ExecutionStatus.Failed);
+        var skipped = orderedResults.Count(result => result.Status == ExecutionStatus.Skipped);
 
         if (succeeded > 0)
         {
@@ -88,4 +63,48 @@ public sealed class NetworkCommandService : INetworkCommandService
 
         return new OperationExecutionResult(succeeded, failed, skipped, messages);
     }
+
+    private async Task<ConnectionExecutionResult> ExecuteForConnectionAsync(
+        ConnectionConfig connection,
+        int index,
+        string actionLabel,
+        Func<IPiholeClientV5?, IPiholeClientV6?, CancellationToken, Task> executor,
+        CancellationToken cancellationToken)
+    {
+        var displayName = $"{connection.Hostname}:{connection.Port}";
+        var secret = await _credentialStore.ReadSecretAsync(connection.Id, cancellationToken);
+        if (connection.PasswordProtected && string.IsNullOrWhiteSpace(secret))
+        {
+            return new ConnectionExecutionResult(index, ExecutionStatus.Skipped, $"{displayName}: skipped because no secret is stored.");
+        }
+
+        try
+        {
+            if (connection.Version == ConnectionVersion.V6)
+            {
+                var client = new PiholeClientV6(connection, secret);
+                await executor(null, client, cancellationToken);
+            }
+            else
+            {
+                var client = new PiholeClientV5(connection, secret);
+                await executor(client, null, cancellationToken);
+            }
+
+            return new ConnectionExecutionResult(index, ExecutionStatus.Succeeded, $"{displayName}: {actionLabel} succeeded.");
+        }
+        catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
+        {
+            return new ConnectionExecutionResult(index, ExecutionStatus.Failed, $"{displayName}: {actionLabel} failed. {exception.Message}");
+        }
+    }
+
+    private enum ExecutionStatus
+    {
+        Succeeded,
+        Failed,
+        Skipped,
+    }
+
+    private sealed record ConnectionExecutionResult(int Index, ExecutionStatus Status, string Message);
 }

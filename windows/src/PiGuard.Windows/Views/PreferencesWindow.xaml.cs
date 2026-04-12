@@ -58,6 +58,9 @@ public partial class PreferencesWindow : Window
         LaunchAtStartupCheckBox.IsChecked = await _startupService.IsEnabledAsync();
         ShortcutEnabledCheckBox.IsChecked = _preferences.ShortcutEnabled;
         EnableLoggingCheckBox.IsChecked = _preferences.EnableLogging;
+        EnableFloatingStatsPillCheckBox.IsChecked = _preferences.EnableFloatingStatsPill;
+        EnableTrayMiniPanelCheckBox.IsChecked = _preferences.EnableTrayMiniPanel;
+        EnableRichTrayTooltipCheckBox.IsChecked = _preferences.EnableRichTrayTooltip;
         PollingRateTextBox.Text = _preferences.PollingRateSeconds.ToString();
 
         if (_connections.Count > 0)
@@ -160,6 +163,9 @@ public partial class PreferencesWindow : Window
             Connections = normalizedConnections,
             ShortcutEnabled = ShortcutEnabledCheckBox.IsChecked == true,
             EnableLogging = EnableLoggingCheckBox.IsChecked == true,
+            EnableFloatingStatsPill = EnableFloatingStatsPillCheckBox.IsChecked == true,
+            EnableTrayMiniPanel = EnableTrayMiniPanelCheckBox.IsChecked == true,
+            EnableRichTrayTooltip = EnableRichTrayTooltipCheckBox.IsChecked == true,
             LaunchAtStartup = LaunchAtStartupCheckBox.IsChecked == true,
             PollingRateSeconds = pollingRate,
         };
@@ -304,7 +310,7 @@ public partial class PreferencesWindow : Window
 
         public bool UseSsl { get; set; }
 
-        public ConnectionVersion Version { get; set; }
+        public ConnectionVersion Version { get; set; } = ConnectionVersion.V6;
 
         public string AdminUrl { get; set; } = string.Empty;
 

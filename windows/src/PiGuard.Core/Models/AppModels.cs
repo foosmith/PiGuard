@@ -47,6 +47,34 @@ public sealed record PiholeNetworkOverview(
     int AverageBlocklist,
     IReadOnlyList<PiholeStatusSnapshot> Nodes);
 
+public sealed record TopItem(string Name, int Count);
+
+public enum QueryLogStatus
+{
+    Allowed,
+    Blocked,
+}
+
+public sealed record QueryLogEntry(
+    DateTimeOffset Timestamp,
+    string Domain,
+    string Client,
+    QueryLogStatus Status,
+    string ServerIdentifier,
+    string ServerDisplayName);
+
+public enum DomainRuleAction
+{
+    Allow,
+    Block,
+}
+
+public sealed record DomainRuleResult(
+    string ServerIdentifier,
+    string ServerDisplayName,
+    bool Succeeded,
+    string Message);
+
 public enum SyncRunStatus
 {
     Success,
@@ -86,6 +114,9 @@ public sealed record AppPreferences
     public bool LaunchAtStartup { get; init; }
     public int PollingRateSeconds { get; init; } = 3;
     public bool EnableLogging { get; init; }
+    public bool EnableFloatingStatsPill { get; init; }
+    public bool EnableTrayMiniPanel { get; init; } = true;
+    public bool EnableRichTrayTooltip { get; init; } = true;
     public SyncPreferences Sync { get; init; } = new();
 }
 

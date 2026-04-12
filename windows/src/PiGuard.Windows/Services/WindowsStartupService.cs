@@ -1,4 +1,3 @@
-using System.IO;
 using Microsoft.Win32;
 using PiGuard.Core.Abstractions;
 
@@ -9,12 +8,10 @@ public sealed class WindowsStartupService : IStartupService
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
 
     private readonly string _appName;
-    private readonly string _executableName;
 
-    public WindowsStartupService(string appName, string executableName)
+    public WindowsStartupService(string appName)
     {
         _appName = appName;
-        _executableName = executableName;
     }
 
     public Task<bool> IsEnabledAsync(CancellationToken cancellationToken = default)
@@ -28,7 +25,8 @@ public sealed class WindowsStartupService : IStartupService
         using var key = Registry.CurrentUser.CreateSubKey(RunKeyPath);
         if (enabled)
         {
-            var executablePath = Path.Combine(AppContext.BaseDirectory, _executableName);
+            var executablePath = Environment.ProcessPath
+                ?? throw new InvalidOperationException("Unable to resolve the current process path.");
             key?.SetValue(_appName, $"\"{executablePath}\"");
         }
         else

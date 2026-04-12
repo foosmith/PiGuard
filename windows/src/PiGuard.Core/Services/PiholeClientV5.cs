@@ -1,5 +1,6 @@
 using System.Net.Http.Json;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PiGuard.Core.Abstractions;
 using PiGuard.Core.Models;
 
@@ -60,6 +61,81 @@ public sealed class PiholeClientV5 : IPiholeClientV5
         _ = await ReadJsonAsync<PiholeV5StatusResponse>(response, cancellationToken);
     }
 
+    public async Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default)
+    {
+        var requestUri = BuildApiUri("topItems");
+        using var response = await SendGetAsync(requestUri, cancellationToken);
+        var payload = await ReadJsonAsync<PiholeV5TopAdsResponse>(response, cancellationToken);
+        return payload.TopAds
+            .OrderByDescending(item => item.Value)
+            .ThenBy(item => item.Key, StringComparer.OrdinalIgnoreCase)
+            .Take(10)
+            .Select(item => new TopItem(item.Key, item.Value))
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<TopItem>> FetchTopClientsAsync(CancellationToken cancellationToken = default)
+    {
+        var requestUri = BuildApiUri("topClients");
+        using var response = await SendGetAsync(requestUri, cancellationToken);
+        var payload = await ReadJsonAsync<PiholeV5TopClientsResponse>(response, cancellationToken);
+        return payload.TopSources
+            .Select(item => new TopItem(item.Key.Split('|', 2)[0], item.Value))
+            .OrderByDescending(item => item.Count)
+            .ThenBy(item => item.Name, StringComparer.OrdinalIgnoreCase)
+            .Take(10)
+            .ToArray();
+    }
+
+    public async Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(
+        string serverDisplayName,
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var requestUri = BuildApiUri("getAllQueries", limit.ToString());
+        using var response = await SendGetAsync(requestUri, cancellationToken);
+        var payload = await ReadJsonAsync<PiholeV5QueryLogResponse>(response, cancellationToken);
+        var blockedCodes = new HashSet<int> { 1, 4, 5, 6, 7, 8, 9, 10, 11 };
+
+        return payload.Data
+            .Select(row =>
+            {
+                if (row.Count < 5 ||
+                    !long.TryParse(row[0].GetString(), out var timestampValue) ||
+                    row[2].GetString() is not { } domain ||
+                    row[3].GetString() is not { } client ||
+                    !TryReadInt(row[4], out var statusCode))
+                {
+                    return null;
+                }
+
+                return new QueryLogEntry(
+                    DateTimeOffset.FromUnixTimeSeconds(timestampValue),
+                    domain,
+                    client,
+                    blockedCodes.Contains(statusCode) ? QueryLogStatus.Blocked : QueryLogStatus.Allowed,
+                    ConnectionId,
+                    serverDisplayName);
+            })
+            .Where(entry => entry is not null)
+            .Cast<QueryLogEntry>()
+            .ToArray();
+    }
+
+    public async Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        var requestUri = BuildApiUri("list", $"white&add={Uri.EscapeDataString(domain)}");
+        using var response = await SendGetAsync(requestUri, cancellationToken);
+        _ = await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+
+    public async Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        var requestUri = BuildApiUri("list", $"black&add={Uri.EscapeDataString(domain)}");
+        using var response = await SendGetAsync(requestUri, cancellationToken);
+        _ = await response.Content.ReadAsStringAsync(cancellationToken);
+    }
+
     private Uri BuildApiUri(string action, string? argument = null)
     {
         if (_connection.PasswordProtected && string.IsNullOrWhiteSpace(_apiToken))
@@ -71,8 +147,9 @@ public sealed class PiholeClientV5 : IPiholeClientV5
         var authPrefix = !_connection.PasswordProtected && string.IsNullOrWhiteSpace(_apiToken)
             ? string.Empty
             : $"auth={Uri.EscapeDataString(_apiToken ?? string.Empty)}&";
-        var argumentSuffix = argument is null ? string.Empty : $"={Uri.EscapeDataString(argument)}";
-        builder.Query = $"{authPrefix}{action}{argumentSuffix}";
+        builder.Query = argument is null
+            ? $"{authPrefix}{action}"
+            : $"{authPrefix}{action}={argument}";
         return builder.Uri;
     }
 
@@ -130,6 +207,22 @@ public sealed class PiholeClientV5 : IPiholeClientV5
             content);
     }
 
+    private static bool TryReadInt(JsonElement element, out int value)
+    {
+        if (element.ValueKind == JsonValueKind.Number)
+        {
+            return element.TryGetInt32(out value);
+        }
+
+        if (element.ValueKind == JsonValueKind.String)
+        {
+            return int.TryParse(element.GetString(), out value);
+        }
+
+        value = 0;
+        return false;
+    }
+
     private sealed record PiholeV5Summary(
         int DomainsBeingBlocked,
         int DnsQueriesToday,
@@ -143,4 +236,7 @@ public sealed class PiholeClientV5 : IPiholeClientV5
         string Status);
 
     private sealed record PiholeV5StatusResponse(string Status);
+    private sealed record PiholeV5TopAdsResponse([property: JsonPropertyName("top_ads")] Dictionary<string, int> TopAds);
+    private sealed record PiholeV5TopClientsResponse([property: JsonPropertyName("top_sources")] Dictionary<string, int> TopSources);
+    private sealed record PiholeV5QueryLogResponse(List<List<JsonElement>> Data);
 }

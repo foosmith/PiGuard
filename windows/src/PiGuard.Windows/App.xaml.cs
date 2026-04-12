@@ -26,9 +26,10 @@ public partial class App : System.Windows.Application
 
             var settingsStore = new JsonSettingsStore(Path.Combine(appDataRoot, "settings.json"));
             var credentialStore = new WindowsCredentialStore(appDataRoot);
-            var startupService = new WindowsStartupService("PiGuard", "PiGuard.Windows.exe");
+            var startupService = new WindowsStartupService("PiGuard");
             _pollingService = new PiholePollingService(settingsStore, credentialStore);
             var networkCommandService = new NetworkCommandService(settingsStore, credentialStore, _pollingService);
+            var networkInsightsService = new NetworkInsightsService(settingsStore, credentialStore);
             _syncService = new SyncOrchestrationService(settingsStore, credentialStore, _pollingService);
 
             await _syncService.StartAsync();
@@ -39,6 +40,7 @@ public partial class App : System.Windows.Application
                 startupService,
                 _pollingService,
                 networkCommandService,
+                networkInsightsService,
                 _syncService);
             await _trayHost.InitializeAsync();
         }

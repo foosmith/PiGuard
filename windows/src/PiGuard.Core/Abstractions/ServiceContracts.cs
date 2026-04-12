@@ -48,6 +48,14 @@ public interface INetworkCommandService
     Task<OperationExecutionResult> DisableNetworkAsync(int? seconds = null, CancellationToken cancellationToken = default);
 }
 
+public interface INetworkInsightsService
+{
+    Task<IReadOnlyDictionary<string, IReadOnlyList<TopItem>>> FetchTopBlockedAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<string, IReadOnlyList<TopItem>>> FetchTopClientsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(string? serverIdentifier = null, int limit = 100, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<DomainRuleResult>> ApplyDomainRuleAsync(string domain, DomainRuleAction action, CancellationToken cancellationToken = default);
+}
+
 public interface ISyncService : IDisposable
 {
     event EventHandler<SyncStatusSnapshot>? SyncStatusChanged;
@@ -64,6 +72,11 @@ public interface IPiholeClientV5
     Task<PiholeStatusSnapshot> FetchStatusAsync(CancellationToken cancellationToken = default);
     Task EnableAsync(CancellationToken cancellationToken = default);
     Task DisableAsync(int? seconds = null, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopItem>> FetchTopClientsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(string serverDisplayName, int limit = 100, CancellationToken cancellationToken = default);
+    Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default);
+    Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default);
 }
 
 public interface IPiholeClientV6
@@ -73,4 +86,9 @@ public interface IPiholeClientV6
     Task EnableAsync(CancellationToken cancellationToken = default);
     Task DisableAsync(int? seconds = null, CancellationToken cancellationToken = default);
     Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<TopItem>> FetchTopClientsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(string serverDisplayName, int limit = 100, CancellationToken cancellationToken = default);
+    Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default);
+    Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default);
 }

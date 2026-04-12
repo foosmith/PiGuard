@@ -91,7 +91,7 @@
                         <TextBox x:Name="PortTextBox" Grid.Row="1" Grid.Column="1" Margin="8,0,0,8" />
 
                         <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Version" />
-                        <ComboBox x:Name="VersionComboBox" Grid.Row="2" Grid.Column="1" Margin="8,0,0,8" SelectedIndex="0">
+                        <ComboBox x:Name="VersionComboBox" Grid.Row="2" Grid.Column="1" Margin="8,0,0,8" SelectedIndex="1">
                             <ComboBoxItem Content="Pi-hole v5 or earlier" Tag="LegacyV5" />
                             <ComboBoxItem Content="Pi-hole v6" Tag="V6" />
                         </ComboBox>
@@ -132,6 +132,9 @@
                         <CheckBox x:Name="LaunchAtStartupCheckBox" Margin="0,0,0,10" Content="Launch at startup" />
                         <CheckBox x:Name="ShortcutEnabledCheckBox" Margin="0,0,0,10" Content="Enable global hotkey" />
                         <CheckBox x:Name="EnableLoggingCheckBox" Margin="0,0,0,10" Content="Enable diagnostic logging" />
+                        <CheckBox x:Name="EnableFloatingStatsPillCheckBox" Margin="0,0,0,10" Content="Show floating stats pill" />
+                        <CheckBox x:Name="EnableTrayMiniPanelCheckBox" Margin="0,0,0,10" Content="Show mini panel on tray click" />
+                        <CheckBox x:Name="EnableRichTrayTooltipCheckBox" Margin="0,0,0,10" Content="Use richer tray hover text" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center" Text="Polling rate (seconds)" />
                             <TextBox x:Name="PollingRateTextBox" Width="80" Margin="12,0,0,0" />

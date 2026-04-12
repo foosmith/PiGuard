@@ -63,7 +63,8 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
             return;
         }
 
-        await _lifetimeCts.CancelAsync();
+        var lifetimeCts = _lifetimeCts;
+        await lifetimeCts.CancelAsync();
 
         try
         {
@@ -74,7 +75,7 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
         }
         finally
         {
-            _lifetimeCts.Dispose();
+            lifetimeCts.Dispose();
             _lifetimeCts = null;
             _backgroundTask = null;
         }
@@ -137,9 +138,12 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
 
     public void Dispose()
     {
+        var lifetimeCts = Interlocked.Exchange(ref _lifetimeCts, null);
+        lifetimeCts?.Cancel();
+        lifetimeCts?.Dispose();
+        _backgroundTask = null;
         _syncGate.Dispose();
         _gravityGate.Dispose();
-        _lifetimeCts?.Dispose();
     }
 
     private enum GravityResult { Triggered, Failed, Skipped }
