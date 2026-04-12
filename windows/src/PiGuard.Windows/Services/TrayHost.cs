@@ -136,7 +136,7 @@ public sealed class TrayHost : IDisposable
     {
         _pollingService.NetworkOverviewUpdated -= HandleNetworkOverviewUpdated;
         _syncService.SyncStatusChanged -= HandleSyncStatusChanged;
-        _pollingService.StopAsync().GetAwaiter().GetResult();
+        _ = _pollingService.StopAsync();
         _notifyIcon.Dispose();
     }
 
@@ -223,29 +223,57 @@ public sealed class TrayHost : IDisposable
     private async Task EnableNetworkAsync()
     {
         _statusMenuItem.Text = "Status: Enabling...";
-        var result = await _networkCommandService.EnableNetworkAsync();
-        _statusMenuItem.Text = BuildCommandSummary("Enabled", result);
+        try
+        {
+            var result = await _networkCommandService.EnableNetworkAsync();
+            _statusMenuItem.Text = BuildCommandSummary("Enabled", result);
+        }
+        catch
+        {
+            _statusMenuItem.Text = "Status: Enable failed";
+        }
     }
 
     private async Task DisableNetworkAsync()
     {
         _statusMenuItem.Text = "Status: Disabling...";
-        var result = await _networkCommandService.DisableNetworkAsync();
-        _statusMenuItem.Text = BuildCommandSummary("Disabled", result);
+        try
+        {
+            var result = await _networkCommandService.DisableNetworkAsync();
+            _statusMenuItem.Text = BuildCommandSummary("Disabled", result);
+        }
+        catch
+        {
+            _statusMenuItem.Text = "Status: Disable failed";
+        }
     }
 
     private async Task TriggerGravityUpdateAsync()
     {
         _statusMenuItem.Text = "Status: Updating gravity...";
-        await _syncService.TriggerGravityUpdateAsync();
-        _statusMenuItem.Text = "Status: Gravity update finished";
+        try
+        {
+            await _syncService.TriggerGravityUpdateAsync();
+            _statusMenuItem.Text = "Status: Gravity update finished";
+        }
+        catch
+        {
+            _statusMenuItem.Text = "Status: Gravity update failed";
+        }
     }
 
     private async Task TriggerSyncNowAsync()
     {
         _statusMenuItem.Text = "Status: Running sync...";
-        await _syncService.TriggerSyncNowAsync();
-        _statusMenuItem.Text = "Status: Sync finished";
+        try
+        {
+            await _syncService.TriggerSyncNowAsync();
+            _statusMenuItem.Text = "Status: Sync finished";
+        }
+        catch
+        {
+            _statusMenuItem.Text = "Status: Sync failed";
+        }
     }
 
     private static string BuildCommandSummary(string verb, OperationExecutionResult result)

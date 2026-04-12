@@ -58,17 +58,8 @@ public sealed class PiholePollingService : IPollingService, IDisposable
 
     public async Task RefreshNowAsync(CancellationToken cancellationToken = default)
     {
-        await _refreshGate.WaitAsync(cancellationToken);
-        try
-        {
-            var preferences = await _settingsStore.LoadAsync(cancellationToken);
-            var overview = await PollNetworkAsync(preferences, cancellationToken);
-            NetworkOverviewUpdated?.Invoke(this, overview);
-        }
-        finally
-        {
-            _refreshGate.Release();
-        }
+        var preferences = await _settingsStore.LoadAsync(cancellationToken);
+        await RefreshWithPreferencesAsync(preferences, cancellationToken);
     }
 
     public void Dispose()
@@ -79,13 +70,13 @@ public sealed class PiholePollingService : IPollingService, IDisposable
 
     private async Task RunAsync(CancellationToken cancellationToken)
     {
-        var initialPreferences = await _settingsStore.LoadAsync(cancellationToken);
-        NetworkOverviewUpdated?.Invoke(this, BuildInitialOverview(initialPreferences));
-        await RefreshNowAsync(cancellationToken);
+        var preferences = await _settingsStore.LoadAsync(cancellationToken);
+        NetworkOverviewUpdated?.Invoke(this, BuildInitialOverview(preferences));
+        await RefreshWithPreferencesAsync(preferences, cancellationToken);
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var preferences = await _settingsStore.LoadAsync(cancellationToken);
+            preferences = await _settingsStore.LoadAsync(cancellationToken);
             var interval = TimeSpan.FromSeconds(Math.Max(1, preferences.PollingRateSeconds));
 
             try
@@ -97,7 +88,21 @@ public sealed class PiholePollingService : IPollingService, IDisposable
                 break;
             }
 
-            await RefreshNowAsync(cancellationToken);
+            await RefreshWithPreferencesAsync(preferences, cancellationToken);
+        }
+    }
+
+    private async Task RefreshWithPreferencesAsync(AppPreferences preferences, CancellationToken cancellationToken)
+    {
+        await _refreshGate.WaitAsync(cancellationToken);
+        try
+        {
+            var overview = await PollNetworkAsync(preferences, cancellationToken);
+            NetworkOverviewUpdated?.Invoke(this, overview);
+        }
+        finally
+        {
+            _refreshGate.Release();
         }
     }
 

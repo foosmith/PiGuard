@@ -15,6 +15,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
         PropertyNameCaseInsensitive = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
     };
+    private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(5) };
     private static readonly Lock SessionCacheLock = new();
     private static readonly Dictionary<string, SessionCacheEntry> SessionCache = [];
 
@@ -29,8 +30,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     {
         _connection = connection;
         _appPassword = appPassword;
-        _httpClient = httpClient ?? new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(5);
+        _httpClient = httpClient ?? SharedHttpClient;
     }
 
     public string ConnectionId => _connection.Id;
@@ -290,7 +290,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     private string BuildSessionCacheKey()
     {
         var scheme = _connection.UseSsl ? "https" : "http";
-        return $"{scheme}://{_connection.Hostname}:{_connection.Port}";
+        return $"{scheme}://{_connection.Hostname}:{_connection.Port}|{_appPassword}";
     }
 
     private static SessionCacheEntry? GetCachedSession(string cacheKey)

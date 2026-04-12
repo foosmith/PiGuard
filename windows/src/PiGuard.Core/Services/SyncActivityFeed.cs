@@ -4,6 +4,8 @@ namespace PiGuard.Core.Services;
 
 public sealed class SyncActivityFeed
 {
+    private const int MaxEntries = 200;
+
     private readonly object _gate = new();
     private readonly List<SyncActivityEntry> _entries = [];
 
@@ -20,6 +22,10 @@ public sealed class SyncActivityFeed
         lock (_gate)
         {
             _entries.Add(new SyncActivityEntry(DateTimeOffset.UtcNow, message));
+            if (_entries.Count > MaxEntries)
+            {
+                _entries.RemoveRange(0, _entries.Count - MaxEntries);
+            }
         }
     }
 

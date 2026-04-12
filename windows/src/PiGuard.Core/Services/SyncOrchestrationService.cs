@@ -115,32 +115,12 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
                 return;
             }
 
-            var triggered = 0;
-            var failed = 0;
-            var skipped = 0;
-            foreach (var connection in v6Connections)
-            {
-                var displayName = BuildDisplayName(connection);
-                var secret = await _credentialStore.ReadSecretAsync(connection.Id, cancellationToken);
-                if (connection.PasswordProtected && string.IsNullOrWhiteSpace(secret))
-                {
-                    skipped++;
-                    AppendActivity($"{displayName}: skipped because no app password is stored.");
-                    continue;
-                }
+            var tasks = v6Connections.Select(connection => TriggerGravityForConnectionAsync(connection, cancellationToken));
+            var results = await Task.WhenAll(tasks);
 
-                try
-                {
-                    await new PiholeClientV6(connection, secret).TriggerGravityUpdateAsync(cancellationToken);
-                    triggered++;
-                    AppendActivity($"{displayName}: gravity update triggered.");
-                }
-                catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
-                {
-                    failed++;
-                    AppendActivity($"{displayName}: gravity update failed. {exception.Message}");
-                }
-            }
+            var triggered = results.Count(r => r == GravityResult.Triggered);
+            var failed = results.Count(r => r == GravityResult.Failed);
+            var skipped = results.Count(r => r == GravityResult.Skipped);
 
             AppendActivity($"Gravity update finished. Triggered={triggered}, Failed={failed}, Skipped={skipped}.");
             if (triggered > 0)
@@ -160,6 +140,31 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
         _syncGate.Dispose();
         _gravityGate.Dispose();
         _lifetimeCts?.Dispose();
+    }
+
+    private enum GravityResult { Triggered, Failed, Skipped }
+
+    private async Task<GravityResult> TriggerGravityForConnectionAsync(ConnectionConfig connection, CancellationToken cancellationToken)
+    {
+        var displayName = BuildDisplayName(connection);
+        var secret = await _credentialStore.ReadSecretAsync(connection.Id, cancellationToken);
+        if (connection.PasswordProtected && string.IsNullOrWhiteSpace(secret))
+        {
+            AppendActivity($"{displayName}: skipped because no app password is stored.");
+            return GravityResult.Skipped;
+        }
+
+        try
+        {
+            await new PiholeClientV6(connection, secret).TriggerGravityUpdateAsync(cancellationToken);
+            AppendActivity($"{displayName}: gravity update triggered.");
+            return GravityResult.Triggered;
+        }
+        catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
+        {
+            AppendActivity($"{displayName}: gravity update failed. {exception.Message}");
+            return GravityResult.Failed;
+        }
     }
 
     private async Task RunScheduledSyncLoopAsync(CancellationToken cancellationToken)
@@ -244,8 +249,9 @@ public sealed class SyncOrchestrationService : ISyncService, IDisposable
 
         try
         {
-            _ = await primary.FetchStatusAsync(cancellationToken);
-            _ = await secondary.FetchStatusAsync(cancellationToken);
+            await Task.WhenAll(
+                primary.FetchStatusAsync(cancellationToken),
+                secondary.FetchStatusAsync(cancellationToken));
 
             var modeTag = isDryRun ? " [dry run]" : string.Empty;
             AppendActivity($"Sync{modeTag}: starting.");

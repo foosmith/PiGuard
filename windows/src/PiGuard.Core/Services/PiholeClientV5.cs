@@ -12,6 +12,8 @@ public sealed class PiholeClientV5 : IPiholeClientV5
         PropertyNameCaseInsensitive = true,
     };
 
+    private static readonly HttpClient SharedHttpClient = new() { Timeout = TimeSpan.FromSeconds(3) };
+
     private readonly ConnectionConfig _connection;
     private readonly HttpClient _httpClient;
     private readonly string? _apiToken;
@@ -20,8 +22,7 @@ public sealed class PiholeClientV5 : IPiholeClientV5
     {
         _connection = connection;
         _apiToken = apiToken;
-        _httpClient = httpClient ?? new HttpClient();
-        _httpClient.Timeout = TimeSpan.FromSeconds(3);
+        _httpClient = httpClient ?? SharedHttpClient;
     }
 
     public string ConnectionId => _connection.Id;

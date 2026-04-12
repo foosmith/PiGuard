@@ -48,10 +48,12 @@ public interface INetworkCommandService
     Task<OperationExecutionResult> DisableNetworkAsync(int? seconds = null, CancellationToken cancellationToken = default);
 }
 
-public interface ISyncService
+public interface ISyncService : IDisposable
 {
     event EventHandler<SyncStatusSnapshot>? SyncStatusChanged;
 
+    Task StartAsync(CancellationToken cancellationToken = default);
+    Task StopAsync(CancellationToken cancellationToken = default);
     Task TriggerSyncNowAsync(CancellationToken cancellationToken = default);
     Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default);
 }
