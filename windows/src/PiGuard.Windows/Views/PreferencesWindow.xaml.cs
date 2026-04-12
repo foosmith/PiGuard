@@ -28,7 +28,15 @@ public partial class PreferencesWindow : Window
     private async void PreferencesWindow_Loaded(object sender, RoutedEventArgs e)
     {
         Loaded -= PreferencesWindow_Loaded;
-        await LoadAsync();
+        try
+        {
+            await LoadAsync();
+        }
+        catch
+        {
+            StatusTextBlock.Text = "Failed to load preferences. Your settings file may be corrupt.";
+            SaveChangesButton.IsEnabled = false;
+        }
     }
 
     private async Task LoadAsync()

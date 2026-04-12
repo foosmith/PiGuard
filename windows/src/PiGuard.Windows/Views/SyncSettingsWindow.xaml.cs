@@ -25,7 +25,16 @@ public partial class SyncSettingsWindow : Window
     private async void SyncSettingsWindow_Loaded(object sender, RoutedEventArgs e)
     {
         Loaded -= SyncSettingsWindow_Loaded;
-        await LoadAsync();
+        try
+        {
+            await LoadAsync();
+        }
+        catch
+        {
+            StatusTextBlock.Text = "Failed to load sync settings. Your settings file may be corrupt.";
+            SaveButton.IsEnabled = false;
+            SyncNowButton.IsEnabled = false;
+        }
     }
 
     private async Task LoadAsync()
@@ -86,14 +95,10 @@ public partial class SyncSettingsWindow : Window
             return;
         }
 
+        SyncNowButton.IsEnabled = false;
         try
         {
-            _preferences = _preferences with
-            {
-                Sync = syncPreferences,
-                LaunchAtStartup = _preferences.LaunchAtStartup,
-            };
-
+            _preferences = _preferences with { Sync = syncPreferences };
             await _settingsStore.SaveAsync(_preferences);
             StatusTextBlock.Text = "Sync requested.";
             await _syncService.TriggerSyncNowAsync();
@@ -101,6 +106,10 @@ public partial class SyncSettingsWindow : Window
         catch
         {
             StatusTextBlock.Text = "Sync failed. Please try again.";
+        }
+        finally
+        {
+            UpdateStatusPanel();
         }
     }
 

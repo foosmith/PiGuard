@@ -147,7 +147,7 @@
                        Foreground="#FF666666"
                        Text="Load or create a connection, then save changes." />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
-                <Button Width="120" Margin="0,0,12,0" Content="Save Changes" Click="SaveChangesButton_Click" />
+                <Button x:Name="SaveChangesButton" Width="120" Margin="0,0,12,0" Content="Save Changes" Click="SaveChangesButton_Click" />
                 <Button Width="100" Content="Close" Click="CloseButton_Click" />
             </StackPanel>
         </DockPanel>
