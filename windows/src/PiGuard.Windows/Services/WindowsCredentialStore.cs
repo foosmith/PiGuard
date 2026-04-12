@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,7 +9,7 @@ namespace PiGuard.Windows.Services;
 public sealed class WindowsCredentialStore : ICredentialStore
 {
     private readonly string _credentialRoot;
-    private readonly Dictionary<string, string?> _cache = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, string?> _cache = new(StringComparer.Ordinal);
 
     public WindowsCredentialStore(string appDataRoot)
     {
@@ -25,7 +26,7 @@ public sealed class WindowsCredentialStore : ICredentialStore
         var path = GetPath(accountKey);
         if (!File.Exists(path))
         {
-            _cache[accountKey] = null;
+            _cache.TryAdd(accountKey, null);
             return null;
         }
 
@@ -53,7 +54,7 @@ public sealed class WindowsCredentialStore : ICredentialStore
             File.Delete(path);
         }
 
-        _cache.Remove(accountKey);
+        _cache.TryRemove(accountKey, out _);
         return Task.CompletedTask;
     }
 

@@ -10,6 +10,7 @@ public partial class App : System.Windows.Application
 {
     private TrayHost? _trayHost;
     private ISyncService? _syncService;
+    private PiholePollingService? _pollingService;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -17,27 +18,39 @@ public partial class App : System.Windows.Application
 
         ShutdownMode = ShutdownMode.OnExplicitShutdown;
 
-        var appDataRoot = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "PiGuard");
+        try
+        {
+            var appDataRoot = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "PiGuard");
 
-        var settingsStore = new JsonSettingsStore(Path.Combine(appDataRoot, "settings.json"));
-        var credentialStore = new WindowsCredentialStore(appDataRoot);
-        var startupService = new WindowsStartupService("PiGuard", "PiGuard.Windows.exe");
-        var pollingService = new PiholePollingService(settingsStore, credentialStore);
-        var networkCommandService = new NetworkCommandService(settingsStore, credentialStore, pollingService);
-        _syncService = new SyncOrchestrationService(settingsStore, credentialStore, pollingService);
+            var settingsStore = new JsonSettingsStore(Path.Combine(appDataRoot, "settings.json"));
+            var credentialStore = new WindowsCredentialStore(appDataRoot);
+            var startupService = new WindowsStartupService("PiGuard", "PiGuard.Windows.exe");
+            _pollingService = new PiholePollingService(settingsStore, credentialStore);
+            var networkCommandService = new NetworkCommandService(settingsStore, credentialStore, _pollingService);
+            _syncService = new SyncOrchestrationService(settingsStore, credentialStore, _pollingService);
 
-        await _syncService.StartAsync();
+            await _syncService.StartAsync();
 
-        _trayHost = new TrayHost(
-            settingsStore,
-            credentialStore,
-            startupService,
-            pollingService,
-            networkCommandService,
-            _syncService);
-        await _trayHost.InitializeAsync();
+            _trayHost = new TrayHost(
+                settingsStore,
+                credentialStore,
+                startupService,
+                _pollingService,
+                networkCommandService,
+                _syncService);
+            await _trayHost.InitializeAsync();
+        }
+        catch (Exception exception)
+        {
+            System.Windows.MessageBox.Show(
+                $"PiGuard failed to start: {exception.Message}",
+                "PiGuard",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+            Shutdown();
+        }
     }
 
     protected override void OnExit(ExitEventArgs e)
@@ -45,6 +58,7 @@ public partial class App : System.Windows.Application
         _trayHost?.Dispose();
         _ = _syncService?.StopAsync();
         _syncService?.Dispose();
+        _pollingService?.Dispose();
         base.OnExit(e);
     }
 }
