@@ -65,10 +65,17 @@ public partial class SyncSettingsWindow : Window
             return;
         }
 
-        _preferences = _preferences with { Sync = syncPreferences };
-        await _settingsStore.SaveAsync(_preferences);
-        UpdateStatusPanel();
-        StatusTextBlock.Text = "Sync settings saved.";
+        try
+        {
+            _preferences = _preferences with { Sync = syncPreferences };
+            await _settingsStore.SaveAsync(_preferences);
+            UpdateStatusPanel();
+            StatusTextBlock.Text = "Sync settings saved.";
+        }
+        catch
+        {
+            StatusTextBlock.Text = "Save failed. Please try again.";
+        }
     }
 
     private async void SyncNowButton_Click(object sender, RoutedEventArgs e)
@@ -79,15 +86,22 @@ public partial class SyncSettingsWindow : Window
             return;
         }
 
-        _preferences = _preferences with
+        try
         {
-            Sync = syncPreferences,
-            LaunchAtStartup = _preferences.LaunchAtStartup,
-        };
+            _preferences = _preferences with
+            {
+                Sync = syncPreferences,
+                LaunchAtStartup = _preferences.LaunchAtStartup,
+            };
 
-        await _settingsStore.SaveAsync(_preferences);
-        StatusTextBlock.Text = "Sync requested.";
-        await _syncService.TriggerSyncNowAsync();
+            await _settingsStore.SaveAsync(_preferences);
+            StatusTextBlock.Text = "Sync requested.";
+            await _syncService.TriggerSyncNowAsync();
+        }
+        catch
+        {
+            StatusTextBlock.Text = "Sync failed. Please try again.";
+        }
     }
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();

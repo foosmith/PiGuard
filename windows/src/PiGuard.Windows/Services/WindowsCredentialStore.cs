@@ -8,6 +8,7 @@ namespace PiGuard.Windows.Services;
 public sealed class WindowsCredentialStore : ICredentialStore
 {
     private readonly string _credentialRoot;
+    private readonly Dictionary<string, string?> _cache = new(StringComparer.Ordinal);
 
     public WindowsCredentialStore(string appDataRoot)
     {
@@ -16,15 +17,23 @@ public sealed class WindowsCredentialStore : ICredentialStore
 
     public async Task<string?> ReadSecretAsync(string accountKey, CancellationToken cancellationToken = default)
     {
+        if (_cache.TryGetValue(accountKey, out var cached))
+        {
+            return cached;
+        }
+
         var path = GetPath(accountKey);
         if (!File.Exists(path))
         {
+            _cache[accountKey] = null;
             return null;
         }
 
         var protectedBytes = await File.ReadAllBytesAsync(path, cancellationToken);
         var bytes = ProtectedData.Unprotect(protectedBytes, optionalEntropy: null, DataProtectionScope.CurrentUser);
-        return Encoding.UTF8.GetString(bytes);
+        var value = Encoding.UTF8.GetString(bytes);
+        _cache[accountKey] = value;
+        return value;
     }
 
     public async Task WriteSecretAsync(string accountKey, string value, CancellationToken cancellationToken = default)
@@ -33,6 +42,7 @@ public sealed class WindowsCredentialStore : ICredentialStore
         var bytes = Encoding.UTF8.GetBytes(value);
         var protectedBytes = ProtectedData.Protect(bytes, optionalEntropy: null, DataProtectionScope.CurrentUser);
         await File.WriteAllBytesAsync(GetPath(accountKey), protectedBytes, cancellationToken);
+        _cache[accountKey] = value;
     }
 
     public Task DeleteSecretAsync(string accountKey, CancellationToken cancellationToken = default)
@@ -43,6 +53,7 @@ public sealed class WindowsCredentialStore : ICredentialStore
             File.Delete(path);
         }
 
+        _cache.Remove(accountKey);
         return Task.CompletedTask;
     }
 

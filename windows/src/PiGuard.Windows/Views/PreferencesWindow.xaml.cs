@@ -106,6 +106,18 @@ public partial class PreferencesWindow : Window
 
     private async void SaveChangesButton_Click(object sender, RoutedEventArgs e)
     {
+        try
+        {
+            await SaveChangesAsync();
+        }
+        catch
+        {
+            StatusTextBlock.Text = "Save failed. Check your connection settings and try again.";
+        }
+    }
+
+    private async Task SaveChangesAsync()
+    {
         var selected = ConnectionsListView.SelectedItem as ConnectionEditorItem ?? _editingConnection;
         if (selected is null && _connections.Count > 0)
         {

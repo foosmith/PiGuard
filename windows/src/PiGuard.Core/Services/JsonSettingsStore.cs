@@ -39,7 +39,12 @@ public sealed class JsonSettingsStore : ISettingsStore
             Directory.CreateDirectory(directory);
         }
 
-        await using var stream = File.Create(_settingsPath);
-        await JsonSerializer.SerializeAsync(stream, preferences, SerializerOptions, cancellationToken);
+        var tempPath = _settingsPath + ".tmp";
+        await using (var stream = File.Create(tempPath))
+        {
+            await JsonSerializer.SerializeAsync(stream, preferences, SerializerOptions, cancellationToken);
+        }
+
+        File.Move(tempPath, _settingsPath, overwrite: true);
     }
 }
