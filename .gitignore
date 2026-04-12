@@ -92,3 +92,20 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
+
+# macOS system files
+.DS_Store
+**/.DS_Store
+
+# Xcode build server (machine-specific paths)
+buildServer.json
+
+# Claude Code local settings
+.claude/
+
+# Windows system/IDE files
+Thumbs.db
+.vs/
+*.suo
+*.user
+desktop.ini

@@ -404,7 +404,7 @@ class PiGuardManager: NSObject {
             status.insert($0.status)
         }
         if status.count == 1 {
-            let statusString = status.first!
+            guard let statusString = status.first else { return .offline }
             if statusString == "enabled" {
                 return .enabled
             } else {

@@ -290,7 +290,7 @@ public sealed class PiholeClientV6 : IPiholeClientV6
     private string BuildSessionCacheKey()
     {
         var scheme = _connection.UseSsl ? "https" : "http";
-        return $"{scheme}://{_connection.Hostname}:{_connection.Port}|{_appPassword}";
+        return $"{scheme}://{_connection.Hostname}:{_connection.Port}";
     }
 
     private static SessionCacheEntry? GetCachedSession(string cacheKey)

@@ -63,7 +63,7 @@ class PiholeAPI: NSObject {
             builtURLString.append(contentsOf: "=\(argument)")
         }
 
-        Log.debug("Built API String: \(builtURLString)")
+        Log.debug("Built API String: \(builtURLString.replacingOccurrences(of: "auth=\(connection.token)", with: "auth=<REDACTED>"))")
 
         guard let builtURL = URL(string: builtURLString) else { return completion(nil) }
 
@@ -96,7 +96,7 @@ class PiholeAPI: NSObject {
         do {
             let jsonDecoder = JSONDecoder()
             jsonDecoder.keyDecodingStrategy = .convertFromSnakeCase
-            let jsonData = string.data(using: .utf8)!
+            guard let jsonData = string.data(using: .utf8) else { return nil }
             let object = try jsonDecoder.decode(T.self, from: jsonData)
             return object
         } catch {
@@ -120,7 +120,8 @@ class PiholeAPI: NSObject {
     }
 
     var admin: URL {
-        return URL(string: "http://\(connection.hostname):\(connection.port)/admin")!
+        let prefix = connection.useSSL ? "https" : "http"
+        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")!
     }
 
     // MARK: - Testing

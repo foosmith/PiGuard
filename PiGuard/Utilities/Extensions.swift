@@ -16,7 +16,7 @@ extension Int {
         let formatter = NumberFormatter()
         formatter.usesGroupingSeparator = true
         formatter.numberStyle = .decimal
-        return formatter.string(from: NSNumber(value: self))!
+        return formatter.string(from: NSNumber(value: self)) ?? "\(self)"
     }
 }
 
@@ -27,7 +27,7 @@ extension Double {
         formatter.numberStyle = .percent
         formatter.minimumFractionDigits = 1
         formatter.maximumFractionDigits = 1
-        return formatter.string(from: NSNumber(value: self / 100))!
+        return formatter.string(from: NSNumber(value: self / 100)) ?? "\(self)"
     }
 }
 
