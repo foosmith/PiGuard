@@ -1,12 +1,12 @@
 {
   "images" : [
     {
-      "filename" : "piguard_menuIcon_22px.png",
+      "filename" : "piguard-edited-menu.png",
       "idiom" : "mac",
       "scale" : "1x"
     },
     {
-      "filename" : "piguard-menu@2x.png",
+      "filename" : "piguard-edited-menu@2x.png",
       "idiom" : "mac",
       "scale" : "2x"
     }
