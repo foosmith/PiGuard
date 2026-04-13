@@ -20,14 +20,26 @@ class AsyncOperation: Operation, @unchecked Sendable {
         return true
     }
 
-    var state = State.isReady {
-        willSet {
-            willChangeValue(forKey: state.rawValue)
-            willChangeValue(forKey: newValue.rawValue)
+    private let stateLock = NSLock()
+    private var _state = State.isReady
+
+    var state: State {
+        get {
+            stateLock.lock()
+            defer { stateLock.unlock() }
+            return _state
         }
-        didSet {
-            didChangeValue(forKey: oldValue.rawValue)
-            didChangeValue(forKey: state.rawValue)
+        set {
+            let old: State
+            let new: State = newValue
+            stateLock.lock()
+            old = _state
+            _state = newValue
+            stateLock.unlock()
+            willChangeValue(forKey: old.rawValue)
+            willChangeValue(forKey: new.rawValue)
+            didChangeValue(forKey: old.rawValue)
+            didChangeValue(forKey: new.rawValue)
         }
     }
 

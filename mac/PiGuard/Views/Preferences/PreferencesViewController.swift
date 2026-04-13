@@ -124,8 +124,7 @@ class PreferencesViewController: NSViewController {
     }
     
     func handleCancel() {
-        print("Cancel selected")
-        // Handle cancellation if needed
+        Log.debug("Cancel selected")
     }
 
     @IBAction func editButtonAction(_: NSButton) {

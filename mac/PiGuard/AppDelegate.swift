@@ -14,7 +14,8 @@ import Cocoa
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_: Notification) {
-        // Insert code here to initialize your application
+        // Remove legacy v1 plaintext token that may be sitting in UserDefaults
+        UserDefaults.standard.removeObject(forKey: "token")
     }
 
     func applicationWillTerminate(_: Notification) {

@@ -162,7 +162,11 @@ class PiholeSettingsViewController: NSViewController {
         api.testConnection { status in
             switch status {
             case .success:
-                self.testConnectionLabel.stringValue = "Success"
+                if !self.apiTokenTextField.stringValue.isEmpty && self.useSSLCheckbox.state == .off {
+                    self.testConnectionLabel.stringValue = "Connected — Warning: token sent in plaintext over HTTP"
+                } else {
+                    self.testConnectionLabel.stringValue = "Success"
+                }
                 self.saveAndCloseButton.isEnabled = true
                 if self.apiTokenTextField.stringValue.isEmpty {
                     self.passwordProtected = false

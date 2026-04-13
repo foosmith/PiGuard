@@ -162,7 +162,8 @@ extension PiholeConnectionV4 {
     var legacyIdentifier: String { "\(hostname):\(port)" }
     var identifier: String {
         let scheme = useSSL ? "https" : "http"
-        return "\(scheme)://\(hostname):\(port)::\(backendType.rawValue)"
+        let host = hostname.contains(":") ? "[\(hostname)]" : hostname
+        return "\(scheme)://\(host):\(port)::\(backendType.rawValue)"
     }
     var endpointDisplayName: String {
         let scheme = useSSL ? "https" : "http"

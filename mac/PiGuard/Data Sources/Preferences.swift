@@ -93,8 +93,7 @@ extension UserDefaults {
                     piholesV4.append(PiholeConnectionV4(hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL, token: pihole.token, username: "", passwordProtected: pihole.passwordProtected, adminPanelURL: pihole.adminPanelURL, backendType: .piholeV5))
                 }
                 set([], for: Preferences.Key.piholesV2)
-                let encodedArray = piholesV4.map { $0.encode()! }
-                set(encodedArray, for: Preferences.Key.piholesV4)
+                set(piholes: piholesV4)
             }
             return piholesV4
         } else if let array = array(forKey: Preferences.Key.piholesV3), !array.isEmpty {
@@ -106,16 +105,51 @@ extension UserDefaults {
             }
             if !piholesV4.isEmpty {
                 set([], for: Preferences.Key.piholesV3)
-                let encodedArray = piholesV4.map { $0.encode()! }
-                set(encodedArray, for: Preferences.Key.piholesV4)
+                set(piholes: piholesV4)
             }
             return piholesV4
         } else if let array = array(forKey: Preferences.Key.piholesV4), !array.isEmpty {
             var piholesV4: [PiholeConnectionV4] = []
+            var needsResave = false
             for data in array {
                 Log.debug("Loading V4 connection")
-                guard let data = data as? Data, let piholeConnection = PiholeConnectionV4(data: data) else { continue }
-                piholesV4.append(piholeConnection)
+                guard let data = data as? Data, let connection = PiholeConnectionV4(data: data) else { continue }
+
+                let tokenKey = "\(connection.identifier).token"
+                let usernameKey = "\(connection.identifier).username"
+
+                var token: String
+                if let keychainToken = try? KeychainCredentialStore.shared.readString(account: tokenKey) {
+                    token = keychainToken
+                } else if !connection.token.isEmpty {
+                    // First launch after update: migrate plaintext token from UserDefaults to Keychain
+                    try? KeychainCredentialStore.shared.upsertString(connection.token, account: tokenKey)
+                    token = connection.token
+                    needsResave = true
+                } else {
+                    token = ""
+                }
+
+                var username: String
+                if let keychainUsername = try? KeychainCredentialStore.shared.readString(account: usernameKey) {
+                    username = keychainUsername
+                } else if !connection.username.isEmpty {
+                    try? KeychainCredentialStore.shared.upsertString(connection.username, account: usernameKey)
+                    username = connection.username
+                    needsResave = true
+                } else {
+                    username = ""
+                }
+
+                piholesV4.append(PiholeConnectionV4(
+                    hostname: connection.hostname, port: connection.port, useSSL: connection.useSSL,
+                    token: token, username: username, passwordProtected: connection.passwordProtected,
+                    adminPanelURL: connection.adminPanelURL, backendType: connection.backendType
+                ))
+            }
+            if needsResave {
+                // Strip plaintext credentials from UserDefaults now that they're in Keychain
+                set(piholes: piholesV4)
             }
             return piholesV4
         }
@@ -123,7 +157,40 @@ extension UserDefaults {
     }
 
     func set(piholes: [PiholeConnectionV4]) {
-        let array = piholes.map { $0.encode()! }
+        // Remove Keychain entries for any connections that are no longer in the new array.
+        let newIdentifiers = Set(piholes.map { $0.identifier })
+        if let existing = array(forKey: Preferences.Key.piholesV4) {
+            for item in existing {
+                guard let data = item as? Data, let old = PiholeConnectionV4(data: data) else { continue }
+                guard !newIdentifiers.contains(old.identifier) else { continue }
+                try? KeychainCredentialStore.shared.delete(account: "\(old.identifier).token")
+                try? KeychainCredentialStore.shared.delete(account: "\(old.identifier).username")
+            }
+        }
+
+        // Persist credentials in Keychain; store structs without credentials in UserDefaults
+        for pihole in piholes {
+            let tokenKey = "\(pihole.identifier).token"
+            let usernameKey = "\(pihole.identifier).username"
+            try? KeychainCredentialStore.shared.upsertString(pihole.token, account: tokenKey)
+            if !pihole.username.isEmpty {
+                try? KeychainCredentialStore.shared.upsertString(pihole.username, account: usernameKey)
+            }
+        }
+        let stripped = piholes.map { pihole in
+            PiholeConnectionV4(
+                hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL,
+                token: "", username: "", passwordProtected: pihole.passwordProtected,
+                adminPanelURL: pihole.adminPanelURL, backendType: pihole.backendType
+            )
+        }
+        let array = stripped.compactMap { pihole -> Data? in
+            guard let data = pihole.encode() else {
+                Log.warn("Failed to encode connection \(pihole.identifier); skipping")
+                return nil
+            }
+            return data
+        }
         set(array, for: Preferences.Key.piholesV4)
     }
 

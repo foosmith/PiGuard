@@ -55,22 +55,30 @@ open class Log {
         return logsDir.appendingPathComponent("piguard.log")
     }()
 
+    private static var fileHandle: FileHandle?
+    private static let fileQueue = DispatchQueue(label: "com.foosmith.PiGuard.logging")
+
     public static func startFileLogging() {
         let url = logFileURL
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? "".write(to: url, atomically: true, encoding: .utf8)
+        fileHandle = try? FileHandle(forWritingTo: url)
         handler = { _, message in
-            guard let data = (message + "\n").data(using: .utf8) else { return }
-            if let handle = try? FileHandle(forWritingTo: url) {
+            guard let data = (message + "\n").data(using: .utf8),
+                  let handle = fileHandle else { return }
+            fileQueue.async {
                 handle.seekToEndOfFile()
                 handle.write(data)
-                try? handle.close()
             }
         }
     }
 
     public static func stopFileLogging() {
         handler = nil
+        fileQueue.sync {
+            try? fileHandle?.close()
+            fileHandle = nil
+        }
     }
 
     private static let dateformatter: DateFormatter = {

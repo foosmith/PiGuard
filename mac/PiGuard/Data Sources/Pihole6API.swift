@@ -157,6 +157,7 @@ struct PiholeV6BlockingRequest: Encodable {
 
 class Pihole6API: NSObject {
     let connection: PiholeConnectionV4
+    private let sessionLock = NSLock()
     private var sessionID: String?
     private var sessionExpiry: Date?
 
@@ -195,9 +196,9 @@ class Pihole6API: NSObject {
     
     var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/PiGuard"
 
-    var admin: URL {
+    var admin: URL? {
         let prefix = connection.useSSL ? "https" : "http"
-        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")!
+        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")
     }
 
     func checkPassword(password: String, totp: Int?) async throws -> PiholeV6PasswordResponse {
@@ -222,7 +223,7 @@ class Pihole6API: NSObject {
 
     func triggerGravityUpdate() async throws {
         let sid = try await sessionToken()
-        let req = request(for: buildURL("/action/gravity", queryItems: nil), method: "POST", apiKey: sid)
+        let req = request(for: try buildURL("/action/gravity", queryItems: nil), method: "POST", apiKey: sid)
         _ = try await performRaw(req)
     }
 
@@ -232,13 +233,15 @@ class Pihole6API: NSObject {
         value.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? value
     }
 
-    private func buildURL(_ path: String, queryItems: [URLQueryItem]?) -> URL {
+    private func buildURL(_ path: String, queryItems: [URLQueryItem]?) throws -> URL {
         guard let queryItems, !queryItems.isEmpty,
               var components = URLComponents(string: "\(baseURL)\(path)") else {
-            return URL(string: "\(baseURL)\(path)")!
+            guard let url = URL(string: "\(baseURL)\(path)") else { throw APIError.invalidURL }
+            return url
         }
         components.queryItems = queryItems
-        return components.url ?? URL(string: "\(baseURL)\(path)")!
+        guard let url = components.url else { throw APIError.invalidURL }
+        return url
     }
 
     private func performRaw(_ req: URLRequest) async throws -> Data {
@@ -261,27 +264,27 @@ class Pihole6API: NSObject {
         }
     }
 
-    func getData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem]? = nil) async throws -> Data {
+    func getData(_ path: String, queryItems: [URLQueryItem]? = nil) async throws -> Data {
         let sid = try await sessionToken()
-        let req = request(for: buildURL(path, queryItems: queryItems), apiKey: sid)
+        let req = request(for: try buildURL(path, queryItems: queryItems), apiKey: sid)
         return try await performRaw(req)
     }
 
-    func postData<B: Encodable>(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem]? = nil, body: B) async throws -> Data {
+    func postData<B: Encodable>(_ path: String, queryItems: [URLQueryItem]? = nil, body: B) async throws -> Data {
         let sid = try await sessionToken()
-        let req = request(for: buildURL(path, queryItems: queryItems), method: "POST", apiKey: sid, body: body)
+        let req = request(for: try buildURL(path, queryItems: queryItems), method: "POST", apiKey: sid, body: body)
         return try await performRaw(req)
     }
 
-    func putData<B: Encodable>(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem]? = nil, body: B) async throws -> Data {
+    func putData<B: Encodable>(_ path: String, queryItems: [URLQueryItem]? = nil, body: B) async throws -> Data {
         let sid = try await sessionToken()
-        let req = request(for: buildURL(path, queryItems: queryItems), method: "PUT", apiKey: sid, body: body)
+        let req = request(for: try buildURL(path, queryItems: queryItems), method: "PUT", apiKey: sid, body: body)
         return try await performRaw(req)
     }
 
-    func deleteData(_ path: String, apiKey: String? = nil, queryItems: [URLQueryItem]? = nil) async throws -> Data {
+    func deleteData(_ path: String, queryItems: [URLQueryItem]? = nil) async throws -> Data {
         let sid = try await sessionToken()
-        let req = request(for: buildURL(path, queryItems: queryItems), method: "DELETE", apiKey: sid)
+        let req = request(for: try buildURL(path, queryItems: queryItems), method: "DELETE", apiKey: sid)
         return try await performRaw(req)
     }
 
@@ -420,8 +423,8 @@ class Pihole6API: NSObject {
     private func get<T: Decodable>(
         _ path: String, responseType: T.Type, apiKey: String? = nil
     ) async throws -> T {
-        let request = request(
-            for: URL(string: "\(baseURL)\(path)")!, apiKey: apiKey)
+        guard let url = URL(string: "\(baseURL)\(path)") else { throw APIError.invalidURL }
+        let request = request(for: url, apiKey: apiKey)
         return try await perform(request, responseType: T.self)
     }
 
@@ -429,9 +432,8 @@ class Pihole6API: NSObject {
         _ path: String, responseType: T.Type, apiKey: String? = nil,
         body: Encodable? = nil
     ) async throws -> T {
-        let request = request(
-            for: URL(string: "\(baseURL)\(path)")!, method: "POST",
-            apiKey: apiKey, body: body)
+        guard let url = URL(string: "\(baseURL)\(path)") else { throw APIError.invalidURL }
+        let request = request(for: url, method: "POST", apiKey: apiKey, body: body)
         return try await perform(request, responseType: T.self)
     }
 
@@ -450,14 +452,19 @@ class Pihole6API: NSObject {
             return nil
         }
 
-        if let sessionID, let sessionExpiry, sessionExpiry > Date() {
-            return sessionID
+        // Fast path: return cached session if still valid (read under lock, no await)
+        sessionLock.lock()
+        if let cachedID = sessionID, let expiry = sessionExpiry, expiry > Date() {
+            sessionLock.unlock()
+            return cachedID
         }
+        sessionLock.unlock()
 
         guard !connection.token.isEmpty else {
             throw APIError.invalidResponse(statusCode: 401, content: "Missing Pi-hole v6 app password")
         }
 
+        // Slow path: authenticate outside the lock (await cannot be held under NSLock)
         let response = try await checkPassword(password: connection.token, totp: nil)
 
         guard response.session.valid else {
@@ -467,14 +474,18 @@ class Pihole6API: NSObject {
             )
         }
 
+        // Write back under lock
+        sessionLock.lock()
         sessionID = response.session.sid
         if response.session.validity > 0 {
             sessionExpiry = Date().addingTimeInterval(TimeInterval(max(response.session.validity - 5, 0)))
         } else {
             sessionExpiry = nil
         }
+        let newID = sessionID
+        sessionLock.unlock()
 
-        return sessionID
+        return newID
     }
 
 }

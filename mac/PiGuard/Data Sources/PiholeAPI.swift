@@ -119,9 +119,9 @@ class PiholeAPI: NSObject {
         return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
     }
 
-    var admin: URL {
+    var admin: URL? {
         let prefix = connection.useSSL ? "https" : "http"
-        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")!
+        return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")
     }
 
     // MARK: - Testing

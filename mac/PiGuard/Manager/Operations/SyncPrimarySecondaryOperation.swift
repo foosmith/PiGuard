@@ -314,7 +314,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     }
 
     private func fetchGroups(api: Pihole6API) async throws -> [Group] {
-        let data = try await api.getData("/groups", apiKey: api.connection.token)
+        let data = try await api.getData("/groups")
         let object = try JSONSerialization.jsonObject(with: data)
 
         let array: [Any]
@@ -339,7 +339,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     private func createGroup(api: Pihole6API, name: String, enabled: Bool, comment: String?) async throws {
         _ = try await api.postData(
             "/groups",
-            apiKey: api.connection.token,
             queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
             body: GroupCreateRequest(name: name, enabled: enabled, comment: comment)
         )
@@ -349,7 +348,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         let encoded = Pihole6API.encodePathComponent(name)
         _ = try await api.putData(
             "/groups/\(encoded)",
-            apiKey: api.connection.token,
             queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
             body: GroupUpdateRequest(enabled: enabled, comment: comment)
         )
@@ -404,7 +402,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                     do {
                         _ = try await secondary.deleteData(
                             "/lists/\(id)",
-                            apiKey: secondary.connection.token,
                             queryItems: [
                                 URLQueryItem(name: "type", value: "block"),
                                 URLQueryItem(name: "app_sudo", value: "true"),
@@ -439,7 +436,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 if let existingId = existing?.id {
                     _ = try await secondary.putData(
                         "/lists/\(existingId)",
-                        apiKey: secondary.connection.token,
                         queryItems: [
                             URLQueryItem(name: "type", value: "block"),
                             URLQueryItem(name: "app_sudo", value: "true"),
@@ -452,7 +448,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 } else {
                     _ = try await secondary.postData(
                         "/lists",
-                        apiKey: secondary.connection.token,
                         queryItems: [
                             URLQueryItem(name: "type", value: "block"),
                             URLQueryItem(name: "app_sudo", value: "true"),
@@ -483,7 +478,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     private func fetchAdlists(api: Pihole6API) async throws -> [Adlist] {
         let data = try await api.getData(
             "/lists",
-            apiKey: api.connection.token,
             queryItems: [URLQueryItem(name: "type", value: "block")]
         )
         let object = try JSONSerialization.jsonObject(with: data)
@@ -553,7 +547,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
             do {
                 _ = try await secondary.putData(
                     "/lists/\(id)",
-                    apiKey: secondary.connection.token,
                     queryItems: [
                         URLQueryItem(name: "type", value: "block"),
                         URLQueryItem(name: "app_sudo", value: "true"),
@@ -565,12 +558,13 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 )
                 fixedIdToDecoded[id] = fixed
                 continue
-            } catch {}
+            } catch {
+                Log.warn("Sync: could not fix percent-encoded adlist \(id): \(error)")
+            }
 
             do {
                 _ = try await secondary.deleteData(
                     "/lists/\(id)",
-                    apiKey: secondary.connection.token,
                     queryItems: [
                         URLQueryItem(name: "type", value: "block"),
                         URLQueryItem(name: "app_sudo", value: "true"),
@@ -580,7 +574,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 if case .invalidResponse(statusCode: 404, content: _) = deleteError { /* already gone */ } else {
                     _ = try? await secondary.putData(
                         "/lists/\(id)",
-                        apiKey: secondary.connection.token,
                         queryItems: [
                             URLQueryItem(name: "type", value: "block"),
                             URLQueryItem(name: "app_sudo", value: "true"),
@@ -617,7 +610,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
             do {
                 _ = try await secondary.deleteData(
                     "/lists/\(id)",
-                    apiKey: secondary.connection.token,
                     queryItems: [
                         URLQueryItem(name: "type", value: "block"),
                         URLQueryItem(name: "app_sudo", value: "true"),
@@ -630,7 +622,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 default:
                     _ = try? await secondary.putData(
                         "/lists/\(id)",
-                        apiKey: secondary.connection.token,
                         queryItems: [
                             URLQueryItem(name: "type", value: "block"),
                             URLQueryItem(name: "app_sudo", value: "true"),
@@ -650,7 +641,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         guard let id = list.id else { return }
         _ = try await secondary.putData(
             "/lists/\(id)",
-            apiKey: secondary.connection.token,
             queryItems: [
                 URLQueryItem(name: "type", value: "block"),
                 URLQueryItem(name: "app_sudo", value: "true"),
@@ -704,14 +694,12 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                     let encoded = Pihole6API.encodePathComponent(domainStr)
                     _ = try await secondary.putData(
                         "\(bucket.path)/\(encoded)",
-                        apiKey: secondary.connection.token,
                         queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
                         body: DomainUpdateRequest(enabled: desired.enabled, comment: desired.comment, groups: translatedGroups)
                     )
                 } else {
                     _ = try await secondary.postData(
                         bucket.path,
-                        apiKey: secondary.connection.token,
                         queryItems: [URLQueryItem(name: "app_sudo", value: "true")],
                         body: DomainCreateRequest(
                             domain: domainStr, enabled: desired.enabled,
@@ -728,7 +716,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     }
 
     private func fetchDomains(api: Pihole6API, bucket: DomainBucket) async throws -> [Domain] {
-        let data = try await api.getData(bucket.path, apiKey: api.connection.token)
+        let data = try await api.getData(bucket.path)
         let object = try JSONSerialization.jsonObject(with: data)
 
         let array: [Any]
@@ -756,7 +744,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
             do {
                 _ = try await api.deleteData(
                     "/domains/\(id)",
-                    apiKey: api.connection.token,
                     queryItems: [URLQueryItem(name: "app_sudo", value: "true")]
                 )
                 return
@@ -769,7 +756,6 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         let encoded = Pihole6API.encodePathComponent(domain.domain)
         _ = try await api.deleteData(
             "\(bucket.path)/\(encoded)",
-            apiKey: api.connection.token,
             queryItems: [URLQueryItem(name: "app_sudo", value: "true")]
         )
     }

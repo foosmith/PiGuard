@@ -1,0 +1,126 @@
+  PiGuard macOS — Security & Code Audit
+
+  What's Done Well
+
+  - KeychainCredentialStore is well-implemented (proper locking, caching, status-code
+  handling) — but never actually used
+  - Debug log redaction in PiholeAPI.swift:66 is a good instinct
+  - AdGuardHomeSettingsViewController input validation before save is solid
+  - AsyncOperation pattern is correct
+  - Error propagation via APIError is consistent
+
+  ---
+  Critical
+
+  1. Credentials stored in UserDefaults, not Keychain — Structs.swift:150-158,
+  Preferences.swift:113-128
+  PiholeConnectionV4.token (API tokens, passwords) is JSON-encoded into
+  UserDefaults.piholesV4 — a plaintext plist on disk readable by any process.
+  KeychainCredentialStore exists but is wired up nowhere.
+  Fix: Strip token/username from the persisted struct; key them in the Keychain under
+  connection.identifier. Apply the lazy-migration pattern already used for v2→v3→v4
+  upgrades.
+
+  2. Pi-hole v5 token transmitted as URL query param — PiholeAPI.swift:56-57
+  "?auth=\(connection.token)&\(endpoint.queryParameter)"
+  Token appears in server access logs, proxy logs, and OS URL logging. When useSSL is
+  false, travels in plaintext over the network. (Protocol limitation for v5, but app
+  doesn't warn the user.)
+  Fix: In PiholeSettingsViewController.testConnection(), surface a warning label when
+  !connection.useSSL && !connection.token.isEmpty.
+
+  3. Force-unwrapped api! / api6! on the polling hot path —
+  UpdatePiholeOperation.swift:23,33,43,46, UpdatePiholeV6Operation.swift:29,30,42,56
+  Convention prevents nil today, but a type-system guarantee doesn't exist. Any future
+  change to createPiholes() silently crashes at the next poll cycle.
+  Fix: guard let api = pihole.api else { state = .isFinished; return } at the top of main()
+   in both operations.
+
+  4. Force-unwrap on user-supplied hostname in URL construction —
+  Pihole6API.swift:200,238,241,424,433, PiholeAPI.swift:124
+  return URL(string: "\(prefix)://\(connection.hostname):\(connection.port)/admin")!
+  A hostname with trailing spaces, Unicode, or invalid URL characters returns nil and
+  crashes. Reachable during normal use via paste.
+  Fix: guard let url = URL(string: ...) and propagate APIError.invalidURL.
+
+  ---
+  Important
+
+  5. apiKey parameter in Pihole6API is silently discarded — Pihole6API.swift,
+  SyncPrimarySecondaryOperation.swift
+  getData/postData/putData/deleteData accept apiKey but always discard it, calling
+  sessionToken() instead. SyncPrimarySecondaryOperation passes api.connection.token on
+  every call believing it's used. It isn't.
+  Fix: Remove the unused apiKey parameter from all four methods, or document why it's dead.
+
+  6. AsyncOperation.state has no thread-safety protection — AsyncOperation.swift:23-31
+  state is read by OperationQueue on its thread and written from Task { } closures on
+  arbitrary Swift concurrency executors — a data race. The @unchecked Sendable marking
+  suppresses the compiler warning but doesn't fix the race.
+  Fix: Protect state with an NSLock or DispatchQueue serialization.
+
+  7. Pihole6API.sessionToken() is not concurrency-safe — Pihole6API.swift:448-478
+  sessionID/sessionExpiry are plain stored properties on a class, read/written from async
+  context. Concurrent callers (e.g., async let pairs in UpdateAdGuardHomeOperation) can
+  race on these, producing duplicate auth requests or reading torn state.
+  Fix: Convert Pihole6API to an actor, or protect with OSAllocatedUnfairLock.
+
+  8. Password loaded into UI from UserDefaults on edit —
+  PiholeV6SettingsViewController.swift:142, AdGuardHomeSettingsViewController.swift:215
+  Until finding #1 is fixed, the raw password is read from the plaintext plist back into a
+  text field — accessible to accessibility services or crash reporters.
+  Fix: After Keychain migration, load credentials on-demand from Keychain when the settings
+   sheet opens.
+
+  9. Preferences.piholesV4 encode force-unwrap crashes at startup —
+  Preferences.swift:96,109,126
+  let encodedArray = piholesV4.map { $0.encode()! }
+  Runs during preference loading before the UI is shown. If JSONEncoder fails for any
+  reason, the app crashes before the user sees anything.
+  Fix: guard let encoded = $0.encode() else { continue } with a log on failure.
+
+  10. PBDatabase legacy token key persists indefinitely — Database.swift:15,28,50-52
+  Legacy v1 token key is registered in UserDefaults.register(defaults:). Old plaintext
+  tokens stored under this key are never migrated or cleared.
+  Fix: Remove PBDatabase entirely, or scrub the token key from UserDefaults on first
+  post-upgrade launch.
+
+  11. IPv6 hostname breaks PiholeConnectionV4.identifier — Structs.swift:163-166
+  "\(scheme)://\(hostname):\(port)::\(backendType.rawValue)"
+  An IPv6 hostname (e.g., ::1) produces an ambiguous identifier that silently breaks sync
+  matching.
+  Fix: Ensure IPv6 addresses are bracket-wrapped when stored, or use a pipe | separator.
+
+  ---
+  Minor
+
+  12. Logging.swift opens/closes FileHandle on every log line — Logging.swift:64-68
+  Inefficient and racy under concurrent log calls. Keep a single FileHandle open and
+  serialize writes.
+
+  13. Sync remediation swallows errors silently —
+  SyncPrimarySecondaryOperation.swift:565-568
+  Empty catch {} loses the error from a failed remediation PUT with no log trace.
+  Fix: catch { Log.warn("Sync: could not fix percent-encoded adlist \(id): \(error)") }
+
+  14. updateMenuBarTitle / menuBarBaseTitle duplicated verbatim —
+  MainMenuController.swift:343-391, 479-524
+  Identical title-building logic in two functions. Extract to a shared private helper.
+
+  15. print() in PreferencesViewController.handleCancel() —
+  PreferencesViewController.swift:128
+  Bypasses the logging system, outputs in release builds. Replace with Log.debug(...) or
+  remove.
+
+  16. ~45 lines of commented-out dead code — UpdatePiholeV6Operation.swift:70-115
+  Legacy v5 code left in comments. Delete it — it's in git history.
+
+  ---
+  Priority Order for Fixes
+
+  1. #1 — Move credentials to Keychain (blocks #6, #8)
+  2. #3, #4 — Eliminate force-unwrap crash paths
+  3. #7, #6 — Fix concurrency races (session token, operation state)
+  4. #2 — Warn users about HTTP + token exposure
+  5. #5, #9, #10 — Dead code / startup crash risk
+  6. #11–#16 — Minor quality items

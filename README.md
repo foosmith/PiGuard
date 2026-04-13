@@ -56,19 +56,25 @@ PiGuard includes a searchable, sortable Query Log window.
 
 ## Download & Install
 
-### Current Public Build (build 701)
+### Current Public Build (build 702)
 
-**[⬇ Download PiGuard-3.3-701-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.3/PiGuard-3.3-701-macOS.dmg)**
+**[⬇ Download PiGuard-3.4-702-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.4/PiGuard-3.4-702-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-3.3-701-macOS.dmg**
+1. Download **PiGuard-3.4-702-macOS.dmg**
 2. Open the DMG — a window will appear showing the app and an Applications shortcut
 3. Drag the app into the **Applications** folder
 4. Eject the DMG
 5. Open PiGuard from **Launchpad** or **Applications** — it will appear in your menu bar
 
 > **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
+
+### What's New in v3.4
+
+- **Security** — credentials migrated from UserDefaults to Keychain; orphaned Keychain entries cleaned up on connection removal
+- **Stability** — thread-safety fixes for operation state and session token caching; force-unwrap crash paths eliminated
+- **UI** — warning shown when Pi-hole v5 token is sent over plain HTTP
 
 ### What's New in v3.3
 

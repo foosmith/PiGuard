@@ -341,53 +341,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     }
 
     private func updateMenuBarTitle() {
-        guard let networkOverview = networkOverview else { return }
-        let currentStatus = networkOverview.networkStatus
-
-        var titleElements: [String] = []
-
-        if currentStatus == .enabled || currentStatus == .partiallyEnabled {
-            let showLabels = Preferences.standard.showLabels
-            let verboseLabels = Preferences.standard.verboseLabels
-            if Preferences.standard.showQueries {
-                if showLabels {
-                    let label = verboseLabels ? "Queries:" : "Q:"
-                    titleElements.append(label)
-                }
-                titleElements.append(networkOverview.totalQueriesToday.string)
-                if Preferences.standard.showBlocked || Preferences.standard.showPercentage, showLabels {
-                    titleElements.append("•")
-                }
-            }
-            if Preferences.standard.showBlocked {
-                if showLabels {
-                    let label = verboseLabels ? "Blocked:" : "B:"
-                    titleElements.append(label)
-                }
-                if Preferences.standard.showQueries, !showLabels {
-                    titleElements.append("/")
-                }
-                titleElements.append(networkOverview.adsBlockedToday.string)
-            }
-
-            if Preferences.standard.showPercentage {
-                if Preferences.standard.showBlocked || (Preferences.standard.showQueries && !showLabels) {
-                    titleElements.append("(\(networkOverview.adsPercentageToday.string))")
-                } else {
-                    if showLabels {
-                        let label = verboseLabels ? "Blocked:" : "B:"
-                        titleElements.append(label)
-                    }
-                    titleElements.append("\(networkOverview.adsPercentageToday.string)")
-                }
-            }
-        } else {
-            titleElements = [currentStatus.rawValue]
-        }
-
-        // Set title
-        let titleString = titleElements.joined(separator: " ")
-        setMenuBarTitle(titleString)
+        setMenuBarTitle(menuBarBaseTitle())
     }
 
     private func menuBarImage() -> NSImage? {
