@@ -6,7 +6,7 @@ This is a fork of the original [PiBar](https://github.com/amiantos/pibar) projec
 
 ## Screenshots
 
-![PiGuard screenshots showing the menu bar, preferences, sync settings, and about window](docs/screenshots/piguard-readme-collage.png)
+![PiGuard screenshots showing the menu bar, preferences, sync settings, and about window](screenshots/piguard-readme-collage.png)
 
 ## Pi-hole Features
 

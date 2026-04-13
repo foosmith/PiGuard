@@ -103,6 +103,9 @@ buildServer.json
 # Claude Code local settings
 .claude/
 
+# Local documentation (not published to GitHub)
+docs/
+
 # Windows system/IDE files
 Thumbs.db
 .vs/
