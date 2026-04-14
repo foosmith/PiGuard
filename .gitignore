@@ -112,3 +112,6 @@ Thumbs.db
 *.suo
 *.user
 desktop.ini
+
+# Local scripts
+/scripts
