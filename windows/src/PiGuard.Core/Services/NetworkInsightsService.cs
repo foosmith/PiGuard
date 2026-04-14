@@ -20,7 +20,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
         var results = await Task.WhenAll(
             preferences.Connections.Select(connection => FetchTopItemsAsync(
                 connection,
-                static (clientV5, clientV6, token) => clientV5?.FetchTopBlockedAsync(token) ?? clientV6!.FetchTopBlockedAsync(token),
+                static (client, token) => client.FetchTopBlockedAsync(token),
                 cancellationToken)));
 
         return results
@@ -34,7 +34,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
         var results = await Task.WhenAll(
             preferences.Connections.Select(connection => FetchTopItemsAsync(
                 connection,
-                static (clientV5, clientV6, token) => clientV5?.FetchTopClientsAsync(token) ?? clientV6!.FetchTopClientsAsync(token),
+                static (client, token) => client.FetchTopClientsAsync(token),
                 cancellationToken)));
 
         return results
@@ -74,7 +74,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
 
     private async Task<TopItemFetchResult> FetchTopItemsAsync(
         ConnectionConfig connection,
-        Func<IPiholeClientV5?, IPiholeClientV6?, CancellationToken, Task<IReadOnlyList<TopItem>>> fetcher,
+        Func<IDnsFilterClient, CancellationToken, Task<IReadOnlyList<TopItem>>> fetcher,
         CancellationToken cancellationToken)
     {
         var secret = await _credentialStore.ReadSecretAsync(connection.Id, cancellationToken);
@@ -85,9 +85,8 @@ public sealed class NetworkInsightsService : INetworkInsightsService
 
         try
         {
-            var items = connection.Version == ConnectionVersion.V6
-                ? await fetcher(null, new PiholeClientV6(connection, secret), cancellationToken)
-                : await fetcher(new PiholeClientV5(connection, secret), null, cancellationToken);
+            var client = CreateClient(connection, secret);
+            var items = await fetcher(client, cancellationToken);
             return new TopItemFetchResult(connection, items);
         }
         catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
@@ -110,9 +109,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
         try
         {
             var displayName = BuildDisplayName(connection);
-            return connection.Version == ConnectionVersion.V6
-                ? await new PiholeClientV6(connection, secret).FetchQueryLogAsync(displayName, limit, cancellationToken)
-                : await new PiholeClientV5(connection, secret).FetchQueryLogAsync(displayName, limit, cancellationToken);
+            return await CreateClient(connection, secret).FetchQueryLogAsync(displayName, limit, cancellationToken);
         }
         catch (Exception exception) when (exception is PiholeApiException or HttpRequestException)
         {
@@ -135,29 +132,14 @@ public sealed class NetworkInsightsService : INetworkInsightsService
 
         try
         {
-            if (connection.Version == ConnectionVersion.V6)
+            var client = CreateClient(connection, secret);
+            if (action == DomainRuleAction.Allow)
             {
-                var client = new PiholeClientV6(connection, secret);
-                if (action == DomainRuleAction.Allow)
-                {
-                    await client.AllowDomainAsync(domain, cancellationToken);
-                }
-                else
-                {
-                    await client.BlockDomainAsync(domain, cancellationToken);
-                }
+                await client.AllowDomainAsync(domain, cancellationToken);
             }
             else
             {
-                var client = new PiholeClientV5(connection, secret);
-                if (action == DomainRuleAction.Allow)
-                {
-                    await client.AllowDomainAsync(domain, cancellationToken);
-                }
-                else
-                {
-                    await client.BlockDomainAsync(domain, cancellationToken);
-                }
+                await client.BlockDomainAsync(domain, cancellationToken);
             }
 
             return new DomainRuleResult(connection.Id, displayName, true, $"{action} succeeded.");
@@ -168,13 +150,16 @@ public sealed class NetworkInsightsService : INetworkInsightsService
         }
     }
 
+    // AdGuard Home nodes are treated like V5 — they always receive rules directly.
+    // When sync is on with a matched primary V6, only the primary V6 + V5 + AGH nodes receive rules
+    // (not the secondary V6, because sync will propagate it). If primary is not matched, all nodes receive rules.
     private static IEnumerable<ConnectionConfig> DetermineRuleTargets(AppPreferences preferences)
     {
         var v6Connections = preferences.Connections
             .Where(connection => connection.Version == ConnectionVersion.V6)
             .ToArray();
-        var v5Connections = preferences.Connections
-            .Where(connection => connection.Version == ConnectionVersion.LegacyV5);
+        var nonV6Connections = preferences.Connections
+            .Where(connection => connection.Version != ConnectionVersion.V6);
 
         if (v6Connections.Length >= 2 && preferences.Sync.Enabled)
         {
@@ -183,12 +168,20 @@ public sealed class NetworkInsightsService : INetworkInsightsService
 
             if (primary is not null)
             {
-                return [primary, .. v5Connections];
+                return [primary, .. nonV6Connections];
             }
         }
 
-        return [.. v6Connections, .. v5Connections];
+        return [.. v6Connections, .. nonV6Connections];
     }
+
+    private static IDnsFilterClient CreateClient(ConnectionConfig connection, string? secret) =>
+        connection.Version switch
+        {
+            ConnectionVersion.V6 => new PiholeClientV6(connection, secret),
+            ConnectionVersion.AdGuardHome => new AdGuardHomeClient(connection, secret),
+            _ => new PiholeClientV5(connection, secret),
+        };
 
     private static string BuildDisplayName(ConnectionConfig connection) => $"{connection.Hostname}:{connection.Port}";
 
