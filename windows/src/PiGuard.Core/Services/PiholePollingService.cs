@@ -150,11 +150,7 @@ public sealed class PiholePollingService : IPollingService, IDisposable
 
         try
         {
-            return connection.Version switch
-            {
-                ConnectionVersion.V6 => await new PiholeClientV6(connection, secret).FetchStatusAsync(cancellationToken),
-                _ => await new PiholeClientV5(connection, secret).FetchStatusAsync(cancellationToken),
-            };
+            return await CreateClient(connection, secret).FetchStatusAsync(cancellationToken);
         }
         catch (PiholeApiException)
         {
@@ -165,6 +161,14 @@ public sealed class PiholePollingService : IPollingService, IDisposable
             return BuildOfflineSnapshot(connection, canBeManaged);
         }
     }
+
+    private static IDnsFilterClient CreateClient(ConnectionConfig connection, string? secret) =>
+        connection.Version switch
+        {
+            ConnectionVersion.V6 => new PiholeClientV6(connection, secret),
+            ConnectionVersion.AdGuardHome => new AdGuardHomeClient(connection, secret),
+            _ => new PiholeClientV5(connection, secret),
+        };
 
     private static PiholeStatusSnapshot BuildOfflineSnapshot(ConnectionConfig connection, bool canBeManaged) =>
         new(
