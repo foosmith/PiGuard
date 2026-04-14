@@ -197,7 +197,7 @@ public sealed class AdGuardHomeClient : IDnsFilterClient
 
     private async Task PostAsync(string path, object body, CancellationToken cancellationToken)
     {
-        var json = JsonSerializer.Serialize(body);
+        var json = JsonSerializer.Serialize(body, SerializerOptions);
         var request = CreateRequest(HttpMethod.Post, BuildUri(path));
         request.Content = new StringContent(json, Encoding.UTF8, "application/json");
         using var response = await SendAsync(request, cancellationToken);

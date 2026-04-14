@@ -428,7 +428,9 @@ public partial class PreferencesWindow : Window
         };
 
         public string AuthenticationLabel => Version == ConnectionVersion.AdGuardHome
-            ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing credentials" : "Stored credentials")
+            ? PasswordProtected
+                ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing credentials" : "Stored credentials")
+                : "No secret"
             : PasswordProtected
                 ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing secret" : "Stored secret")
                 : "No secret";

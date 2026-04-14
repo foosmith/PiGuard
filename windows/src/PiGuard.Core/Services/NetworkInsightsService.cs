@@ -24,8 +24,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
                 cancellationToken)));
 
         return results
-            .Where(result => result.Items is not null)
-            .ToDictionary(result => result.Connection.Id, result => (IReadOnlyList<TopItem>)result.Items!, StringComparer.Ordinal);
+            .ToDictionary(result => result.Connection.Id, result => result.Items, StringComparer.Ordinal);
     }
 
     public async Task<IReadOnlyDictionary<string, IReadOnlyList<TopItem>>> FetchTopClientsAsync(CancellationToken cancellationToken = default)
@@ -38,8 +37,7 @@ public sealed class NetworkInsightsService : INetworkInsightsService
                 cancellationToken)));
 
         return results
-            .Where(result => result.Items is not null)
-            .ToDictionary(result => result.Connection.Id, result => (IReadOnlyList<TopItem>)result.Items!, StringComparer.Ordinal);
+            .ToDictionary(result => result.Connection.Id, result => result.Items, StringComparer.Ordinal);
     }
 
     public async Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(
@@ -185,5 +183,5 @@ public sealed class NetworkInsightsService : INetworkInsightsService
 
     private static string BuildDisplayName(ConnectionConfig connection) => $"{connection.Hostname}:{connection.Port}";
 
-    private sealed record TopItemFetchResult(ConnectionConfig Connection, IReadOnlyList<TopItem>? Items);
+    private sealed record TopItemFetchResult(ConnectionConfig Connection, IReadOnlyList<TopItem> Items);
 }
