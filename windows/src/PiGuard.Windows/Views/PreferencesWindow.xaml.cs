@@ -308,7 +308,7 @@ public partial class PreferencesWindow : Window
 
     private void VersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (UsernameLabel is null) return; // fires during InitializeComponent before named elements exist
+        if (UsernameLabel is null || UsernameTextBox is null || SecretLabel is null) return; // fires during InitializeComponent before named elements exist
         var isAgh = VersionComboBox.SelectedIndex == 2;
         UsernameLabel.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
         UsernameTextBox.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
