@@ -81,6 +81,7 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
@@ -91,46 +92,57 @@
                         <TextBox x:Name="PortTextBox" Grid.Row="1" Grid.Column="1" Margin="8,0,0,8" />
 
                         <TextBlock Grid.Row="2" VerticalAlignment="Center" Text="Version" />
-                        <ComboBox x:Name="VersionComboBox" Grid.Row="2" Grid.Column="1" Margin="8,0,0,8" SelectedIndex="1">
+                        <ComboBox x:Name="VersionComboBox" Grid.Row="2" Grid.Column="1" Margin="8,0,0,8" SelectedIndex="1"
+                                  SelectionChanged="VersionComboBox_SelectionChanged">
                             <ComboBoxItem Content="Pi-hole v5 or earlier" Tag="LegacyV5" />
                             <ComboBoxItem Content="Pi-hole v6" Tag="V6" />
+                            <ComboBoxItem Content="AdGuard Home" Tag="AdGuardHome" />
                         </ComboBox>
 
-                        <TextBlock Grid.Row="3" VerticalAlignment="Center" Text="Security" />
+                        <TextBlock x:Name="UsernameLabel" Grid.Row="3" VerticalAlignment="Center" Text="Username" Visibility="Collapsed" />
+                        <TextBox x:Name="UsernameTextBox" Grid.Row="3" Grid.Column="1" Margin="8,0,0,8" Visibility="Collapsed" />
+
+                        <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="Security" />
                         <CheckBox x:Name="UseSslCheckBox"
-                                  Grid.Row="3"
+                                  Grid.Row="4"
                                   Grid.Column="1"
                                   Margin="8,0,0,8"
                                   VerticalAlignment="Center"
                                   Content="Use HTTPS" />
 
-                        <TextBlock Grid.Row="4" VerticalAlignment="Center" Text="Admin URL" />
-                        <TextBox x:Name="AdminUrlTextBox" Grid.Row="4" Grid.Column="1" Margin="8,0,0,8" />
+                        <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="Admin URL" />
+                        <TextBox x:Name="AdminUrlTextBox" Grid.Row="5" Grid.Column="1" Margin="8,0,0,8" />
 
-                        <TextBlock Grid.Row="5" VerticalAlignment="Center" Text="Secret" />
-                        <PasswordBox x:Name="SecretPasswordBox" Grid.Row="5" Grid.Column="1" Margin="8,0,0,8" />
+                        <TextBlock Grid.Row="6" VerticalAlignment="Center" Text="Secret" />
+                        <PasswordBox x:Name="SecretPasswordBox" Grid.Row="6" Grid.Column="1" Margin="8,0,0,8" />
 
-                        <TextBlock Grid.Row="6" VerticalAlignment="Center" Text="Secret Behavior" />
+                        <TextBlock Grid.Row="7" VerticalAlignment="Center" Text="Secret Behavior" />
                         <CheckBox x:Name="PasswordProtectedCheckBox"
-                                  Grid.Row="6"
+                                  Grid.Row="7"
                                   Grid.Column="1"
                                   Margin="8,0,0,8"
                                   VerticalAlignment="Center"
                                   Content="Connection requires token/app password" />
 
-                        <TextBlock Grid.Row="7"
-                                   Grid.ColumnSpan="2"
-                                   Margin="0,12,0,0"
-                                   Foreground="#FF666666"
-                                   TextWrapping="Wrap"
-                                   Text="For v5 connections, store the API token here. For v6 connections, store the app password. Leaving the secret blank while editing keeps the existing stored secret." />
+                        <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Margin="0,12,0,0" VerticalAlignment="Bottom">
+                            <TextBlock Foreground="#FF666666"
+                                       TextWrapping="Wrap"
+                                       Text="For v5 connections, store the API token here. For v6 connections, store the app password. For AdGuard Home, store the password here and enter the username above. Leaving the secret blank while editing keeps the existing stored secret." />
+                            <Button x:Name="TestConnectionButton"
+                                    Width="160"
+                                    Margin="0,10,0,0"
+                                    HorizontalAlignment="Left"
+                                    Content="Test Connection"
+                                    Click="TestConnectionButton_Click" />
+                        </StackPanel>
                     </Grid>
                 </GroupBox>
 
                 <GroupBox Grid.Row="2" Header="App Behavior">
                     <StackPanel Margin="12">
                         <CheckBox x:Name="LaunchAtStartupCheckBox" Margin="0,0,0,10" Content="Launch at startup" />
-                        <CheckBox x:Name="ShortcutEnabledCheckBox" Margin="0,0,0,10" Content="Enable global hotkey" />
+                        <CheckBox x:Name="ShortcutEnabledCheckBox" Margin="0,0,0,10" Content="Enable global hotkey (Ctrl+Alt+Shift+P)"
+                                  ToolTip="Quickly toggle blocking on all configured servers from anywhere" />
                         <CheckBox x:Name="EnableLoggingCheckBox" Margin="0,0,0,10" Content="Enable diagnostic logging" />
                         <CheckBox x:Name="EnableFloatingStatsPillCheckBox" Margin="0,0,0,10" Content="Show floating stats pill" />
                         <CheckBox x:Name="EnableTrayMiniPanelCheckBox" Margin="0,0,0,10" Content="Show mini panel on tray click" />
