@@ -17,6 +17,7 @@ public sealed class TrayHost : IDisposable
     private readonly INetworkCommandService _networkCommandService;
     private readonly INetworkInsightsService _networkInsightsService;
     private readonly ISyncService _syncService;
+    private readonly IHotkeyService _hotkeyService;
     private readonly Forms.NotifyIcon _notifyIcon = new();
     private readonly Forms.ToolStripMenuItem _statusMenuItem = new() { Enabled = false };
     private readonly Forms.ToolStripMenuItem _queriesMenuItem = new() { Enabled = false };
@@ -48,7 +49,8 @@ public sealed class TrayHost : IDisposable
         IPollingService pollingService,
         INetworkCommandService networkCommandService,
         INetworkInsightsService networkInsightsService,
-        ISyncService syncService)
+        ISyncService syncService,
+        IHotkeyService hotkeyService)
     {
         _settingsStore = settingsStore;
         _credentialStore = credentialStore;
@@ -57,6 +59,7 @@ public sealed class TrayHost : IDisposable
         _networkCommandService = networkCommandService;
         _networkInsightsService = networkInsightsService;
         _syncService = syncService;
+        _hotkeyService = hotkeyService;
     }
 
     public async Task InitializeAsync(CancellationToken cancellationToken = default)
@@ -95,7 +98,23 @@ public sealed class TrayHost : IDisposable
         _notifyIcon.MouseUp += HandleNotifyIconMouseUp;
         _queryLogMenuItem.Click += (_, _) => ShowQueryLog();
         _enableMenuItem.Click += async (_, _) => await EnableNetworkAsync();
-        _disableMenuItem.Click += async (_, _) => await DisableNetworkAsync();
+        (int? Seconds, string Label)[] disableDurations =
+        [
+            (15,   "15 Seconds"),
+            (30,   "30 Seconds"),
+            (60,   "1 Minute"),
+            (300,  "5 Minutes"),
+            (600,  "10 Minutes"),
+            (1800, "30 Minutes"),
+            (null, "Indefinitely"),
+        ];
+        foreach (var (seconds, label) in disableDurations)
+        {
+            var captured = seconds;
+            var item = new Forms.ToolStripMenuItem(label);
+            item.Click += async (_, _) => await DisableNetworkAsync(captured);
+            _disableMenuItem.DropDownItems.Add(item);
+        }
         _gravityMenuItem.Click += async (_, _) => await TriggerGravityUpdateAsync();
         _syncMenuItem.Click += async (_, _) => await TriggerSyncNowAsync();
 
@@ -164,6 +183,7 @@ public sealed class TrayHost : IDisposable
         _notifyIcon.DoubleClick -= HandleNotifyIconDoubleClick;
         _notifyIcon.MouseUp -= HandleNotifyIconMouseUp;
         _ = _pollingService.StopAsync();
+        _ = _hotkeyService.UnregisterAsync();
         _notifyIcon.Dispose();
         _floatingStatsPillWindow?.Close();
         _trayMiniPanelWindow?.Close();
@@ -246,6 +266,7 @@ public sealed class TrayHost : IDisposable
         _blockedMenuItem.Text = $"Blocked: {overview.AdsBlockedToday:N0} ({overview.AdsPercentageToday:F1}%)";
         _blocklistMenuItem.Text = $"Blocklist: {overview.AverageBlocklist:N0}";
         _notifyIcon.Text = BuildTrayText(overview);
+        RebuildPerServerSubmenus(overview);
         UpdateActionState();
         ApplyFloatingStatsPill();
         ApplyTrayMiniPanel();
@@ -263,19 +284,33 @@ public sealed class TrayHost : IDisposable
         var canManage = _lastOverview.CanBeManaged;
         var isBusy = _lastSyncStatus.IsGravityUpdateInProgress || _lastSyncStatus.IsSyncInProgress;
         var v6Count = _lastOverview.Nodes.Count(node => node.IsV6);
+        var nodeCount = _lastOverview.Nodes.Count;
 
-        _enableMenuItem.Enabled = canManage &&
-            !isBusy &&
-            _lastOverview.Status is PiholeNetworkStatus.Disabled;
-        _disableMenuItem.Enabled = canManage &&
-            !isBusy &&
-            _lastOverview.Status is PiholeNetworkStatus.Enabled or PiholeNetworkStatus.PartiallyEnabled;
-        _queryLogMenuItem.Enabled = _lastOverview.Nodes.Count > 0;
-        _topBlockedMenuItem.Enabled = _lastOverview.Nodes.Count > 0;
-        _topClientsMenuItem.Enabled = _lastOverview.Nodes.Count > 0;
-        _adminConsoleMenuItem.Enabled = _lastOverview.Nodes.Count > 0;
+        // Mirror Mac hide/show logic: hide the irrelevant action rather than showing two grey items.
+        var blockingActive = _lastOverview.Status is PiholeNetworkStatus.Enabled or PiholeNetworkStatus.PartiallyEnabled;
+        var blockingDisabled = _lastOverview.Status is PiholeNetworkStatus.Disabled;
+        _enableMenuItem.Visible = !blockingActive;
+        _disableMenuItem.Visible = !blockingDisabled;
+
+        _enableMenuItem.Enabled = canManage && !isBusy && blockingDisabled;
+        _disableMenuItem.Enabled = canManage && !isBusy && blockingActive;
+
+        // Singular vs plural label to match Mac behavior.
+        var label = nodeCount == 1 ? "Pi-hole" : nodeCount > 1 ? "Pi-holes" : "Blocking";
+        _enableMenuItem.Text = $"Enable {label}";
+        _disableMenuItem.Text = $"Disable {label}";
+
+        _queryLogMenuItem.Enabled = nodeCount > 0;
+        _topBlockedMenuItem.Enabled = nodeCount > 0;
+        _topClientsMenuItem.Enabled = nodeCount > 0;
+        _adminConsoleMenuItem.Enabled = nodeCount > 0;
+
+        // Hide gravity and sync items when they have no applicable servers (matches Mac).
+        _gravityMenuItem.Visible = v6Count > 0;
         _gravityMenuItem.Enabled = canManage && !isBusy && v6Count > 0;
+        _syncMenuItem.Visible = v6Count >= 2;
         _syncMenuItem.Enabled = !isBusy && v6Count >= 2;
+
         ApplyTrayMiniPanel();
     }
 
@@ -293,12 +328,12 @@ public sealed class TrayHost : IDisposable
         }
     }
 
-    private async Task DisableNetworkAsync()
+    private async Task DisableNetworkAsync(int? seconds = null)
     {
         _statusMenuItem.Text = "Status: Disabling...";
         try
         {
-            var result = await _networkCommandService.DisableNetworkAsync();
+            var result = await _networkCommandService.DisableNetworkAsync(seconds);
             _statusMenuItem.Text = BuildCommandSummary("Disabled", result);
         }
         catch
@@ -342,7 +377,17 @@ public sealed class TrayHost : IDisposable
             return $"Status: {verb} skipped";
         }
 
-        return $"Status: {verb} {result.Succeeded}, failed {result.Failed}, skipped {result.Skipped}";
+        var summary = $"Status: {verb} {result.Succeeded}, failed {result.Failed}, skipped {result.Skipped}";
+        if (result.Failed > 0)
+        {
+            var firstError = result.Messages.FirstOrDefault(m => m.Contains("failed"));
+            if (!string.IsNullOrWhiteSpace(firstError))
+            {
+                summary += $" — {firstError}";
+            }
+        }
+
+        return summary;
     }
 
     private static string FormatStatus(PiholeNetworkStatus status) => status switch
@@ -439,6 +484,12 @@ public sealed class TrayHost : IDisposable
             return;
         }
 
+        if (!adminUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+            !adminUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            adminUrl = "http://" + adminUrl;
+        }
+
         Process.Start(new ProcessStartInfo
         {
             FileName = adminUrl,
@@ -454,10 +505,45 @@ public sealed class TrayHost : IDisposable
             ApplyFloatingStatsPill();
             ApplyTrayMiniPanel();
             _notifyIcon.Text = BuildTrayText(_lastOverview);
+            if (_preferences.ShortcutEnabled)
+                await _hotkeyService.RegisterAsync(cancellationToken);
+            else
+                await _hotkeyService.UnregisterAsync(cancellationToken);
         }
         catch
         {
         }
+    }
+
+    private void RebuildPerServerSubmenus(PiholeNetworkOverview overview)
+    {
+        var nodes = overview.Nodes.OrderBy(n => n.DisplayName, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (nodes.Length <= 1)
+        {
+            _statusMenuItem.DropDownItems.Clear();
+            _queriesMenuItem.DropDownItems.Clear();
+            _blockedMenuItem.DropDownItems.Clear();
+            _blocklistMenuItem.DropDownItems.Clear();
+            return;
+        }
+
+        void Rebuild(Forms.ToolStripMenuItem parent, Func<PiholeStatusSnapshot, string> format)
+        {
+            parent.DropDownItems.Clear();
+            foreach (var node in nodes)
+            {
+                parent.DropDownItems.Add(new Forms.ToolStripMenuItem($"{node.DisplayName}: {format(node)}") { Enabled = false });
+            }
+        }
+
+        Rebuild(_statusMenuItem, n =>
+        {
+            if (!n.Online) return "Offline";
+            return n.Enabled switch { true => "Enabled", false => "Disabled", _ => "Unknown" };
+        });
+        Rebuild(_queriesMenuItem, n => $"{n.TotalQueriesToday:N0}");
+        Rebuild(_blockedMenuItem, n => $"{n.AdsBlockedToday:N0} ({n.AdsPercentageToday:F1}%)");
+        Rebuild(_blocklistMenuItem, n => $"{n.DomainsBeingBlocked:N0}");
     }
 
     private string BuildTrayText(PiholeNetworkOverview overview)
