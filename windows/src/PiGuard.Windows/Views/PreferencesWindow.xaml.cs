@@ -299,6 +299,7 @@ public partial class PreferencesWindow : Window
         var isAgh = connection.Version == ConnectionVersion.AdGuardHome;
         UsernameLabel.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
         UsernameTextBox.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
+        SecretLabel.Text = isAgh ? "Password" : "Secret";
         UseSslCheckBox.IsChecked = connection.UseSsl;
         AdminUrlTextBox.Text = connection.AdminUrl;
         SecretPasswordBox.Password = string.Empty;
@@ -310,6 +311,7 @@ public partial class PreferencesWindow : Window
         var isAgh = VersionComboBox.SelectedIndex == 2;
         UsernameLabel.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
         UsernameTextBox.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
+        SecretLabel.Text = isAgh ? "Password" : "Secret";
     }
 
     private bool TryApplyEditorToConnection(ConnectionEditorItem connection, out string message)
