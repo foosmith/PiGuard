@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using PiGuard.Core.Abstractions;
 using PiGuard.Core.Models;
+using PiGuard.Core.Services;
 
 namespace PiGuard.Windows.Views;
 
@@ -152,9 +153,9 @@ public partial class PreferencesWindow : Window
             normalizedConnections.Add(connection.ToConfig());
         }
 
-        if (!int.TryParse(PollingRateTextBox.Text, out var pollingRate) || pollingRate < 1)
+        if (!int.TryParse(PollingRateTextBox.Text, out var pollingRate) || pollingRate < 3)
         {
-            StatusTextBlock.Text = "Polling rate must be a whole number greater than zero.";
+            StatusTextBlock.Text = "Polling rate must be 3 seconds or more.";
             return;
         }
 
@@ -219,16 +220,96 @@ public partial class PreferencesWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
+    private async void TestConnectionButton_Click(object sender, RoutedEventArgs e)
+    {
+        var hostname = HostnameTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(hostname))
+        {
+            StatusTextBlock.Text = "Enter a hostname before testing.";
+            return;
+        }
+
+        if (!int.TryParse(PortTextBox.Text, out var port) || port is < 1 or > 65535)
+        {
+            StatusTextBlock.Text = "Port must be between 1 and 65535.";
+            return;
+        }
+
+        var version = VersionComboBox.SelectedIndex switch
+        {
+            1 => ConnectionVersion.V6,
+            2 => ConnectionVersion.AdGuardHome,
+            _ => ConnectionVersion.LegacyV5,
+        };
+        var useSsl = UseSslCheckBox.IsChecked == true;
+        var passwordProtected = PasswordProtectedCheckBox.IsChecked == true;
+        var adminUrl = string.IsNullOrWhiteSpace(AdminUrlTextBox.Text)
+            ? (version == ConnectionVersion.AdGuardHome
+                ? $"{(useSsl ? "https" : "http")}://{hostname}:{port}"
+                : BuildAdminUrl(hostname, port, useSsl))
+            : AdminUrlTextBox.Text.Trim();
+
+        var pendingSecret = SecretPasswordBox.Password.Trim();
+        var secret = !string.IsNullOrWhiteSpace(pendingSecret)
+            ? pendingSecret
+            : _editingConnection?.StoredSecret;
+
+        var username = UsernameTextBox.Text.Trim();
+        var connectionId = BuildConnectionId(hostname, port, useSsl, version);
+        var config = new ConnectionConfig(connectionId, hostname, port, useSsl, version, adminUrl, passwordProtected, username);
+
+        TestConnectionButton.IsEnabled = false;
+        StatusTextBlock.Text = "Testing connection...";
+
+        try
+        {
+            IDnsFilterClient client = version switch
+            {
+                ConnectionVersion.V6 => new PiholeClientV6(config, passwordProtected ? secret : null),
+                ConnectionVersion.AdGuardHome => new AdGuardHomeClient(config, passwordProtected ? secret : null),
+                _ => new PiholeClientV5(config, passwordProtected ? secret : null),
+            };
+
+            var status = await client.FetchStatusAsync();
+            var statusText = status.Enabled == true ? "Enabled" : status.Enabled == false ? "Disabled" : "Unknown";
+            StatusTextBlock.Text = $"Connection successful — {statusText}";
+        }
+        catch (Exception ex)
+        {
+            StatusTextBlock.Text = $"Connection failed: {ex.Message}";
+        }
+        finally
+        {
+            TestConnectionButton.IsEnabled = true;
+        }
+    }
+
     private void PopulateEditor(ConnectionEditorItem connection)
     {
         _editingConnection = connection;
         HostnameTextBox.Text = connection.Hostname;
         PortTextBox.Text = connection.Port.ToString();
-        VersionComboBox.SelectedIndex = connection.Version == ConnectionVersion.V6 ? 1 : 0;
+        VersionComboBox.SelectedIndex = connection.Version switch
+        {
+            ConnectionVersion.V6 => 1,
+            ConnectionVersion.AdGuardHome => 2,
+            _ => 0,
+        };
+        UsernameTextBox.Text = connection.Username;
+        var isAgh = connection.Version == ConnectionVersion.AdGuardHome;
+        UsernameLabel.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
+        UsernameTextBox.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
         UseSslCheckBox.IsChecked = connection.UseSsl;
         AdminUrlTextBox.Text = connection.AdminUrl;
         SecretPasswordBox.Password = string.Empty;
         PasswordProtectedCheckBox.IsChecked = connection.PasswordProtected;
+    }
+
+    private void VersionComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var isAgh = VersionComboBox.SelectedIndex == 2;
+        UsernameLabel.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
+        UsernameTextBox.Visibility = isAgh ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private bool TryApplyEditorToConnection(ConnectionEditorItem connection, out string message)
@@ -246,11 +327,18 @@ public partial class PreferencesWindow : Window
             return false;
         }
 
-        var version = VersionComboBox.SelectedIndex == 1 ? ConnectionVersion.V6 : ConnectionVersion.LegacyV5;
+        var version = VersionComboBox.SelectedIndex switch
+        {
+            1 => ConnectionVersion.V6,
+            2 => ConnectionVersion.AdGuardHome,
+            _ => ConnectionVersion.LegacyV5,
+        };
         var useSsl = UseSslCheckBox.IsChecked == true;
         var passwordProtected = PasswordProtectedCheckBox.IsChecked == true;
         var adminUrl = string.IsNullOrWhiteSpace(AdminUrlTextBox.Text)
-            ? BuildAdminUrl(hostname, port, useSsl)
+            ? (version == ConnectionVersion.AdGuardHome
+                ? $"{(useSsl ? "https" : "http")}://{hostname}:{port}"
+                : BuildAdminUrl(hostname, port, useSsl))
             : AdminUrlTextBox.Text.Trim();
         var pendingSecret = SecretPasswordBox.Password.Trim();
 
@@ -261,6 +349,7 @@ public partial class PreferencesWindow : Window
         connection.UseSsl = useSsl;
         connection.AdminUrl = adminUrl;
         connection.PasswordProtected = passwordProtected;
+        connection.Username = UsernameTextBox.Text.Trim();
         connection.Id = BuildConnectionId(hostname, port, useSsl, version);
 
         if (!string.IsNullOrWhiteSpace(pendingSecret))
@@ -296,7 +385,12 @@ public partial class PreferencesWindow : Window
     private static string BuildConnectionId(string hostname, int port, bool useSsl, ConnectionVersion version)
     {
         var scheme = useSsl ? "https" : "http";
-        var versionToken = version == ConnectionVersion.V6 ? "v6" : "v5";
+        var versionToken = version switch
+        {
+            ConnectionVersion.V6 => "v6",
+            ConnectionVersion.AdGuardHome => "agh",
+            _ => "v5",
+        };
         return $"{scheme}://{hostname}:{port}::{versionToken}";
     }
 
@@ -320,23 +414,40 @@ public partial class PreferencesWindow : Window
 
         public string PendingSecret { get; set; } = string.Empty;
 
+        public string Username { get; set; } = string.Empty;
+
         public string DisplayName => string.IsNullOrWhiteSpace(Hostname) ? "(new connection)" : $"{Hostname}:{Port}";
 
-        public string VersionLabel => Version == ConnectionVersion.V6 ? "v6" : "v5";
+        public string VersionLabel => Version switch
+        {
+            ConnectionVersion.V6 => "v6",
+            ConnectionVersion.AdGuardHome => "AGH",
+            _ => "v5",
+        };
 
-        public string AuthenticationLabel => PasswordProtected
-            ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing secret" : "Stored secret")
-            : "No secret";
+        public string AuthenticationLabel => Version == ConnectionVersion.AdGuardHome
+            ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing credentials" : "Stored credentials")
+            : PasswordProtected
+                ? (string.IsNullOrWhiteSpace(StoredSecret) && string.IsNullOrWhiteSpace(PendingSecret) ? "Missing secret" : "Stored secret")
+                : "No secret";
 
-        public ConnectionConfig ToConfig() =>
-            new(
+        public ConnectionConfig ToConfig()
+        {
+            var scheme = UseSsl ? "https" : "http";
+            var defaultAdminUrl = Version == ConnectionVersion.AdGuardHome
+                ? $"{scheme}://{Hostname}:{Port}"
+                : BuildAdminUrl(Hostname, Port, UseSsl);
+
+            return new(
                 Id,
                 Hostname,
                 Port,
                 UseSsl,
                 Version,
-                string.IsNullOrWhiteSpace(AdminUrl) ? BuildAdminUrl(Hostname, Port, UseSsl) : AdminUrl,
-                PasswordProtected);
+                string.IsNullOrWhiteSpace(AdminUrl) ? defaultAdminUrl : AdminUrl,
+                PasswordProtected,
+                Username);
+        }
 
         public static ConnectionEditorItem FromConfig(ConnectionConfig config, string? storedSecret) =>
             new()
@@ -349,6 +460,7 @@ public partial class PreferencesWindow : Window
                 AdminUrl = config.AdminUrl,
                 PasswordProtected = config.PasswordProtected,
                 StoredSecret = storedSecret ?? string.Empty,
+                Username = config.Username,
             };
     }
 }
