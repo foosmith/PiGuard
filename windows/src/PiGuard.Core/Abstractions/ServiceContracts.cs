@@ -66,20 +66,7 @@ public interface ISyncService : IDisposable
     Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default);
 }
 
-public interface IPiholeClientV5
-{
-    string ConnectionId { get; }
-    Task<PiholeStatusSnapshot> FetchStatusAsync(CancellationToken cancellationToken = default);
-    Task EnableAsync(CancellationToken cancellationToken = default);
-    Task DisableAsync(int? seconds = null, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<TopItem>> FetchTopClientsAsync(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<QueryLogEntry>> FetchQueryLogAsync(string serverDisplayName, int limit = 100, CancellationToken cancellationToken = default);
-    Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default);
-    Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default);
-}
-
-public interface IPiholeClientV6
+public interface IDnsFilterClient
 {
     string ConnectionId { get; }
     Task<PiholeStatusSnapshot> FetchStatusAsync(CancellationToken cancellationToken = default);
