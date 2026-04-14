@@ -4,6 +4,7 @@ public enum ConnectionVersion
 {
     LegacyV5,
     V6,
+    AdGuardHome,
 }
 
 public sealed record ConnectionConfig(
@@ -13,7 +14,8 @@ public sealed record ConnectionConfig(
     bool UseSsl,
     ConnectionVersion Version,
     string AdminUrl,
-    bool PasswordProtected);
+    bool PasswordProtected,
+    string Username = "");
 
 public enum PiholeNetworkStatus
 {
@@ -126,6 +128,7 @@ public sealed record SyncPreferences
     public string PrimaryConnectionId { get; init; } = string.Empty;
     public string SecondaryConnectionId { get; init; } = string.Empty;
     public int IntervalMinutes { get; init; } = 15;
+    public bool IntervalUsesCustom { get; init; }
     public bool SkipGroups { get; init; }
     public bool SkipAdlists { get; init; }
     public bool SkipDomains { get; init; }
