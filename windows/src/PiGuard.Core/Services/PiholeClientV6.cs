@@ -8,7 +8,7 @@ using PiGuard.Core.Models;
 
 namespace PiGuard.Core.Services;
 
-public sealed class PiholeClientV6 : IPiholeClientV6
+public sealed class PiholeClientV6 : IDnsFilterClient
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {

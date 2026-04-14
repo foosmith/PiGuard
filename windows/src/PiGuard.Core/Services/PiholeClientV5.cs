@@ -6,7 +6,7 @@ using PiGuard.Core.Models;
 
 namespace PiGuard.Core.Services;
 
-public sealed class PiholeClientV5 : IPiholeClientV5
+public sealed class PiholeClientV5 : IDnsFilterClient
 {
     private static readonly JsonSerializerOptions SerializerOptions = new()
     {
@@ -60,6 +60,9 @@ public sealed class PiholeClientV5 : IPiholeClientV5
         using var response = await SendGetAsync(requestUri, cancellationToken);
         _ = await ReadJsonAsync<PiholeV5StatusResponse>(response, cancellationToken);
     }
+
+    public Task TriggerGravityUpdateAsync(CancellationToken cancellationToken = default) =>
+        Task.CompletedTask;
 
     public async Task<IReadOnlyList<TopItem>> FetchTopBlockedAsync(CancellationToken cancellationToken = default)
     {
