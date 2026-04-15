@@ -328,11 +328,14 @@ public sealed class TrayHost : IDisposable
         try
         {
             var result = await _networkCommandService.EnableNetworkAsync();
-            _statusMenuItem.Text = BuildCommandSummary("Enabled", result);
+            var summary = BuildCommandSummary("Enabled", result);
+            _statusMenuItem.Text = summary;
+            ShowBalloonTip("PiGuard", summary.Replace("Status: ", string.Empty), result.Failed > 0 ? Forms.ToolTipIcon.Warning : Forms.ToolTipIcon.Info);
         }
         catch
         {
             _statusMenuItem.Text = "Status: Enable failed";
+            ShowBalloonTip("PiGuard", "Enable failed", Forms.ToolTipIcon.Error);
         }
     }
 
@@ -342,11 +345,14 @@ public sealed class TrayHost : IDisposable
         try
         {
             var result = await _networkCommandService.DisableNetworkAsync(seconds);
-            _statusMenuItem.Text = BuildCommandSummary("Disabled", result);
+            var summary = BuildCommandSummary("Disabled", result);
+            _statusMenuItem.Text = summary;
+            ShowBalloonTip("PiGuard", summary.Replace("Status: ", string.Empty), result.Failed > 0 ? Forms.ToolTipIcon.Warning : Forms.ToolTipIcon.Info);
         }
         catch
         {
             _statusMenuItem.Text = "Status: Disable failed";
+            ShowBalloonTip("PiGuard", "Disable failed", Forms.ToolTipIcon.Error);
         }
     }
 
@@ -376,6 +382,11 @@ public sealed class TrayHost : IDisposable
         {
             _statusMenuItem.Text = "Status: Sync failed";
         }
+    }
+
+    private void ShowBalloonTip(string title, string text, Forms.ToolTipIcon icon)
+    {
+        _notifyIcon.ShowBalloonTip(3000, title, text, icon);
     }
 
     private static string BuildCommandSummary(string verb, OperationExecutionResult result)
