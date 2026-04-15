@@ -91,7 +91,7 @@ public sealed class TrayHost : IDisposable
         menu.Items.Add("Exit", null, (_, _) => ExitApplication());
 
         _notifyIcon.Text = "PiGuard";
-        _notifyIcon.Icon = SystemIcons.Application;
+        _notifyIcon.Icon = LoadTrayIcon();
         _notifyIcon.ContextMenuStrip = menu;
         _notifyIcon.Visible = true;
         _notifyIcon.DoubleClick += HandleNotifyIconDoubleClick;
@@ -396,6 +396,15 @@ public sealed class TrayHost : IDisposable
         }
 
         return summary;
+    }
+
+    private static Icon LoadTrayIcon()
+    {
+        using var stream = typeof(TrayHost).Assembly
+            .GetManifestResourceStream("PiGuard.Windows.Resources.piguard-menu.png")!;
+        using var bitmap = new System.Drawing.Bitmap(stream);
+        using var resized = new System.Drawing.Bitmap(bitmap, new System.Drawing.Size(16, 16));
+        return Icon.FromHandle(resized.GetHicon());
     }
 
     private static string FormatStatus(PiholeNetworkStatus status) => status switch

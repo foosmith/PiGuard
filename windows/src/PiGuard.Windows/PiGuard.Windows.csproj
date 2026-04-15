@@ -12,4 +12,8 @@
   <ItemGroup>
     <ProjectReference Include="..\PiGuard.Core\PiGuard.Core.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\piguard-menu.png" />
+  </ItemGroup>
 </Project>
