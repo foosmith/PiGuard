@@ -6,7 +6,8 @@
         Height="700"
         MinWidth="920"
         MinHeight="640"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackground}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />

@@ -3,5 +3,10 @@
 
     <!-- Named brushes referenced via DynamicResource -->
     <SolidColorBrush x:Key="MutedTextBrush" Color="#FF666666"/>
+    <SolidColorBrush x:Key="WindowBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="PanelBackground" Color="#F5F5F5"/>
+    <SolidColorBrush x:Key="InputBackground" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="BorderBrushKey" Color="#CCCCCC"/>
+    <SolidColorBrush x:Key="TextPrimary" Color="#000000"/>
 
 </ResourceDictionary>

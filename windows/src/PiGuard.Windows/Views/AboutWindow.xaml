@@ -5,7 +5,8 @@
         Width="420"
         Height="260"
         ResizeMode="NoResize"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource WindowBackground}">
     <Grid Margin="24">
         <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
             <TextBlock FontSize="28" FontWeight="SemiBold" TextAlignment="Center" Text="PiGuard" />
