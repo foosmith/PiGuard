@@ -101,8 +101,13 @@ public sealed class AdGuardHomeClient : IDnsFilterClient
             foreach (var item in dataElement.EnumerateArray())
             {
                 if (!TryGetString(item, "time", out var timeStr) ||
-                    !TryGetString(item, "domain", out var domain) ||
                     !TryGetString(item, "reason", out var reason))
+                {
+                    continue;
+                }
+
+                if (!item.TryGetProperty("question", out var question) ||
+                    !TryGetString(question, "name", out var domain))
                 {
                     continue;
                 }
