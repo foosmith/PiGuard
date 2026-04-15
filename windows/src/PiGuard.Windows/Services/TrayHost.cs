@@ -31,6 +31,7 @@ public sealed class TrayHost : IDisposable
     private readonly Forms.ToolStripMenuItem _adminConsoleMenuItem = new("Admin Console");
     private readonly Forms.ToolStripMenuItem _gravityMenuItem = new("Update Gravity");
     private readonly Forms.ToolStripMenuItem _syncMenuItem = new("Sync Now");
+    private Forms.ContextMenuStrip? _contextMenu;
 
     private PreferencesWindow? _preferencesWindow;
     private SyncSettingsWindow? _syncSettingsWindow;
@@ -66,6 +67,7 @@ public sealed class TrayHost : IDisposable
     {
         await RefreshPreferencesAsync(cancellationToken);
         var menu = new Forms.ContextMenuStrip();
+        _contextMenu = menu;
         menu.Opening += async (_, _) => await HandleMenuOpeningAsync();
         menu.Items.AddRange([
             _statusMenuItem,
@@ -519,6 +521,12 @@ public sealed class TrayHost : IDisposable
         try
         {
             _preferences = await _settingsStore.LoadAsync(cancellationToken);
+            if (_contextMenu is not null)
+            {
+                _contextMenu.Renderer = _preferences.EnableDarkMode
+                    ? new DarkMenuRenderer()
+                    : new Forms.ToolStripProfessionalRenderer();
+            }
             ApplyFloatingStatsPill();
             ApplyTrayMiniPanel();
             _notifyIcon.Text = BuildTrayText(_lastOverview);
@@ -654,5 +662,52 @@ public sealed class TrayHost : IDisposable
         window.DisableRequested += async (_, _) => await DisableNetworkAsync();
         window.Closed += (_, _) => _trayMiniPanelWindow = null;
         return window;
+    }
+
+    private sealed class DarkMenuRenderer : Forms.ToolStripProfessionalRenderer
+    {
+        public DarkMenuRenderer() : base(new DarkColorTable()) { }
+
+        protected override void OnRenderItemText(Forms.ToolStripItemTextRenderEventArgs e)
+        {
+            e.TextColor = e.Item.Enabled
+                ? Color.FromArgb(0xEE, 0xF4, 0xFF)
+                : Color.FromArgb(0x55, 0x75, 0x95);
+            base.OnRenderItemText(e);
+        }
+
+        protected override void OnRenderArrow(Forms.ToolStripArrowRenderEventArgs e)
+        {
+            e.ArrowColor = Color.FromArgb(0xEE, 0xF4, 0xFF);
+            base.OnRenderArrow(e);
+        }
+    }
+
+    private sealed class DarkColorTable : Forms.ProfessionalColorTable
+    {
+        private static Color Bg => Color.FromArgb(0x16, 0x20, 0x30);
+        private static Color Hover => Color.FromArgb(0x1D, 0x30, 0x50);
+        private static Color Border => Color.FromArgb(0x2D, 0x45, 0x66);
+        private static Color Separator => Color.FromArgb(0x2D, 0x45, 0x66);
+
+        public override Color ToolStripDropDownBackground => Bg;
+        public override Color ImageMarginGradientBegin => Bg;
+        public override Color ImageMarginGradientMiddle => Bg;
+        public override Color ImageMarginGradientEnd => Bg;
+        public override Color MenuBorder => Border;
+        public override Color MenuItemBorder => Border;
+        public override Color MenuItemSelected => Hover;
+        public override Color MenuItemSelectedGradientBegin => Hover;
+        public override Color MenuItemSelectedGradientEnd => Hover;
+        public override Color MenuItemPressedGradientBegin => Hover;
+        public override Color MenuItemPressedGradientEnd => Hover;
+        public override Color MenuItemPressedGradientMiddle => Hover;
+        public override Color SeparatorDark => Separator;
+        public override Color SeparatorLight => Separator;
+        public override Color MenuStripGradientBegin => Bg;
+        public override Color MenuStripGradientEnd => Bg;
+        public override Color CheckBackground => Hover;
+        public override Color CheckSelectedBackground => Hover;
+        public override Color CheckPressedBackground => Hover;
     }
 }
