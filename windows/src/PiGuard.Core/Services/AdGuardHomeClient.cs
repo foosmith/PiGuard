@@ -199,7 +199,9 @@ public sealed class AdGuardHomeClient : IDnsFilterClient
     {
         var json = JsonSerializer.Serialize(body, SerializerOptions);
         var request = CreateRequest(HttpMethod.Post, BuildUri(path));
-        request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+        var content = new ByteArrayContent(Encoding.UTF8.GetBytes(json));
+        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+        request.Content = content;
         using var response = await SendAsync(request, cancellationToken);
         if (response.Content.Headers.ContentLength is > 0)
         {
