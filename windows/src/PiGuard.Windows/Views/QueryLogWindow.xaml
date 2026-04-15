@@ -62,7 +62,7 @@
         <DockPanel Grid.Row="4" LastChildFill="False">
             <TextBlock x:Name="StatusTextBlock"
                        VerticalAlignment="Center"
-                       Foreground="#FF666666"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Text="Loading query log..." />
             <Button Width="100" DockPanel.Dock="Right" Content="Close" Click="CloseButton_Click" />
         </DockPanel>

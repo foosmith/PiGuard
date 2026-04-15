@@ -19,7 +19,7 @@
         <StackPanel>
             <TextBlock FontSize="24" FontWeight="SemiBold" Text="Preferences" />
             <TextBlock Margin="0,8,0,0"
-                       Foreground="#FF666666"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        TextWrapping="Wrap"
                        Text="Manage Pi-hole connections and the basic tray app behavior for the Windows port." />
         </StackPanel>
@@ -54,7 +54,7 @@
                         <Button Width="100" Margin="0,0,8,0" Content="New" Click="NewConnectionButton_Click" />
                         <Button Width="100" Margin="0,0,8,0" Content="Delete" Click="DeleteConnectionButton_Click" />
                         <TextBlock VerticalAlignment="Center"
-                                   Foreground="#FF666666"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    Text="Changes are saved explicitly with Save Changes." />
                     </StackPanel>
                 </Grid>
@@ -125,7 +125,7 @@
                                   Content="Connection requires token/app password" />
 
                         <StackPanel Grid.Row="8" Grid.ColumnSpan="2" Margin="0,12,0,0" VerticalAlignment="Bottom">
-                            <TextBlock Foreground="#FF666666"
+                            <TextBlock Foreground="{DynamicResource MutedTextBrush}"
                                        TextWrapping="Wrap"
                                        Text="For v5 connections, store the API token here. For v6 connections, store the app password. For AdGuard Home, store the password here and enter the username above. Leaving the secret blank while editing keeps the existing stored secret." />
                             <Button x:Name="TestConnectionButton"
@@ -147,6 +147,7 @@
                         <CheckBox x:Name="EnableFloatingStatsPillCheckBox" Margin="0,0,0,10" Content="Show floating stats pill" />
                         <CheckBox x:Name="EnableTrayMiniPanelCheckBox" Margin="0,0,0,10" Content="Show mini panel on tray click" />
                         <CheckBox x:Name="EnableRichTrayTooltipCheckBox" Margin="0,0,0,10" Content="Use richer tray hover text" />
+                        <CheckBox x:Name="EnableDarkModeCheckBox" Margin="0,0,0,10" Content="Enable dark mode" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock VerticalAlignment="Center" Text="Polling rate (seconds)" />
                             <TextBox x:Name="PollingRateTextBox" Width="80" Margin="12,0,0,0" />
@@ -159,7 +160,7 @@
         <DockPanel Grid.Row="4" LastChildFill="False">
             <TextBlock x:Name="StatusTextBlock"
                        VerticalAlignment="Center"
-                       Foreground="#FF666666"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Text="Load or create a connection, then save changes." />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                 <Button x:Name="SaveChangesButton" Width="120" Margin="0,0,12,0" Content="Save Changes" Click="SaveChangesButton_Click" />

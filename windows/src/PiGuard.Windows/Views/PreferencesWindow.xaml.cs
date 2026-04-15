@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using PiGuard.Core.Abstractions;
 using PiGuard.Core.Models;
 using PiGuard.Core.Services;
+using PiGuard.Windows.Services;
 
 namespace PiGuard.Windows.Views;
 
@@ -62,6 +63,7 @@ public partial class PreferencesWindow : Window
         EnableFloatingStatsPillCheckBox.IsChecked = _preferences.EnableFloatingStatsPill;
         EnableTrayMiniPanelCheckBox.IsChecked = _preferences.EnableTrayMiniPanel;
         EnableRichTrayTooltipCheckBox.IsChecked = _preferences.EnableRichTrayTooltip;
+        EnableDarkModeCheckBox.IsChecked = _preferences.EnableDarkMode;
         PollingRateTextBox.Text = _preferences.PollingRateSeconds.ToString();
 
         if (_connections.Count > 0)
@@ -167,11 +169,13 @@ public partial class PreferencesWindow : Window
             EnableFloatingStatsPill = EnableFloatingStatsPillCheckBox.IsChecked == true,
             EnableTrayMiniPanel = EnableTrayMiniPanelCheckBox.IsChecked == true,
             EnableRichTrayTooltip = EnableRichTrayTooltipCheckBox.IsChecked == true,
+            EnableDarkMode = EnableDarkModeCheckBox.IsChecked == true,
             LaunchAtStartup = LaunchAtStartupCheckBox.IsChecked == true,
             PollingRateSeconds = pollingRate,
         };
 
         await _settingsStore.SaveAsync(_preferences);
+        ThemeManager.Apply(_preferences.EnableDarkMode);
         await _startupService.SetEnabledAsync(LaunchAtStartupCheckBox.IsChecked == true);
 
         var activeIds = normalizedConnections.Select(connection => connection.Id).ToHashSet(StringComparer.Ordinal);

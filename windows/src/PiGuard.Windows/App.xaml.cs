@@ -1,6 +1,7 @@
 using System.IO;
 using System.Windows;
 using PiGuard.Core.Abstractions;
+using PiGuard.Core.Models;
 using PiGuard.Core.Services;
 using PiGuard.Windows.Services;
 
@@ -11,6 +12,7 @@ public partial class App : System.Windows.Application
     private TrayHost? _trayHost;
     private ISyncService? _syncService;
     private PiholePollingService? _pollingService;
+    private WindowsHotkeyService? _hotkeyService;
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -25,6 +27,8 @@ public partial class App : System.Windows.Application
                 "PiGuard");
 
             var settingsStore = new JsonSettingsStore(Path.Combine(appDataRoot, "settings.json"));
+            var startupPreferences = await settingsStore.LoadAsync();
+            ThemeManager.Apply(startupPreferences.EnableDarkMode);
             var credentialStore = new WindowsCredentialStore(appDataRoot);
             var startupService = new WindowsStartupService("PiGuard");
             _pollingService = new PiholePollingService(settingsStore, credentialStore);
@@ -34,6 +38,17 @@ public partial class App : System.Windows.Application
 
             await _syncService.StartAsync();
 
+            PiholeNetworkOverview lastOverview = new(PiholeNetworkStatus.Initializing, false, 0, 0, 0, 0, []);
+            _pollingService.NetworkOverviewUpdated += (_, overview) => lastOverview = overview;
+
+            _hotkeyService = new WindowsHotkeyService(async () =>
+            {
+                if (lastOverview.Status is PiholeNetworkStatus.Enabled or PiholeNetworkStatus.PartiallyEnabled)
+                    await networkCommandService.DisableNetworkAsync();
+                else
+                    await networkCommandService.EnableNetworkAsync();
+            });
+
             _trayHost = new TrayHost(
                 settingsStore,
                 credentialStore,
@@ -41,7 +56,8 @@ public partial class App : System.Windows.Application
                 _pollingService,
                 networkCommandService,
                 networkInsightsService,
-                _syncService);
+                _syncService,
+                _hotkeyService);
             await _trayHost.InitializeAsync();
         }
         catch (Exception exception)
@@ -58,6 +74,7 @@ public partial class App : System.Windows.Application
     protected override void OnExit(ExitEventArgs e)
     {
         _trayHost?.Dispose();
+        _hotkeyService?.Dispose();
         _ = _syncService?.StopAsync();
         _syncService?.Dispose();
         _pollingService?.Dispose();

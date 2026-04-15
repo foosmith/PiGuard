@@ -19,7 +19,7 @@
         <StackPanel>
             <TextBlock FontSize="24" FontWeight="SemiBold" Text="Sync Settings" />
             <TextBlock Margin="0,8,0,0"
-                       Foreground="#FF666666"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        TextWrapping="Wrap"
                        Text="Configure primary-to-secondary sync for Pi-hole v6 connections and review the last saved sync state." />
         </StackPanel>
@@ -48,7 +48,7 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12" Foreground="#FF666666" TextWrapping="Wrap"
+                    <TextBlock Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,12" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap"
                                Text="Choose two Pi-hole v6 connections. The primary is treated as the source of truth; the secondary is updated to match it." />
 
                     <TextBlock Grid.Row="1" VerticalAlignment="Center" Text="Enable Sync" />
@@ -79,15 +79,30 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" VerticalAlignment="Center" Text="Interval (minutes)" />
-                    <ComboBox x:Name="IntervalComboBox" Grid.Row="0" Grid.Column="1" Margin="8,0,0,12" Width="180" HorizontalAlignment="Left">
-                        <ComboBoxItem Content="5" />
-                        <ComboBoxItem Content="15" />
-                        <ComboBoxItem Content="30" />
-                        <ComboBoxItem Content="60" />
-                    </ComboBox>
+                    <StackPanel Grid.Row="0" Grid.Column="1" Margin="8,0,0,12" Orientation="Horizontal">
+                        <ComboBox x:Name="IntervalComboBox" Width="120" SelectionChanged="IntervalComboBox_SelectionChanged">
+                            <ComboBoxItem Content="5" />
+                            <ComboBoxItem Content="15" />
+                            <ComboBoxItem Content="30" />
+                            <ComboBoxItem Content="60" />
+                            <ComboBoxItem Content="Custom" />
+                        </ComboBox>
+                        <TextBox x:Name="CustomIntervalTextBox"
+                                 Width="60"
+                                 Margin="8,0,0,0"
+                                 VerticalAlignment="Center"
+                                 Visibility="Collapsed"
+                                 ToolTip="Enter any interval in whole minutes (minimum 1)" />
+                        <TextBlock x:Name="CustomIntervalLabel"
+                                   Margin="6,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource MutedTextBrush}"
+                                   Visibility="Collapsed"
+                                   Text="min" />
+                    </StackPanel>
 
                     <StackPanel Grid.Row="1" Grid.ColumnSpan="2">
-                        <TextBlock Margin="0,0,0,8" Foreground="#FF666666" Text="Leave a scope unchecked to skip syncing that category." />
+                        <TextBlock Margin="0,0,0,8" Foreground="{DynamicResource MutedTextBrush}" Text="Leave a scope unchecked to skip syncing that category." />
                         <WrapPanel>
                             <CheckBox x:Name="SyncGroupsCheckBox" Margin="0,0,16,8" Content="Groups" />
                             <CheckBox x:Name="SyncAdlistsCheckBox" Margin="0,0,16,8" Content="Adlists" />
@@ -119,7 +134,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock x:Name="ReadinessTextBlock" FontWeight="SemiBold" TextWrapping="Wrap" />
-                    <TextBlock x:Name="LastRunTextBlock" Grid.Row="2" Foreground="#FF666666" TextWrapping="Wrap" />
+                    <TextBlock x:Name="LastRunTextBlock" Grid.Row="2" Foreground="{DynamicResource MutedTextBrush}" TextWrapping="Wrap" />
                     <TextBox x:Name="ActivityTextBox"
                              Grid.Row="4"
                              IsReadOnly="True"
@@ -134,7 +149,7 @@
         <DockPanel Grid.Row="4" LastChildFill="False">
             <TextBlock x:Name="StatusTextBlock"
                        VerticalAlignment="Center"
-                       Foreground="#FF666666"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Text="Save sync settings to persist changes." />
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                 <Button x:Name="SaveButton" Width="110" Margin="0,0,12,0" Content="Save" Click="SaveButton_Click" />

@@ -119,6 +119,7 @@ public sealed record AppPreferences
     public bool EnableFloatingStatsPill { get; init; }
     public bool EnableTrayMiniPanel { get; init; } = true;
     public bool EnableRichTrayTooltip { get; init; } = true;
+    public bool EnableDarkMode { get; init; }
     public SyncPreferences Sync { get; init; } = new();
 }
 
