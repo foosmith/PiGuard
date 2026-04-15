@@ -7,6 +7,7 @@
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <RootNamespace>PiGuard.Windows</RootNamespace>
     <AssemblyName>PiGuard.Windows</AssemblyName>
+    <ApplicationIcon>Resources\piguard.ico</ApplicationIcon>
   </PropertyGroup>
 
   <ItemGroup>
@@ -15,5 +16,6 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Resources\piguard-menu.png" />
+    <None Include="Resources\piguard.ico" />
   </ItemGroup>
 </Project>
