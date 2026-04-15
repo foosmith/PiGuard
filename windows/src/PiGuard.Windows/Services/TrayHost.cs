@@ -295,8 +295,16 @@ public sealed class TrayHost : IDisposable
         _enableMenuItem.Enabled = canManage && !isBusy && blockingDisabled;
         _disableMenuItem.Enabled = canManage && !isBusy && blockingActive;
 
-        // Singular vs plural label to match Mac behavior.
-        var label = nodeCount == 1 ? "Pi-hole" : nodeCount > 1 ? "Pi-holes" : "Blocking";
+        // Derive label from connection types so AGH-only fleets don't say "Pi-hole".
+        var hasPihole = _preferences.Connections.Any(c => c.Version != ConnectionVersion.AdGuardHome);
+        var hasAgh = _preferences.Connections.Any(c => c.Version == ConnectionVersion.AdGuardHome);
+        string label;
+        if (hasPihole && !hasAgh)
+            label = nodeCount == 1 ? "Pi-hole" : "Pi-holes";
+        else if (hasAgh && !hasPihole)
+            label = "AdGuard Home";
+        else
+            label = "Blocking";
         _enableMenuItem.Text = $"Enable {label}";
         _disableMenuItem.Text = $"Disable {label}";
 
