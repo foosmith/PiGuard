@@ -136,13 +136,19 @@ public sealed class AdGuardHomeClient : IDnsFilterClient
         return results;
     }
 
-    public Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default) =>
-        ModifyUserRulesAsync($"@@||{domain}^", cancellationToken);
+    public Task AllowDomainAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        var d = domain.TrimEnd('.');
+        return ModifyUserRulesAsync(d, $"@@||{d}^", cancellationToken);
+    }
 
-    public Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default) =>
-        ModifyUserRulesAsync($"||{domain}^", cancellationToken);
+    public Task BlockDomainAsync(string domain, CancellationToken cancellationToken = default)
+    {
+        var d = domain.TrimEnd('.');
+        return ModifyUserRulesAsync(d, $"||{d}^", cancellationToken);
+    }
 
-    private async Task ModifyUserRulesAsync(string newRule, CancellationToken cancellationToken)
+    private async Task ModifyUserRulesAsync(string domain, string newRule, CancellationToken cancellationToken)
     {
         // AdGuard Home replaces the entire rule list — fetch current, append, post back.
         using var document = await GetJsonDocumentAsync("/control/filtering/status", cancellationToken);
@@ -159,6 +165,13 @@ public sealed class AdGuardHomeClient : IDnsFilterClient
                 }
             }
         }
+
+        // Remove any existing allow or block rule for this domain before adding the new one.
+        // Without this, an existing @@||domain^ allow rule silently overrides a new ||domain^ block
+        // rule because AdGuard Home exception rules always win regardless of list order.
+        existingRules.RemoveAll(r =>
+            string.Equals(r, $"||{domain}^", StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(r, $"@@||{domain}^", StringComparison.OrdinalIgnoreCase));
 
         existingRules.Add(newRule);
         await PostAsync("/control/filtering/set_rules", new { rules = existingRules }, cancellationToken);

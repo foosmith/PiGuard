@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Reflection;
 using System.Windows;
 
@@ -9,6 +10,15 @@ public partial class AboutWindow : Window
     {
         InitializeComponent();
         VersionTextBlock.Text = BuildVersionText();
+    }
+
+    private void GitHubButton_Click(object sender, RoutedEventArgs e)
+    {
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = "https://github.com/foosmith/PiGuard",
+            UseShellExecute = true,
+        });
     }
 
     private static string BuildVersionText()

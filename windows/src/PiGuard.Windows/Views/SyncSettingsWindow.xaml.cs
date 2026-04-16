@@ -60,7 +60,7 @@ public partial class SyncSettingsWindow : Window
 
         SelectConnection(PrimaryComboBox, _preferences.Sync.PrimaryConnectionId);
         SelectConnection(SecondaryComboBox, _preferences.Sync.SecondaryConnectionId);
-        SelectInterval(_preferences.Sync.IntervalMinutes);
+        SelectInterval(_preferences.Sync.IntervalMinutes, _preferences.Sync.IntervalUsesCustom);
 
         UpdateStatusPanel();
         StatusTextBlock.Text = "Sync settings loaded.";
@@ -115,6 +115,13 @@ public partial class SyncSettingsWindow : Window
 
     private void CloseButton_Click(object sender, RoutedEventArgs e) => Close();
 
+    private void IntervalComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var isCustom = (IntervalComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() == "Custom";
+        CustomIntervalTextBox.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
+        CustomIntervalLabel.Visibility = isCustom ? Visibility.Visible : Visibility.Collapsed;
+    }
+
     private bool TryBuildSyncPreferences(out SyncPreferences syncPreferences, out string message)
     {
         var primaryId = PrimaryComboBox.SelectedValue as string ?? string.Empty;
@@ -145,8 +152,19 @@ public partial class SyncSettingsWindow : Window
             }
         }
 
-        if (IntervalComboBox.SelectedItem is not ComboBoxItem intervalItem ||
-            !int.TryParse(intervalItem.Content?.ToString(), out var intervalMinutes))
+        var isCustomInterval = (IntervalComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() == "Custom";
+        int intervalMinutes;
+        if (isCustomInterval)
+        {
+            if (!int.TryParse(CustomIntervalTextBox.Text, out intervalMinutes) || intervalMinutes < 1)
+            {
+                syncPreferences = _preferences.Sync;
+                message = "Custom interval must be a whole number of minutes (minimum 1).";
+                return false;
+            }
+        }
+        else if (IntervalComboBox.SelectedItem is not ComboBoxItem intervalItem ||
+                 !int.TryParse(intervalItem.Content?.ToString(), out intervalMinutes))
         {
             syncPreferences = _preferences.Sync;
             message = "Choose a valid sync interval.";
@@ -159,6 +177,7 @@ public partial class SyncSettingsWindow : Window
             PrimaryConnectionId = primaryId,
             SecondaryConnectionId = secondaryId,
             IntervalMinutes = intervalMinutes,
+            IntervalUsesCustom = isCustomInterval,
             SkipGroups = SyncGroupsCheckBox.IsChecked != true,
             SkipAdlists = SyncAdlistsCheckBox.IsChecked != true,
             SkipDomains = SyncDomainsCheckBox.IsChecked != true,
@@ -204,7 +223,8 @@ public partial class SyncSettingsWindow : Window
             return "Primary and secondary must point to different Pi-holes.";
         }
 
-        var interval = (IntervalComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "?";
+        var isCustomInterval = (IntervalComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() == "Custom";
+        var interval = isCustomInterval ? CustomIntervalTextBox.Text : (IntervalComboBox.SelectedItem as ComboBoxItem)?.Content?.ToString() ?? "?";
         var dryRunSuffix = DryRunCheckBox.IsChecked == true ? " in dry-run mode" : string.Empty;
         return $"Ready to sync every {interval} minutes{dryRunSuffix}.";
     }
@@ -286,13 +306,27 @@ public partial class SyncSettingsWindow : Window
         comboBox.SelectedValue = id;
     }
 
-    private void SelectInterval(int intervalMinutes)
+    private void SelectInterval(int intervalMinutes, bool usesCustom = false)
     {
+        if (!usesCustom)
+        {
+            foreach (var item in IntervalComboBox.Items.OfType<ComboBoxItem>())
+            {
+                if (string.Equals(item.Content?.ToString(), intervalMinutes.ToString(), StringComparison.Ordinal))
+                {
+                    IntervalComboBox.SelectedItem = item;
+                    return;
+                }
+            }
+        }
+
+        // Fall back to Custom (last item) and populate the text box.
         foreach (var item in IntervalComboBox.Items.OfType<ComboBoxItem>())
         {
-            if (string.Equals(item.Content?.ToString(), intervalMinutes.ToString(), StringComparison.Ordinal))
+            if (item.Content?.ToString() == "Custom")
             {
                 IntervalComboBox.SelectedItem = item;
+                CustomIntervalTextBox.Text = intervalMinutes.ToString();
                 return;
             }
         }

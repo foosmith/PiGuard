@@ -140,7 +140,7 @@ public partial class QueryLogWindow : Window
             var failures = results.Where(result => !result.Succeeded).ToArray();
             StatusTextBlock.Text = failures.Length == 0
                 ? $"{actionLabel}ed {row.Domain}."
-                : $"{actionLabel} failed on {string.Join(", ", failures.Select(result => result.ServerDisplayName))}.";
+                : $"{actionLabel} failed: {string.Join("; ", failures.Select(result => $"{result.ServerDisplayName} — {result.Message}"))}.";
         }
         catch
         {
@@ -182,7 +182,19 @@ public partial class QueryLogWindow : Window
 
     private void QueryLogDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e) => SetActionState();
 
-    private sealed record ConnectionOption(string Id, string DisplayName);
+    private void QueryLogDataGrid_PreviewMouseRightButtonDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        var row = ItemsControl.ContainerFromElement(QueryLogDataGrid, e.OriginalSource as DependencyObject) as DataGridRow;
+        if (row != null)
+        {
+            row.IsSelected = true;
+        }
+    }
+
+    private sealed record ConnectionOption(string Id, string DisplayName)
+    {
+        public override string ToString() => DisplayName;
+    }
 
     private sealed class QueryLogRow
     {

@@ -26,10 +26,27 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <TextBox x:Name="SearchTextBox"
-                     Grid.Column="0"
-                     VerticalContentAlignment="Center"
-                     TextChanged="SearchTextBox_TextChanged" />
+            <Grid Grid.Column="0">
+                <TextBox x:Name="SearchTextBox"
+                         VerticalContentAlignment="Center"
+                         TextChanged="SearchTextBox_TextChanged" />
+                <TextBlock Text="Search"
+                           VerticalAlignment="Center"
+                           Margin="6,0,0,0"
+                           IsHitTestVisible="False"
+                           Foreground="{DynamicResource MutedTextBrush}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Text, ElementName=SearchTextBox}" Value="">
+                                    <Setter Property="Visibility" Value="Visible"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Grid>
 
             <ComboBox x:Name="ServerFilterComboBox"
                       Grid.Column="2"
@@ -50,7 +67,18 @@
                   CanUserAddRows="False"
                   IsReadOnly="True"
                   SelectionMode="Single"
-                  SelectionChanged="QueryLogDataGrid_SelectionChanged">
+                  SelectionChanged="QueryLogDataGrid_SelectionChanged"
+                  PreviewMouseRightButtonDown="QueryLogDataGrid_PreviewMouseRightButtonDown">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Allow"
+                              IsEnabled="{Binding IsEnabled, ElementName=AllowButton}"
+                              Click="AllowButton_Click" />
+                    <MenuItem Header="Block"
+                              IsEnabled="{Binding IsEnabled, ElementName=BlockButton}"
+                              Click="BlockButton_Click" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Time" Binding="{Binding TimestampLocal}" Width="140" />
                 <DataGridTextColumn Header="Domain" Binding="{Binding Domain}" Width="*" />
