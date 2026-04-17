@@ -31,13 +31,15 @@
 		44E390C72D87C3E2002196DC /* LaunchAtLogin in Frameworks */ = {isa = PBXBuildFile; productRef = 44E390C62D87C3E2002196DC /* LaunchAtLogin */; };
 		44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */; };
 		44FFB092247627B100DCEDEC /* PiGuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FFB091247627B100DCEDEC /* PiGuardManager.swift */; };
-		FBAA0011FBAA0011FBAA0011 /* AdGuardHomeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */; };
-		FBAA0013FBAA0013FBAA0013 /* UpdateAdGuardHomeOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */; };
-		FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */; };
+		UM000002UM000002UM000002 /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = UM000001UM000001UM000001 /* UpdateManager.swift */; };
+		52E46A4E2F92D5590013DD87 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 52E46A4D2F92D5590013DD87 /* Sparkle */; };
 		FBAA0002FBAA0002FBAA0002 /* SyncPrimarySecondaryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */; };
 		FBAA0004FBAA0004FBAA0004 /* SyncProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */; };
 		FBAA0006FBAA0006FBAA0006 /* SyncSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */; };
 		FBAA0008FBAA0008FBAA0008 /* KeychainCredentialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0007FBAA0007FBAA0007 /* KeychainCredentialStore.swift */; };
+		FBAA0011FBAA0011FBAA0011 /* AdGuardHomeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */; };
+		FBAA0013FBAA0013FBAA0013 /* UpdateAdGuardHomeOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */; };
+		FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */; };
 		FBAA0021FBAA0021FBAA0021 /* TopItemsProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0020FBAA0020FBAA0020 /* TopItemsProvider.swift */; };
 		FBAA0023FBAA0023FBAA0023 /* QueryLogProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0022FBAA0022FBAA0022 /* QueryLogProvider.swift */; };
 		QLC0000002QLC0000002QLC2 /* QueryLogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */; };
@@ -55,6 +57,15 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		52E46A512F92D6EC0013DD87 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 7;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -69,7 +80,7 @@
 		4438184D247DE31A009D9B3F /* AboutViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutViewController.swift; sourceTree = "<group>"; };
 		4438184F247DE41B009D9B3F /* AboutWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AboutWindowController.swift; sourceTree = "<group>"; };
 		447CCB5B2D87FB9C00811F7C /* UpdatePiholeV6Operation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdatePiholeV6Operation.swift; sourceTree = "<group>"; };
-		449395D22471ABD600FA0C34 /* PiGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PiGuard.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		449395D22471ABD600FA0C34 /* PiGuard.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PiGuard.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		449395D52471ABD600FA0C34 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		449395D92471ABD700FA0C34 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		449395DC2471ABD700FA0C34 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
@@ -83,14 +94,15 @@
 		44E390C32D8785E1002196DC /* Pihole6API.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Pihole6API.swift; sourceTree = "<group>"; };
 		44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiholeV6SettingsViewController.swift; sourceTree = "<group>"; };
 		44FFB091247627B100DCEDEC /* PiGuardManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardManager.swift; sourceTree = "<group>"; };
-		FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeAPI.swift; sourceTree = "<group>"; };
-		FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAdGuardHomeOperation.swift; sourceTree = "<group>"; };
-		FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeSettingsViewController.swift; sourceTree = "<group>"; };
+		UM000001UM000001UM000001 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncPrimarySecondaryOperation.swift; sourceTree = "<group>"; };
 		FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncProgress.swift; sourceTree = "<group>"; };
 		FBAA0005FBAA0005FBAA0005 /* SyncSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SyncSettingsViewController.swift; sourceTree = "<group>"; };
 		FBAA0007FBAA0007FBAA0007 /* KeychainCredentialStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainCredentialStore.swift; sourceTree = "<group>"; };
 		FBAA0009FBAA0009FBAA0009 /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
+		FBAA0010FBAA0010FBAA0010 /* AdGuardHomeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeAPI.swift; sourceTree = "<group>"; };
+		FBAA0012FBAA0012FBAA0012 /* UpdateAdGuardHomeOperation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAdGuardHomeOperation.swift; sourceTree = "<group>"; };
+		FBAA0016FBAA0016FBAA0016 /* AdGuardHomeSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdGuardHomeSettingsViewController.swift; sourceTree = "<group>"; };
 		FBAA0020FBAA0020FBAA0020 /* TopItemsProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopItemsProvider.swift; sourceTree = "<group>"; };
 		FBAA0022FBAA0022FBAA0022 /* QueryLogProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogProvider.swift; sourceTree = "<group>"; };
 		QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogWindowController.swift; sourceTree = "<group>"; };
@@ -102,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				52E46A4E2F92D5590013DD87 /* Sparkle in Frameworks */,
 				44E390C72D87C3E2002196DC /* LaunchAtLogin in Frameworks */,
 				44E390C22D877DDE002196DC /* HotKey in Frameworks */,
 			);
@@ -136,15 +149,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		QLC0000005QLC0000005QLC5 /* QueryLog */ = {
-			isa = PBXGroup;
-			children = (
-				QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */,
-				QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */,
-			);
-			path = QueryLog;
-			sourceTree = "<group>";
-		};
 		441E78B1247E3ECB00FBC7A0 /* Operations */ = {
 			isa = PBXGroup;
 			children = (
@@ -163,6 +167,7 @@
 			children = (
 				441E78B1247E3ECB00FBC7A0 /* Operations */,
 				44FFB091247627B100DCEDEC /* PiGuardManager.swift */,
+				UM000001UM000001UM000001 /* UpdateManager.swift */,
 				FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */,
 			);
 			path = Manager;
@@ -193,7 +198,7 @@
 		449395C92471ABD600FA0C34 = {
 			isa = PBXGroup;
 			children = (
-					449395D42471ABD600FA0C34 /* PiGuard */,
+				449395D42471ABD600FA0C34 /* PiGuard */,
 				449395D32471ABD600FA0C34 /* Products */,
 				913B94517DDE1EF8E0C98FB2 /* Frameworks */,
 			);
@@ -249,6 +254,15 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		QLC0000005QLC0000005QLC5 /* QueryLog */ = {
+			isa = PBXGroup;
+			children = (
+				QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */,
+				QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */,
+			);
+			path = QueryLog;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -261,6 +275,7 @@
 				449395D02471ABD600FA0C34 /* Resources */,
 				447CCB5D2D895B5800811F7C /* ShellScript */,
 				441E78AB247E21DE00FBC7A0 /* Embed Frameworks */,
+				52E46A512F92D6EC0013DD87 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -270,6 +285,7 @@
 			packageProductDependencies = (
 				44E390C12D877DDE002196DC /* HotKey */,
 				44E390C62D87C3E2002196DC /* LaunchAtLogin */,
+				52E46A4D2F92D5590013DD87 /* Sparkle */,
 			);
 			productName = PiGuard;
 			productReference = 449395D22471ABD600FA0C34 /* PiGuard.app */;
@@ -303,6 +319,7 @@
 			packageReferences = (
 				44E390C02D877DDE002196DC /* XCRemoteSwiftPackageReference "HotKey" */,
 				44E390C52D87C3E2002196DC /* XCRemoteSwiftPackageReference "LaunchAtLogin-Legacy" */,
+				52E46A4C2F92D5590013DD87 /* XCRemoteSwiftPackageReference "Sparkle" */,
 			);
 			productRefGroup = 449395D32471ABD600FA0C34 /* Products */;
 			projectDirPath = "";
@@ -320,7 +337,7 @@
 			files = (
 				449395DA2471ABD700FA0C34 /* Assets.xcassets in Resources */,
 				449395DD2471ABD700FA0C34 /* Main.storyboard in Resources */,
-					449395E62471AC0700FA0C34 /* MainMenu.xib in Resources */,
+				449395E62471AC0700FA0C34 /* MainMenu.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +384,7 @@
 				44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */,
 				FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */,
 				44FFB092247627B100DCEDEC /* PiGuardManager.swift in Sources */,
+				UM000002UM000002UM000002 /* UpdateManager.swift in Sources */,
 				442F6F8B24721523008F1101 /* PreferencesViewController.swift in Sources */,
 				4415D73624747331009E0B31 /* Logging.swift in Sources */,
 				449395E82471AC9D00FA0C34 /* MainMenuController.swift in Sources */,
@@ -540,6 +558,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = PiGuard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -547,7 +566,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 3.4;
-				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
 				PRODUCT_MODULE_NAME = PiGuard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -571,6 +589,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
 				INFOPLIST_FILE = PiGuard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -578,7 +597,6 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 3.4;
-				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
 				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
 				PRODUCT_MODULE_NAME = PiGuard;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -626,6 +644,14 @@
 				kind = branch;
 			};
 		};
+		52E46A4C2F92D5590013DD87 /* XCRemoteSwiftPackageReference "Sparkle" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sparkle-project/Sparkle";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -638,6 +664,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 44E390C52D87C3E2002196DC /* XCRemoteSwiftPackageReference "LaunchAtLogin-Legacy" */;
 			productName = LaunchAtLogin;
+		};
+		52E46A4D2F92D5590013DD87 /* Sparkle */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 52E46A4C2F92D5590013DD87 /* XCRemoteSwiftPackageReference "Sparkle" */;
+			productName = Sparkle;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
