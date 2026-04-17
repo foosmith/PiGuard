@@ -41,5 +41,9 @@
 	<true/>
 	<key>NSSupportsSuddenTermination</key>
 	<true/>
+	<key>SUFeedURL</key>
+	<string>https://foosmith.github.io/PiGuard/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>C/thrUKdCUOB7j/GgCQmeh9i2FdaMojdWqDO6qdOvnI=</string>
 </dict>
 </plist>
