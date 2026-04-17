@@ -39,6 +39,7 @@ struct Preferences {
         static let syncLastMessage = "syncLastMessage"
         static let enableLogging = "enableLogging"
         static let hideMenuBarIcon = "hideMenuBarIcon"
+        static let automaticallyCheckForUpdates = "SUEnableAutomaticChecks"
     }
 
     static var standard: UserDefaults {
@@ -69,6 +70,7 @@ struct Preferences {
             Key.syncLastMessage: "",
             Key.enableLogging: false,
             Key.hideMenuBarIcon: false,
+            Key.automaticallyCheckForUpdates: false,
         ])
 
         return database
@@ -314,6 +316,11 @@ extension UserDefaults {
 
     var hideMenuBarIcon: Bool { bool(forKey: Preferences.Key.hideMenuBarIcon) }
     func set(hideMenuBarIcon: Bool) { set(hideMenuBarIcon, for: Preferences.Key.hideMenuBarIcon) }
+
+    // MARK: - Updates
+
+    var automaticallyCheckForUpdates: Bool { bool(forKey: Preferences.Key.automaticallyCheckForUpdates) }
+    func set(automaticallyCheckForUpdates: Bool) { set(automaticallyCheckForUpdates, for: Preferences.Key.automaticallyCheckForUpdates) }
 }
 
 private extension UserDefaults {
