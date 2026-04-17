@@ -79,6 +79,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     @IBOutlet var topBlockedMenuItem: NSMenuItem!
     @IBOutlet var topClientsMenuItem: NSMenuItem!
     @IBOutlet var queryLogMenuItem: NSMenuItem!
+    @IBOutlet var checkForUpdatesMenuItem: NSMenuItem!
 
 
     // MARK: - Sub-menus for Multi-hole Setups
@@ -120,6 +121,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     @IBAction func aboutAction(_: NSMenuItem) {
         aboutWindowController?.showWindow(self)
+    }
+
+    @IBAction func checkForUpdatesAction(_: NSMenuItem) {
+        UpdateManager.shared.checkForUpdates()
     }
 
     @IBAction func syncSettingsAction(_: NSMenuItem) {
