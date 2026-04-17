@@ -72,6 +72,11 @@ class PreferencesViewController: NSViewController {
         return cb
     }()
 
+    private lazy var automaticallyCheckForUpdatesCheckbox: NSButton = {
+        let cb = NSButton(checkboxWithTitle: "Automatically check for updates on launch", target: self, action: #selector(checkboxAction(_:)))
+        return cb
+    }()
+
     // MARK: - Actions
 
     @IBAction func addButtonActiom(_: NSButton) {
@@ -197,7 +202,14 @@ class PreferencesViewController: NSViewController {
             NSLayoutConstraint.activate([
                 hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
                 hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
-                launchAtLogincheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+            ])
+
+            automaticallyCheckForUpdatesCheckbox.translatesAutoresizingMaskIntoConstraints = false
+            parent.addSubview(automaticallyCheckForUpdatesCheckbox)
+            NSLayoutConstraint.activate([
+                automaticallyCheckForUpdatesCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
+                automaticallyCheckForUpdatesCheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+                launchAtLogincheckbox.topAnchor.constraint(equalTo: automaticallyCheckForUpdatesCheckbox.bottomAnchor, constant: 8),
             ])
         }
 
@@ -220,6 +232,7 @@ class PreferencesViewController: NSViewController {
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
         shortcutEnabledCheckbox.state = Preferences.standard.shortcutEnabled ? .on : .off
         hideMenuBarIconCheckbox.state = Preferences.standard.hideMenuBarIcon ? .on : .off
+        automaticallyCheckForUpdatesCheckbox.state = Preferences.standard.automaticallyCheckForUpdates ? .on : .off
 
         if !Preferences.standard.showTitle {
             showLabelsCheckbox.isEnabled = false
@@ -270,6 +283,7 @@ class PreferencesViewController: NSViewController {
         Preferences.standard.set(enableLogging: enableLoggingCheckbox.state == .on)
         delegate?.applyLoggingPreference()
         Preferences.standard.set(hideMenuBarIcon: hideMenuBarIconCheckbox.state == .on)
+        Preferences.standard.set(automaticallyCheckForUpdates: automaticallyCheckForUpdatesCheckbox.state == .on)
 
         delegate?.updatedPreferences()
 
