@@ -101,9 +101,9 @@ This must be manually kept in sync with the SPM pin whenever Sparkle is updated.
 3. **Download release DMG** — `gh release download ${{ github.event.release.tag_name }} --pattern "*.dmg"` to fetch the `.dmg` asset
 4. **Sign DMG** — run:
    ```bash
-   SIGNATURE=$(./bin/sign_update <dmg-filename> --account "$SPARKLE_PRIVATE_KEY")
+   SIGNATURE=$(echo "$SPARKLE_PRIVATE_KEY" | ./bin/sign_update <dmg-filename> --ed-key-file - -p)
    ```
-   Capture the output as `SIGNATURE`. `--account` accepts the raw base64 private key string directly from the `SPARKLE_PRIVATE_KEY` secret.
+   `--ed-key-file -` reads the base64 private key from stdin; `-p` (`--print-only-signature`) emits only the bare base64 signature, which is what the `sparkle:edSignature` attribute requires.
 5. **Get release metadata** — `gh release view ${{ github.event.release.tag_name }} --json tagName,name,body,publishedAt` to fetch version info and release notes body (Markdown); convert body to HTML using Python's `markdown` library (`pip install markdown` in the step)
 6. **Get DMG file size** — `stat -c%s <dmg-filename>` (Linux runner; produces the byte count)
 7. **Prepend appcast item** — Python script inserts a new `<item>` block immediately before the first existing `<item>` in `appcast.xml`. If no `<item>` exists yet (first release), insert inside the `<channel>` element after `<language>`. The skeleton file is always present (committed in bootstrap step), so the script never needs to create the file from scratch.
