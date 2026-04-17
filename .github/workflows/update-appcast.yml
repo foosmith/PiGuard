@@ -1,0 +1,103 @@
+name: Update Appcast
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  SPARKLE_VERSION: "2.9.1"  # Keep in sync with Package.resolved
+
+jobs:
+  update-appcast:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download Sparkle tools
+        run: |
+          curl -L "https://github.com/sparkle-project/Sparkle/releases/download/${{ env.SPARKLE_VERSION }}/Sparkle-${{ env.SPARKLE_VERSION }}.tar.bz2" -o sparkle.tar.bz2
+          mkdir sparkle-tools
+          tar -xjf sparkle.tar.bz2 -C sparkle-tools
+          chmod +x sparkle-tools/bin/sign_update
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - name: Checkout master scripts
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          path: master-src
+          sparse-checkout: .github/scripts
+
+      - name: Download release DMG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --pattern "*.dmg"
+          DMG_FILE=$(ls *.dmg | head -1)
+          echo "DMG_FILE=$DMG_FILE" >> $GITHUB_ENV
+
+      - name: Extract version info from DMG filename
+        run: |
+          # DMG filename convention: PiGuard-{SHORT_VERSION}-{BUILD_NUMBER}-macOS.dmg
+          SHORT_VERSION=$(echo "$DMG_FILE" | sed 's/PiGuard-\([^-]*\)-.*/\1/')
+          BUILD_NUMBER=$(echo "$DMG_FILE" | sed 's/PiGuard-[^-]*-\([^-]*\)-.*/\1/')
+          echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
+
+      - name: Sign DMG
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          SIGNATURE=$(echo "$SPARKLE_PRIVATE_KEY" | ./sparkle-tools/bin/sign_update "$DMG_FILE" --ed-key-file - -p)
+          echo "SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
+
+      - name: Get DMG file size
+        run: |
+          DMG_LENGTH=$(stat -c%s "$DMG_FILE")
+          echo "DMG_LENGTH=$DMG_LENGTH" >> $GITHUB_ENV
+
+      - name: Get release metadata
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "${{ github.event.release.tag_name }}" \
+            --repo "${{ github.repository }}" \
+            --json name,body,publishedAt > release_meta.json
+
+          python3 -c "import json; d=json.load(open('release_meta.json')); open('RELEASE_NAME.txt','w').write(d['name']); open('release_body.txt','w').write(d['body']); open('PUB_DATE.txt','w').write(d['publishedAt'])"
+          echo "RELEASE_NAME=$(cat RELEASE_NAME.txt)" >> $GITHUB_ENV
+          echo "PUB_DATE=$(cat PUB_DATE.txt)" >> $GITHUB_ENV
+
+      - name: Install markdown Python package
+        run: pip install markdown
+
+      - name: Update appcast
+        run: |
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/$DMG_FILE"
+
+          python3 master-src/.github/scripts/update_appcast.py \
+            --appcast appcast.xml \
+            --title "$RELEASE_NAME" \
+            --version "$BUILD_NUMBER" \
+            --short-version "$SHORT_VERSION" \
+            --pub-date "$PUB_DATE" \
+            --dmg-url "$DMG_URL" \
+            --dmg-length "$DMG_LENGTH" \
+            --signature "$SIGNATURE" \
+            --release-notes-file release_body.txt
+
+      - name: Commit and push appcast
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git commit -m "chore: update appcast for ${{ github.event.release.tag_name }}"
+          git push origin gh-pages
