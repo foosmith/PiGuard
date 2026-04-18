@@ -74,7 +74,7 @@ class PreferencesViewController: NSViewController {
 
     #if !APPSTORE
     private lazy var automaticallyCheckForUpdatesCheckbox: NSButton = {
-        let cb = NSButton(checkboxWithTitle: "Automatically check for updates on launch", target: self, action: #selector(checkboxAction(_:)))
+        let cb = NSButton(checkboxWithTitle: "Check for updates on launch", target: self, action: #selector(checkboxAction(_:)))
         return cb
     }()
     #endif
