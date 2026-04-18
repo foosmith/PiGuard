@@ -72,10 +72,12 @@ class PreferencesViewController: NSViewController {
         return cb
     }()
 
+    #if !APPSTORE
     private lazy var automaticallyCheckForUpdatesCheckbox: NSButton = {
         let cb = NSButton(checkboxWithTitle: "Automatically check for updates on launch", target: self, action: #selector(checkboxAction(_:)))
         return cb
     }()
+    #endif
 
     // MARK: - Actions
 
@@ -199,18 +201,24 @@ class PreferencesViewController: NSViewController {
 
             hideMenuBarIconCheckbox.translatesAutoresizingMaskIntoConstraints = false
             parent.addSubview(hideMenuBarIconCheckbox)
-            NSLayoutConstraint.activate([
-                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
-                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
-            ])
 
+            #if !APPSTORE
             automaticallyCheckForUpdatesCheckbox.translatesAutoresizingMaskIntoConstraints = false
             parent.addSubview(automaticallyCheckForUpdatesCheckbox)
             NSLayoutConstraint.activate([
+                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
                 automaticallyCheckForUpdatesCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
                 automaticallyCheckForUpdatesCheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
                 launchAtLogincheckbox.topAnchor.constraint(equalTo: automaticallyCheckForUpdatesCheckbox.bottomAnchor, constant: 8),
             ])
+            #else
+            NSLayoutConstraint.activate([
+                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
+                launchAtLogincheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+            ])
+            #endif
         }
 
         updateUI()
@@ -232,7 +240,9 @@ class PreferencesViewController: NSViewController {
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
         shortcutEnabledCheckbox.state = Preferences.standard.shortcutEnabled ? .on : .off
         hideMenuBarIconCheckbox.state = Preferences.standard.hideMenuBarIcon ? .on : .off
+        #if !APPSTORE
         automaticallyCheckForUpdatesCheckbox.state = Preferences.standard.automaticallyCheckForUpdates ? .on : .off
+        #endif
 
         if !Preferences.standard.showTitle {
             showLabelsCheckbox.isEnabled = false
@@ -283,7 +293,9 @@ class PreferencesViewController: NSViewController {
         Preferences.standard.set(enableLogging: enableLoggingCheckbox.state == .on)
         delegate?.applyLoggingPreference()
         Preferences.standard.set(hideMenuBarIcon: hideMenuBarIconCheckbox.state == .on)
+        #if !APPSTORE
         Preferences.standard.set(automaticallyCheckForUpdates: automaticallyCheckForUpdatesCheckbox.state == .on)
+        #endif
 
         delegate?.updatedPreferences()
 

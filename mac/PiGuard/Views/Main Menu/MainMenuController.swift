@@ -79,7 +79,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     @IBOutlet var topBlockedMenuItem: NSMenuItem!
     @IBOutlet var topClientsMenuItem: NSMenuItem!
     @IBOutlet var queryLogMenuItem: NSMenuItem!
+    #if !APPSTORE
     private var checkForUpdatesMenuItem: NSMenuItem?
+    #endif
 
 
     // MARK: - Sub-menus for Multi-hole Setups
@@ -123,9 +125,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         aboutWindowController?.showWindow(self)
     }
 
+    #if !APPSTORE
     @objc func checkForUpdatesAction(_ sender: NSMenuItem) {
         UpdateManager.shared.checkForUpdates()
     }
+    #endif
 
     @IBAction func syncSettingsAction(_: NSMenuItem) {
         syncSettingsWindow.makeKeyAndOrderFront(self)
@@ -168,6 +172,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         statusBarItem.menu = mainMenu
         mainMenu.delegate = self
 
+        #if !APPSTORE
         // Insert "Check for Updates…" after the "About PiGuard" menu item
         if let aboutIndex = mainMenu.items.firstIndex(where: { $0.title.hasPrefix("About") }) {
             let item = NSMenuItem(
@@ -179,6 +184,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             mainMenu.insertItem(item, at: aboutIndex + 1)
             checkForUpdatesMenuItem = item
         }
+        #endif
 
         enableKeyboardShortcut()
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)

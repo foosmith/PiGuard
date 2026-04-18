@@ -17,9 +17,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Remove legacy v1 plaintext token that may be sitting in UserDefaults
         UserDefaults.standard.removeObject(forKey: "token")
 
+        #if !APPSTORE
         if Preferences.standard.automaticallyCheckForUpdates {
             UpdateManager.shared.checkForUpdatesInBackground()
         }
+        #endif
     }
 
     func applicationWillTerminate(_: Notification) {
