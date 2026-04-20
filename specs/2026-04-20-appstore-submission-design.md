@@ -9,16 +9,22 @@ Prepare PiGuard for dual distribution: direct download (GitHub/DMG with Sparkle 
 
 ## Section 1: Build Configuration Split
 
-A new "AppStore" Xcode build configuration is added to the project, duplicated from the **target-level** Release configuration (UUID `449395E42471ABD700FA0C34`). The `SWIFT_ACTIVE_COMPILATION_CONDITIONS[arch=*] = APPSTORE` setting, which currently lives in Release, is moved into the new AppStore configuration. Release is restored to clean standard Release settings so direct-download DMG builds compile Sparkle back in.
+Two new Xcode build configurations are added: one at **project level** and one at **target level**, both named "AppStore".
 
-Code signing for the AppStore configuration uses `CODE_SIGN_STYLE = Automatic` (inherited from Release). Xcode automatically selects a Distribution certificate when archiving with Automatic signing — explicitly setting `CODE_SIGN_IDENTITY` is not needed and would conflict with Automatic mode. The team ID `GB7Z2TZ8LT` is inherited from the target-level Release settings.
+**Project-level AppStore config** (duplicated from project-level Release, UUID `449395E12471ABD700FA0C34`):
+- Move `SWIFT_ACTIVE_COMPILATION_CONDITIONS[arch=*] = APPSTORE` from project-level Release into this new config. Remove it from Release so direct-download builds compile Sparkle back in.
+- Set `MACOSX_DEPLOYMENT_TARGET = 11.0` (project-level Release currently has `10.12`; App Store submission uses the target-level value of `11.0`, but this prevents inconsistency).
 
-The single `PiGuard.entitlements` file (containing `com.apple.security.app-sandbox`, `com.apple.security.network.client`, and `com.apple.security.files.user-selected.read-only`) is used for both Release and AppStore configurations — no separate entitlements file is needed.
+**Target-level AppStore config** (duplicated from target-level Release, UUID `449395E42471ABD700FA0C34`):
+- Set `ENABLE_USER_SCRIPT_SANDBOXING = NO` (matches target-level Release; required for the LaunchAtLogin `copy-helper-swiftpm.sh` build phase to run).
+- `CODE_SIGN_STYLE = Automatic` and `DEVELOPMENT_TEAM = GB7Z2TZ8LT` are inherited from target-level Release. Do **not** explicitly set `CODE_SIGN_IDENTITY` — with Automatic signing Xcode resolves the Distribution certificate at archive time. The inherited `CODE_SIGN_IDENTITY = "Apple Development"` from Release must be cleared (removed) in the AppStore target config so Automatic signing takes over cleanly.
+
+The single `PiGuard.entitlements` file (containing `com.apple.security.app-sandbox`, `com.apple.security.network.client`, and `com.apple.security.files.user-selected.read-only`) is used for both Release and AppStore configurations. Keychain access (`SecItemAdd`, `SecItemCopyMatching`, etc.) does not require an additional entitlement under App Sandbox — the app's own default keychain access is granted automatically.
 
 A new "PiGuard AppStore" Xcode scheme is created. Its Archive action targets the AppStore configuration. The existing "PiGuard" scheme (Release/Debug) is left unchanged.
 
 **Files changed:**
-- `mac/PiGuard.xcodeproj/project.pbxproj` — add AppStore configuration entry, move APPSTORE flag
+- `mac/PiGuard.xcodeproj/project.pbxproj` — add project-level and target-level AppStore configuration entries; move APPSTORE flag from project-level Release; fix MACOSX_DEPLOYMENT_TARGET; clear CODE_SIGN_IDENTITY in target-level AppStore config
 - `mac/PiGuard.xcodeproj/xcshareddata/xcschemes/PiGuard AppStore.xcscheme` — new scheme file
 
 **Notes on third-party dependencies:**
@@ -28,7 +34,9 @@ A new "PiGuard AppStore" Xcode scheme is created. Its Archive action targets the
 
 ## Section 2: Sparkle Strip Script
 
-A new "Run Script" build phase is added to the PiGuard target as the **last build phase** (after the existing "Embed Frameworks" phase). When `$CONFIGURATION` is `AppStore`, it removes Sparkle from the built bundle:
+A new "Run Script" build phase is added to the PiGuard target as the **last build phase** — appended after the existing `CopyFiles` phase (UUID `52E46A512F92D6EC0013DD87`), which is currently last. The current build phase order is: Sources → Frameworks → Resources → ShellScript → Embed Frameworks → CopyFiles → *(new strip script here)*.
+
+When `$CONFIGURATION` is `AppStore`, the script removes Sparkle from the built bundle:
 
 ```bash
 if [ "$CONFIGURATION" = "AppStore" ]; then
@@ -39,7 +47,7 @@ fi
 Removing `Sparkle.framework` is sufficient: in Sparkle 2.x all XPC services (`Downloader.xpc`, `Installer.xpc`) and the Autoupdate binary live inside the framework bundle itself. The script is a no-op for Release and Debug builds. This ensures App Store Connect does not encounter Sparkle when scanning the uploaded binary.
 
 **Files changed:**
-- `mac/PiGuard.xcodeproj/project.pbxproj` — new PBXShellScriptBuildPhase entry appended as the last item in the target's `buildPhases` list
+- `mac/PiGuard.xcodeproj/project.pbxproj` — new `PBXShellScriptBuildPhase` entry appended as the last item in the target's `buildPhases` array
 
 ## Section 3: PrivacyInfo.xcprivacy
 
@@ -53,12 +61,14 @@ Declared API reasons:
 
 `NSPrivacyTracking` is `false`. `NSPrivacyCollectedDataTypes` is empty (no user data collected or shared).
 
-`NSPrivacyAccessedAPICategoryFileTimestamp` is omitted — no code path in the app's sandbox accesses file timestamps of files outside its container. It can be added post-submission if Apple's static analysis flags it.
+Omitted categories (can be added if Apple's static analysis flags them post-submission):
+- `NSPrivacyAccessedAPICategoryFileTimestamp` — no code path accesses file timestamps of files outside the app's sandbox container.
+- `NSPrivacyAccessedAPICategorySystemBootTime` — polling timers use `Timer`/`DispatchQueue`, not low-level `mach_absolute_time` or `clock_gettime` directly.
 
-`SUFeedURL` and `SUPublicEDKey` remain in `Info.plist` for the AppStore build. Apple does not reject apps for including these keys, and conditionally removing them is not worth the added complexity.
+`SUFeedURL` and `SUPublicEDKey` remain in `Info.plist` for the AppStore build. Apple does not reject apps for including these keys.
 
 **Notes on App Store review:**
-- The app uses `NSAllowsLocalNetworking` in the ATS config to communicate with Pi-hole and AdGuard Home over HTTP on the local network. This is explicitly permitted under App Sandbox and does not require an entitlement, but reviewers may ask about it. The standard response is that the app's core functionality requires local network access to user-hosted DNS management servers.
+- The app uses `NSAllowsLocalNetworking` in the ATS config to communicate with Pi-hole and AdGuard Home over HTTP on the local network. This is explicitly permitted under App Sandbox. Reviewers may ask; the response is that the app's core functionality requires local network access to user-hosted DNS management servers.
 
 **Files changed:**
 - `mac/PiGuard/PrivacyInfo.xcprivacy` — new file
