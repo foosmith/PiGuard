@@ -664,6 +664,35 @@
 			};
 			name = AppStore;
 		};
+		PGAS0002PGAS0002PGAS0002 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = PiGuard/PiGuard.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 703;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = "$(inherited)";
+				INFOPLIST_FILE = PiGuard/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 3.5;
+				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
+				PRODUCT_MODULE_NAME = PiGuard;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_VERSION = 5.0;
+			};
+			name = AppStore;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -682,6 +711,7 @@
 			buildConfigurations = (
 				449395E32471ABD700FA0C34 /* Debug */,
 				449395E42471ABD700FA0C34 /* Release */,
+				PGAS0002PGAS0002PGAS0002 /* AppStore */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
