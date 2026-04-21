@@ -152,6 +152,7 @@ struct PlaceholderWidgetView: View {
             )?.appendingPathComponent("widget_snapshot.json") else { return false }
             return FileManager.default.fileExists(atPath: url.path)
         }()
+        let readOK = WidgetSnapshotStore.read() != nil
         return VStack(spacing: 4) {
             Image(systemName: "shield.slash")
                 .font(.title3)
@@ -160,6 +161,9 @@ struct PlaceholderWidgetView: View {
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
             Text("file: \(fileExists ? "found" : "missing")")
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+            Text("read: \(readOK ? "ok" : "fail")")
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
         }
