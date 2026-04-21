@@ -354,9 +354,20 @@ class PiGuardManager: NSObject {
         networkOverview = newOverview
 
         let snapshot = WidgetSnapshot(from: newOverview)
-        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID)
-        print("[PiGuard] Widget snapshot — container: \(containerURL?.path ?? "NIL"), status: \(snapshot.networkStatus)")
         WidgetSnapshotStore.write(snapshot)
+
+        // Broadcast via distributed notification so the widget extension can cache
+        // the data even when App Group file access is blocked by sandboxing.
+        if let data = try? JSONEncoder().encode(snapshot),
+           let json = String(data: data, encoding: .utf8) {
+            DistributedNotificationCenter.default().postNotificationName(
+                Notification.Name(WidgetSnapshotStore.distributedNotificationName),
+                object: Bundle.main.bundleIdentifier,
+                userInfo: ["json": json],
+                deliverImmediately: true
+            )
+        }
+
         WidgetCenter.shared.reloadAllTimelines()
     }
 

@@ -13,17 +13,46 @@ struct PiGuardWidgetProvider: TimelineProvider {
     }
 
     func getSnapshot(in context: Context, completion: @escaping (PiGuardWidgetEntry) -> Void) {
-        completion(PiGuardWidgetEntry(date: Date(), snapshot: WidgetSnapshotStore.read()))
+        completion(PiGuardWidgetEntry(date: Date(), snapshot: WidgetSnapshotStore.readBest()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PiGuardWidgetEntry>) -> Void) {
-        let containerPath = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID)?.path ?? "NIL"
-        let snapshot = WidgetSnapshotStore.read()
-        print("[PiGuardWidget] container=\(containerPath) snapshot=\(snapshot?.networkStatus ?? "nil")")
-        let entry = PiGuardWidgetEntry(date: Date(), snapshot: snapshot)
-        // Fallback refresh every 15 minutes; the main app pushes reloads via
-        // WidgetCenter.shared.reloadAllTimelines() on every polling cycle.
-        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-        completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
+        func finish(with snapshot: WidgetSnapshot?) {
+            let entry = PiGuardWidgetEntry(date: Date(), snapshot: snapshot)
+            let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
+            completion(Timeline(entries: [entry], policy: .after(next)))
+        }
+
+        // Fast path: App Group file or local cache already has data.
+        if let snapshot = WidgetSnapshotStore.readBest() {
+            finish(with: snapshot)
+            return
+        }
+
+        // Slow path: wait up to 5 s for the main app to broadcast a snapshot via
+        // NSDistributedNotificationCenter (used when App Group file access is blocked).
+        let sem = DispatchSemaphore(value: 0)
+        var received: WidgetSnapshot?
+        let notifQueue = OperationQueue()
+
+        let token = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name(WidgetSnapshotStore.distributedNotificationName),
+            object: nil,
+            queue: notifQueue
+        ) { note in
+            if let json = note.userInfo?["json"] as? String,
+               let data = json.data(using: .utf8),
+               let snap = try? JSONDecoder().decode(WidgetSnapshot.self, from: data) {
+                WidgetSnapshotStore.writeLocalCache(snap)
+                received = snap
+            }
+            sem.signal()
+        }
+
+        DispatchQueue.global(qos: .userInitiated).async {
+            _ = sem.wait(timeout: .now() + 5)
+            DistributedNotificationCenter.default().removeObserver(token)
+            finish(with: received)
+        }
     }
 }

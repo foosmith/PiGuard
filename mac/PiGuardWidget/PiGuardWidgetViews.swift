@@ -152,31 +152,14 @@ struct PlaceholderWidgetView: View {
             )?.appendingPathComponent("widget_snapshot.json") else { return false }
             return FileManager.default.fileExists(atPath: url.path)
         }()
-        let decodeError: String = {
-            guard let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
-            )?.appendingPathComponent("widget_snapshot.json") else { return "no url" }
-            let data: Data
-            do {
-                data = try Data(contentsOf: url)
-            } catch {
-                return String(error.localizedDescription.prefix(120))
-            }
-            do {
-                _ = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
-                return "ok"
-            } catch {
-                return "decode err: \(String(error.localizedDescription.prefix(40)))"
-            }
-        }()
-        return VStack(spacing: 4) {
+        return VStack(spacing: 8) {
             Image(systemName: "shield.slash")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-            Text(decodeError)
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
+            Text("Open PiGuard\nto begin")
+                .font(.caption2)
                 .multilineTextAlignment(.center)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(12)
