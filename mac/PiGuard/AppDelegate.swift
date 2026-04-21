@@ -13,17 +13,19 @@ import Cocoa
 
 @NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_: Notification) {
-        // Enforce single instance — widget tap can launch a second copy via URL scheme.
+    func applicationWillFinishLaunching(_: Notification) {
+        // Enforce single instance before any UI is set up.
+        // Widget taps trigger a URL open which can launch a second copy.
         let bundleID = Bundle.main.bundleIdentifier!
         let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
             .filter { $0 != NSRunningApplication.current }
         if !others.isEmpty {
             others.first?.activate(options: .activateIgnoringOtherApps)
-            NSApp.terminate(nil)
-            return
+            exit(0)
         }
+    }
 
+    func applicationDidFinishLaunching(_: Notification) {
         // Remove legacy v1 plaintext token that may be sitting in UserDefaults
         UserDefaults.standard.removeObject(forKey: "token")
 
