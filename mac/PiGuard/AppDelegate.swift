@@ -11,20 +11,7 @@
 
 import Cocoa
 
-@NSApplicationMain
 class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationWillFinishLaunching(_: Notification) {
-        // Enforce single instance before any UI is set up.
-        // Widget taps trigger a URL open which can launch a second copy.
-        let bundleID = Bundle.main.bundleIdentifier!
-        let others = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
-            .filter { $0 != NSRunningApplication.current }
-        if !others.isEmpty {
-            others.first?.activate(options: .activateIgnoringOtherApps)
-            exit(0)
-        }
-    }
-
     func applicationDidFinishLaunching(_: Notification) {
         // Remove legacy v1 plaintext token that may be sitting in UserDefaults
         UserDefaults.standard.removeObject(forKey: "token")

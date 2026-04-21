@@ -47,6 +47,7 @@
 		PGAS0005PGAS0005PGAS0005 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */; };
 		PGSH0003PGSH0003PGSH0003 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */; };
 		PGSH0009PGSH0009PGSH0009 /* WidgetSnapshot+PiGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0008PGSH0008PGSH0008 /* WidgetSnapshot+PiGuard.swift */; };
+		PGMN0002PGMN0002PGMN0002 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGMN0001PGMN0001PGMN0001 /* main.swift */; };
 		PGSH0004PGSH0004PGSH0004 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */; };
 		PGSH0006PGSH0006PGSH0006 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */; };
 		PGSH0007PGSH0007PGSH0007 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */; };
@@ -134,6 +135,7 @@
 		PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
 		PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
 		PGSH0008PGSH0008PGSH0008 /* WidgetSnapshot+PiGuard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "WidgetSnapshot+PiGuard.swift"; sourceTree = "<group>"; };
+		PGMN0001PGMN0001PGMN0001 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		PGWT0001PGWT0001PGWT0001 /* PiGuardWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PiGuardWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		PGWT000APGWT000APGWT000A /* PiGuardWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PiGuardWidget.entitlements; sourceTree = "<group>"; };
 		PGWT000BPGWT000BPGWT000B /* PiGuardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidget.swift; sourceTree = "<group>"; };
@@ -264,6 +266,7 @@
 				449395DF2471ABD700FA0C34 /* PiGuard.entitlements */,
 				PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */,
 				449395D92471ABD700FA0C34 /* Assets.xcassets */,
+				PGMN0001PGMN0001PGMN0001 /* main.swift */,
 				449395D52471ABD600FA0C34 /* AppDelegate.swift */,
 				PGSH0008PGSH0008PGSH0008 /* WidgetSnapshot+PiGuard.swift */,
 				FBAA0009FBAA0009FBAA0009 /* Database.swift */,
@@ -524,6 +527,7 @@
 				PGSH0003PGSH0003PGSH0003 /* WidgetSnapshot.swift in Sources */,
 				PGSH0004PGSH0004PGSH0004 /* WidgetSnapshotStore.swift in Sources */,
 				PGSH0009PGSH0009PGSH0009 /* WidgetSnapshot+PiGuard.swift in Sources */,
+				PGMN0002PGMN0002PGMN0002 /* main.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
