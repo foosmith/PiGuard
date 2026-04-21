@@ -160,7 +160,7 @@ struct PlaceholderWidgetView: View {
             do {
                 data = try Data(contentsOf: url)
             } catch {
-                return "read err: \(String(error.localizedDescription.prefix(40)))"
+                return String(error.localizedDescription.prefix(120))
             }
             do {
                 _ = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
