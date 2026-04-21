@@ -354,8 +354,8 @@ class PiGuardManager: NSObject {
         networkOverview = newOverview
 
         let snapshot = WidgetSnapshot(from: newOverview)
-        let appGroupOK = UserDefaults(suiteName: WidgetSnapshotStore.appGroupID) != nil
-        Log.debug("Widget snapshot write — App Group available: \(appGroupOK), status: \(snapshot.networkStatus)")
+        let containerOK = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID) != nil
+        Log.debug("Widget snapshot write — container available: \(containerOK), status: \(snapshot.networkStatus)")
         WidgetSnapshotStore.write(snapshot)
         WidgetCenter.shared.reloadAllTimelines()
     }
