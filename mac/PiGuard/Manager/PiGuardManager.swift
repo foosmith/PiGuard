@@ -353,7 +353,10 @@ class PiGuardManager: NSObject {
         )
         networkOverview = newOverview
 
-        WidgetSnapshotStore.write(WidgetSnapshot(from: newOverview))
+        let snapshot = WidgetSnapshot(from: newOverview)
+        let appGroupOK = UserDefaults(suiteName: WidgetSnapshotStore.appGroupID) != nil
+        Log.debug("Widget snapshot write — App Group available: \(appGroupOK), status: \(snapshot.networkStatus)")
+        WidgetSnapshotStore.write(snapshot)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
