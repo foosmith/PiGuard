@@ -369,6 +369,7 @@
 		};
 		PGAS0003PGAS0003PGAS0003 /* Strip Sparkle (AppStore) */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
