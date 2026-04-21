@@ -152,20 +152,26 @@ struct PlaceholderWidgetView: View {
             )?.appendingPathComponent("widget_snapshot.json") else { return false }
             return FileManager.default.fileExists(atPath: url.path)
         }()
-        let readOK = WidgetSnapshotStore.read() != nil
+        let decodeError: String = {
+            guard let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
+            )?.appendingPathComponent("widget_snapshot.json"),
+            let data = try? Data(contentsOf: url) else { return "no data" }
+            do {
+                _ = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
+                return "ok"
+            } catch {
+                return String(error.localizedDescription.prefix(60))
+            }
+        }()
         return VStack(spacing: 4) {
             Image(systemName: "shield.slash")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-            Text("container: \(containerOK ? "ok" : "nil")")
+            Text(decodeError)
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
-            Text("file: \(fileExists ? "found" : "missing")")
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
-            Text("read: \(readOK ? "ok" : "fail")")
-                .font(.system(size: 9))
-                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(12)
