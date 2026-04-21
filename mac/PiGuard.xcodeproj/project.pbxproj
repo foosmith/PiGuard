@@ -45,6 +45,16 @@
 		QLC0000004QLC0000004QLC4 /* QueryLogViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */; };
 		UM000002UM000002UM000002 /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = UM000001UM000001UM000001 /* UpdateManager.swift */; };
 		PGAS0005PGAS0005PGAS0005 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */; };
+		PGSH0003PGSH0003PGSH0003 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */; };
+		PGSH0004PGSH0004PGSH0004 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */; };
+		PGSH0006PGSH0006PGSH0006 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */; };
+		PGSH0007PGSH0007PGSH0007 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */; };
+		PGWT0011PGWT0011PGWT0011 /* PiGuardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000BPGWT000BPGWT000B /* PiGuardWidget.swift */; };
+		PGWT0012PGWT0012PGWT0012 /* PiGuardWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000CPGWT000CPGWT000C /* PiGuardWidgetBundle.swift */; };
+		PGWT0013PGWT0013PGWT0013 /* PiGuardWidgetEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000DPGWT000DPGWT000D /* PiGuardWidgetEntry.swift */; };
+		PGWT0014PGWT0014PGWT0014 /* PiGuardWidgetProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000EPGWT000EPGWT000E /* PiGuardWidgetProvider.swift */; };
+		PGWT0015PGWT0015PGWT0015 /* PiGuardWidgetViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000FPGWT000FPGWT000F /* PiGuardWidgetViews.swift */; };
+		PGWT0017PGWT0017PGWT0017 /* PiGuardWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = PGWT0001PGWT0001PGWT0001 /* PiGuardWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -65,6 +75,17 @@
 			dstSubfolderSpec = 7;
 			files = (
 			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		PGWT0016PGWT0016PGWT0016 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				PGWT0017PGWT0017PGWT0017 /* PiGuardWidget.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -109,6 +130,16 @@
 		QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogViewController.swift; sourceTree = "<group>"; };
 		UM000001UM000001UM000001 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
 		PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file.xcprivacy; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
+		PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshotStore.swift; sourceTree = "<group>"; };
+		PGWT0001PGWT0001PGWT0001 /* PiGuardWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PiGuardWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		PGWT000APGWT000APGWT000A /* PiGuardWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PiGuardWidget.entitlements; sourceTree = "<group>"; };
+		PGWT000BPGWT000BPGWT000B /* PiGuardWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidget.swift; sourceTree = "<group>"; };
+		PGWT000CPGWT000CPGWT000C /* PiGuardWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidgetBundle.swift; sourceTree = "<group>"; };
+		PGWT000DPGWT000DPGWT000D /* PiGuardWidgetEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidgetEntry.swift; sourceTree = "<group>"; };
+		PGWT000EPGWT000EPGWT000E /* PiGuardWidgetProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidgetProvider.swift; sourceTree = "<group>"; };
+		PGWT000FPGWT000FPGWT000F /* PiGuardWidgetViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiGuardWidgetViews.swift; sourceTree = "<group>"; };
+		PGWT0010PGWT0010PGWT0010 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +150,13 @@
 				52E46A4E2F92D5590013DD87 /* Sparkle in Frameworks */,
 				44E390C72D87C3E2002196DC /* LaunchAtLogin in Frameworks */,
 				44E390C22D877DDE002196DC /* HotKey in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		PGWT0008PGWT0008PGWT0008 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -201,6 +239,8 @@
 			isa = PBXGroup;
 			children = (
 				449395D42471ABD600FA0C34 /* PiGuard */,
+				PGSH0005PGSH0005PGSH0005 /* Shared */,
+				PGWT001APGWT001APGWT001A /* PiGuardWidget */,
 				449395D32471ABD600FA0C34 /* Products */,
 				913B94517DDE1EF8E0C98FB2 /* Frameworks */,
 			);
@@ -210,6 +250,7 @@
 			isa = PBXGroup;
 			children = (
 				449395D22471ABD600FA0C34 /* PiGuard.app */,
+				PGWT0001PGWT0001PGWT0001 /* PiGuardWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -266,6 +307,29 @@
 			path = QueryLog;
 			sourceTree = "<group>";
 		};
+		PGSH0005PGSH0005PGSH0005 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */,
+				PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */,
+			);
+			path = Shared;
+			sourceTree = "<group>";
+		};
+		PGWT001APGWT001APGWT001A /* PiGuardWidget */ = {
+			isa = PBXGroup;
+			children = (
+				PGWT0010PGWT0010PGWT0010 /* Info.plist */,
+				PGWT000APGWT000APGWT000A /* PiGuardWidget.entitlements */,
+				PGWT000BPGWT000BPGWT000B /* PiGuardWidget.swift */,
+				PGWT000CPGWT000CPGWT000C /* PiGuardWidgetBundle.swift */,
+				PGWT000DPGWT000DPGWT000D /* PiGuardWidgetEntry.swift */,
+				PGWT000EPGWT000EPGWT000E /* PiGuardWidgetProvider.swift */,
+				PGWT000FPGWT000FPGWT000F /* PiGuardWidgetViews.swift */,
+			);
+			path = PiGuardWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -280,10 +344,12 @@
 				441E78AB247E21DE00FBC7A0 /* Embed Frameworks */,
 				52E46A512F92D6EC0013DD87 /* CopyFiles */,
 				PGAS0003PGAS0003PGAS0003 /* Strip Sparkle (AppStore) */,
+				PGWT0016PGWT0016PGWT0016 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				PGWT0018PGWT0018PGWT0018 /* PBXTargetDependency */,
 			);
 			name = PiGuard;
 			packageProductDependencies = (
@@ -294,6 +360,23 @@
 			productName = PiGuard;
 			productReference = 449395D22471ABD600FA0C34 /* PiGuard.app */;
 			productType = "com.apple.product-type.application";
+		};
+		PGWT0002PGWT0002PGWT0002 /* PiGuardWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = PGWT0003PGWT0003PGWT0003 /* Build configuration list for PBXNativeTarget "PiGuardWidget" */;
+			buildPhases = (
+				PGWT0007PGWT0007PGWT0007 /* Sources */,
+				PGWT0008PGWT0008PGWT0008 /* Frameworks */,
+				PGWT0009PGWT0009PGWT0009 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = PiGuardWidget;
+			productName = PiGuardWidget;
+			productReference = PGWT0001PGWT0001PGWT0001 /* PiGuardWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -308,6 +391,9 @@
 				TargetAttributes = {
 					449395D12471ABD600FA0C34 = {
 						CreatedOnToolsVersion = 11.4.1;
+					};
+					PGWT0002PGWT0002PGWT0002 = {
+						CreatedOnToolsVersion = 16.2;
 					};
 				};
 			};
@@ -330,6 +416,7 @@
 			projectRoot = "";
 			targets = (
 				449395D12471ABD600FA0C34 /* PiGuard */,
+				PGWT0002PGWT0002PGWT0002 /* PiGuardWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -343,6 +430,13 @@
 				449395DD2471ABD700FA0C34 /* Main.storyboard in Resources */,
 				449395E62471AC0700FA0C34 /* MainMenu.xib in Resources */,
 				PGAS0005PGAS0005PGAS0005 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		PGWT0009PGWT0009PGWT0009 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -424,6 +518,22 @@
 				FBAA0023FBAA0023FBAA0023 /* QueryLogProvider.swift in Sources */,
 				QLC0000002QLC0000002QLC2 /* QueryLogWindowController.swift in Sources */,
 				QLC0000004QLC0000004QLC4 /* QueryLogViewController.swift in Sources */,
+				PGSH0003PGSH0003PGSH0003 /* WidgetSnapshot.swift in Sources */,
+				PGSH0004PGSH0004PGSH0004 /* WidgetSnapshotStore.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		PGWT0007PGWT0007PGWT0007 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				PGSH0006PGSH0006PGSH0006 /* WidgetSnapshot.swift in Sources */,
+				PGSH0007PGSH0007PGSH0007 /* WidgetSnapshotStore.swift in Sources */,
+				PGWT0011PGWT0011PGWT0011 /* PiGuardWidget.swift in Sources */,
+				PGWT0012PGWT0012PGWT0012 /* PiGuardWidgetBundle.swift in Sources */,
+				PGWT0013PGWT0013PGWT0013 /* PiGuardWidgetEntry.swift in Sources */,
+				PGWT0014PGWT0014PGWT0014 /* PiGuardWidgetProvider.swift in Sources */,
+				PGWT0015PGWT0015PGWT0015 /* PiGuardWidgetViews.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -440,6 +550,22 @@
 		};
 /* End PBXVariantGroup section */
 
+/* Begin PBXContainerItemProxy section */
+		PGWT0019PGWT0019PGWT0019 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 449395CA2471ABD600FA0C34 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = PGWT0002PGWT0002PGWT0002;
+			remoteInfo = PiGuardWidget;
+		};
+/* End PBXContainerItemProxy section */
+/* Begin PBXTargetDependency section */
+		PGWT0018PGWT0018PGWT0018 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = PGWT0002PGWT0002PGWT0002 /* PiGuardWidget */;
+			targetProxy = PGWT0019PGWT0019PGWT0019 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 /* Begin XCBuildConfiguration section */
 		449395E02471ABD700FA0C34 /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -717,6 +843,80 @@
 			};
 			name = AppStore;
 		};
+		PGWT0004PGWT0004PGWT0004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PiGuardWidget/PiGuardWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 703;
+				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = PiGuardWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 3.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.foosmith.PiGuard.PiGuardWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		PGWT0005PGWT0005PGWT0005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PiGuardWidget/PiGuardWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 703;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = PiGuardWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 3.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.foosmith.PiGuard.PiGuardWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		PGWT0006PGWT0006PGWT0006 /* AppStore */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = PiGuardWidget/PiGuardWidget.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 703;
+				DEAD_CODE_STRIPPING = YES;
+				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
+				ENABLE_HARDENED_RUNTIME = YES;
+				INFOPLIST_FILE = PiGuardWidget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = PiGuard;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 3.5;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.foosmith.PiGuard.PiGuardWidget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = AppStore;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -736,6 +936,16 @@
 				449395E32471ABD700FA0C34 /* Debug */,
 				449395E42471ABD700FA0C34 /* Release */,
 				PGAS0002PGAS0002PGAS0002 /* AppStore */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		PGWT0003PGWT0003PGWT0003 /* Build configuration list for PBXNativeTarget "PiGuardWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				PGWT0004PGWT0004PGWT0004 /* Debug */,
+				PGWT0005PGWT0005PGWT0005 /* Release */,
+				PGWT0006PGWT0006PGWT0006 /* AppStore */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
