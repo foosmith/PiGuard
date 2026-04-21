@@ -10,6 +10,7 @@
 //  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import Foundation
+import WidgetKit
 
 protocol PiGuardManagerDelegate: AnyObject {
     func updateNetwork(_ network: PiholeNetworkOverview)
@@ -341,7 +342,7 @@ class PiGuardManager: NSObject {
     private func updateNetworkOverview() {
         Log.debug("Updating Network Overview")
 
-        networkOverview = PiholeNetworkOverview(
+        let newOverview = PiholeNetworkOverview(
             networkStatus: networkStatus(),
             canBeManaged: canManage(),
             totalQueriesToday: networkTotalQueries(),
@@ -350,6 +351,10 @@ class PiGuardManager: NSObject {
             averageBlocklist: networkBlocklist(),
             piholes: piholes
         )
+        networkOverview = newOverview
+
+        WidgetSnapshotStore.write(WidgetSnapshot(from: newOverview))
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func networkTotalQueries() -> Int {

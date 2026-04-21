@@ -28,6 +28,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Insert code here to tear down your application
     }
 
+    func application(_ application: NSApplication, open urls: [URL]) {
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
     public static func bringToFront(window: NSWindow) {
         window.center()
         window.makeKeyAndOrderFront(nil)
