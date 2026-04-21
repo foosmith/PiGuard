@@ -155,13 +155,18 @@ struct PlaceholderWidgetView: View {
         let decodeError: String = {
             guard let url = FileManager.default.containerURL(
                 forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
-            )?.appendingPathComponent("widget_snapshot.json"),
-            let data = try? Data(contentsOf: url) else { return "no data" }
+            )?.appendingPathComponent("widget_snapshot.json") else { return "no url" }
+            let data: Data
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                return "read err: \(String(error.localizedDescription.prefix(40)))"
+            }
             do {
                 _ = try JSONDecoder().decode(WidgetSnapshot.self, from: data)
                 return "ok"
             } catch {
-                return String(error.localizedDescription.prefix(60))
+                return "decode err: \(String(error.localizedDescription.prefix(40)))"
             }
         }()
         return VStack(spacing: 4) {
