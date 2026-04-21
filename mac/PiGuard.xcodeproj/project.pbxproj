@@ -44,6 +44,7 @@
 		QLC0000002QLC0000002QLC2 /* QueryLogWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */; };
 		QLC0000004QLC0000004QLC4 /* QueryLogViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */; };
 		UM000002UM000002UM000002 /* UpdateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = UM000001UM000001UM000001 /* UpdateManager.swift */; };
+		PGAS0005PGAS0005PGAS0005 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -107,6 +108,7 @@
 		QLC0000001QLC0000001QLC1 /* QueryLogWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogWindowController.swift; sourceTree = "<group>"; };
 		QLC0000003QLC0000003QLC3 /* QueryLogViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QueryLogViewController.swift; sourceTree = "<group>"; };
 		UM000001UM000001UM000001 /* UpdateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateManager.swift; sourceTree = "<group>"; };
+		PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = file.xcprivacy; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -217,6 +219,7 @@
 			children = (
 				449395DE2471ABD700FA0C34 /* Info.plist */,
 				449395DF2471ABD700FA0C34 /* PiGuard.entitlements */,
+				PGAS0004PGAS0004PGAS0004 /* PrivacyInfo.xcprivacy */,
 				449395D92471ABD700FA0C34 /* Assets.xcassets */,
 				449395D52471ABD600FA0C34 /* AppDelegate.swift */,
 				FBAA0009FBAA0009FBAA0009 /* Database.swift */,
@@ -339,6 +342,7 @@
 				449395DA2471ABD700FA0C34 /* Assets.xcassets in Resources */,
 				449395DD2471ABD700FA0C34 /* Main.storyboard in Resources */,
 				449395E62471AC0700FA0C34 /* MainMenu.xib in Resources */,
+				PGAS0005PGAS0005PGAS0005 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
