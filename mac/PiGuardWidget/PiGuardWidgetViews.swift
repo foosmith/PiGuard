@@ -143,13 +143,24 @@ struct StatCell: View {
 
 struct PlaceholderWidgetView: View {
     var body: some View {
-        VStack(spacing: 8) {
+        let containerOK = FileManager.default.containerURL(
+            forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
+        ) != nil
+        let fileExists: Bool = {
+            guard let url = FileManager.default.containerURL(
+                forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
+            )?.appendingPathComponent("widget_snapshot.json") else { return false }
+            return FileManager.default.fileExists(atPath: url.path)
+        }()
+        return VStack(spacing: 4) {
             Image(systemName: "shield.slash")
                 .font(.title3)
                 .foregroundStyle(.secondary)
-            Text("Open PiGuard\nto begin")
-                .font(.caption2)
-                .multilineTextAlignment(.center)
+            Text("container: \(containerOK ? "ok" : "nil")")
+                .font(.system(size: 9))
+                .foregroundStyle(.secondary)
+            Text("file: \(fileExists ? "found" : "missing")")
+                .font(.system(size: 9))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
