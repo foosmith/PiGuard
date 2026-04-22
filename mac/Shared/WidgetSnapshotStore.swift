@@ -30,30 +30,32 @@ enum WidgetSnapshotStore {
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
 
         let query: [CFString: Any] = [
-            kSecClass:           kSecClassGenericPassword,
-            kSecAttrService:     keychainService,
-            kSecAttrAccount:     keychainAccount,
-            kSecAttrAccessGroup: keychainAccessGroup,
+            kSecClass:                      kSecClassGenericPassword,
+            kSecAttrService:                keychainService,
+            kSecAttrAccount:                keychainAccount,
+            kSecAttrAccessGroup:            keychainAccessGroup,
+            kSecUseDataProtectionKeychain:  true,
         ]
         let update: [CFString: Any] = [kSecValueData: data]
 
         var status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
         if status == errSecItemNotFound {
             var add = query
-            add[kSecValueData]               = data
-            add[kSecAttrAccessible]          = kSecAttrAccessibleAfterFirstUnlock
+            add[kSecValueData]              = data
+            add[kSecAttrAccessible]         = kSecAttrAccessibleAfterFirstUnlock
             status = SecItemAdd(add as CFDictionary, nil)
         }
     }
 
     static func readKeychain() -> WidgetSnapshot? {
         let query: [CFString: Any] = [
-            kSecClass:           kSecClassGenericPassword,
-            kSecAttrService:     keychainService,
-            kSecAttrAccount:     keychainAccount,
-            kSecAttrAccessGroup: keychainAccessGroup,
-            kSecReturnData:      true,
-            kSecMatchLimit:      kSecMatchLimitOne,
+            kSecClass:                      kSecClassGenericPassword,
+            kSecAttrService:                keychainService,
+            kSecAttrAccount:                keychainAccount,
+            kSecAttrAccessGroup:            keychainAccessGroup,
+            kSecUseDataProtectionKeychain:  true,
+            kSecReturnData:                 true,
+            kSecMatchLimit:                 kSecMatchLimitOne,
         ]
         var result: AnyObject?
         guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
