@@ -28,6 +28,8 @@ class PiGuardManager: NSObject {
     private var timer: Timer?
     private var syncTimer: Timer?
     private var updateInterval: TimeInterval
+    private var lastSnapshot: WidgetSnapshot?
+    private var snapshotRequestObserver: Any?
     private let operationQueue: OperationQueue = OperationQueue()
     private let syncQueue: OperationQueue = {
         let q = OperationQueue()
@@ -57,6 +59,23 @@ class PiGuardManager: NSObject {
         applyLoggingPreference()
 
         delegate?.updateNetwork(networkOverview)
+
+        // Respond immediately when the widget extension asks for the current snapshot.
+        snapshotRequestObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name(WidgetSnapshotStore.snapshotRequestNotificationName),
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self, let snapshot = self.lastSnapshot,
+                  let data = try? JSONEncoder().encode(snapshot),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            DistributedNotificationCenter.default().postNotificationName(
+                Notification.Name(WidgetSnapshotStore.distributedNotificationName),
+                object: Bundle.main.bundleIdentifier,
+                userInfo: ["json": json],
+                deliverImmediately: true
+            )
+        }
 
         loadConnections()
     }
@@ -354,6 +373,7 @@ class PiGuardManager: NSObject {
         networkOverview = newOverview
 
         let snapshot = WidgetSnapshot(from: newOverview)
+        lastSnapshot = snapshot
         WidgetSnapshotStore.write(snapshot)
 
         // Broadcast via distributed notification so the widget extension can cache

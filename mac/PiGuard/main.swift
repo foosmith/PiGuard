@@ -15,7 +15,6 @@ let others = NSRunningApplication.runningApplications(
 ).filter { $0.processIdentifier != currentPID }
 
 if !others.isEmpty {
-    others.first?.activate(options: .activateIgnoringOtherApps)
     exit(0)
 }
 

@@ -23,14 +23,14 @@ struct PiGuardWidgetProvider: TimelineProvider {
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
 
-        // Fast path: App Group file or local cache already has data.
+        // Fast path: Keychain or cached data already available.
         if let snapshot = WidgetSnapshotStore.readBest() {
             finish(with: snapshot)
             return
         }
 
-        // Slow path: wait up to 5 s for the main app to broadcast a snapshot via
-        // NSDistributedNotificationCenter (used when App Group file access is blocked).
+        // Slow path: PiGuard hasn't polled yet. Wait up to 5 s for it to broadcast
+        // via NSDistributedNotificationCenter, then cache in local UserDefaults.
         let sem = DispatchSemaphore(value: 0)
         var received: WidgetSnapshot?
         let notifQueue = OperationQueue()
@@ -48,6 +48,14 @@ struct PiGuardWidgetProvider: TimelineProvider {
             }
             sem.signal()
         }
+
+        // Ask the main app to send the snapshot now.
+        DistributedNotificationCenter.default().postNotificationName(
+            Notification.Name(WidgetSnapshotStore.snapshotRequestNotificationName),
+            object: nil,
+            userInfo: nil,
+            deliverImmediately: true
+        )
 
         DispatchQueue.global(qos: .userInitiated).async {
             _ = sem.wait(timeout: .now() + 5)
