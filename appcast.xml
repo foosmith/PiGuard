@@ -6,15 +6,15 @@
         <description>PiGuard Changelog</description>
         <language>en</language>
         <item>
-            <title>PiGuard 3.6</title>
-            <pubDate>Thu, 24 Apr 2026 07:00:00 +0000</pubDate>
-            <sparkle:version>704</sparkle:version>
-            <sparkle:shortVersionString>3.6</sparkle:shortVersionString>
-            <sparkle:releaseNotesLink>https://github.com/foosmith/PiGuard/releases/tag/v3.6</sparkle:releaseNotesLink>
+            <title>PiGuard 3.6.1</title>
+            <pubDate>Thu, 24 Apr 2026 09:00:00 +0000</pubDate>
+            <sparkle:version>705</sparkle:version>
+            <sparkle:shortVersionString>3.6.1</sparkle:shortVersionString>
+            <sparkle:releaseNotesLink>https://github.com/foosmith/PiGuard/releases/tag/v3.6.1</sparkle:releaseNotesLink>
             <enclosure
-                url="https://github.com/foosmith/PiGuard/releases/download/v3.6/PiGuard-3.6-704-macOS.dmg"
-                sparkle:edSignature="XOcxP2xmh1OQbTaRZNBjWw1WsuzluLJ+eQaT0QfXZ9/ryCGYRdhE5VvPbnFuiSdmsHGAhGNU2uKYMlabsio/Bg=="
-                length="4874413"
+                url="https://github.com/foosmith/PiGuard/releases/download/v3.6.1/PiGuard-3.6.1-705-macOS.dmg"
+                sparkle:edSignature="AKiHD935Iv2QSA7gLNaG7UjLtrDf+dpcjACY2LfV/6WGp1VKaSLE95fbSALqXjf1mCzc4mSnjCxJi+Au/8iXCQ=="
+                length="4881334"
                 type="application/octet-stream"
             />
         </item>
