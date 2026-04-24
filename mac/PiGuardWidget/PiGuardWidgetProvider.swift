@@ -29,27 +29,20 @@ struct PiGuardWidgetProvider: TimelineProvider {
             return
         }
 
-        // Slow path: PiGuard hasn't polled yet. Wait up to 5 s for it to broadcast
-        // via NSDistributedNotificationCenter, then cache in local UserDefaults.
+        // Slow path: Wait up to 5s for the main app to update the secure store
+        // and send a 'ping' notification.
         let sem = DispatchSemaphore(value: 0)
-        var received: WidgetSnapshot?
         let notifQueue = OperationQueue()
 
         let token = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name(WidgetSnapshotStore.distributedNotificationName),
             object: nil,
             queue: notifQueue
-        ) { note in
-            if let json = note.userInfo?["json"] as? String,
-               let data = json.data(using: .utf8),
-               let snap = try? JSONDecoder().decode(WidgetSnapshot.self, from: data) {
-                WidgetSnapshotStore.writeLocalCache(snap)
-                received = snap
-            }
+        ) { _ in
             sem.signal()
         }
 
-        // Ask the main app to send the snapshot now.
+        // Ask the main app to update the snapshot and notify us.
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name(WidgetSnapshotStore.snapshotRequestNotificationName),
             object: nil,
@@ -60,7 +53,9 @@ struct PiGuardWidgetProvider: TimelineProvider {
         DispatchQueue.global(qos: .userInitiated).async {
             _ = sem.wait(timeout: .now() + 5)
             DistributedNotificationCenter.default().removeObserver(token)
-            finish(with: received)
+            
+            // Re-read from the secure store now that we've been signaled (or timed out)
+            finish(with: WidgetSnapshotStore.readBest())
         }
     }
 }

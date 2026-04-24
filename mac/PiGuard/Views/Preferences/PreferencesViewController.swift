@@ -15,7 +15,7 @@ import LaunchAtLogin
 
 protocol PreferencesDelegate: AnyObject {
     func updatedPreferences()
-    func updatedConnections()
+    func updatedConnections(_ connections: [PiholeConnectionV4])
     func applyLoggingPreference()
 }
 
@@ -149,15 +149,23 @@ class PreferencesViewController: NSViewController {
     }
 
     @IBAction func removeButtonAction(_: NSButton) {
+        let rowIndexes = tableView.selectedRowIndexes
+        guard !rowIndexes.isEmpty else { return }
+
         var piholes = Preferences.standard.piholes
-        piholes.remove(at: tableView.selectedRow)
-        tableView.removeRows(at: tableView.selectedRowIndexes, withAnimation: .slideUp)
+        piholes.remove(atOffsets: rowIndexes)
+        
+        // Save the model before animating the row out so that numberOfRows(in:),
+        // which reads Preferences.standard.piholes.count, returns the correct
+        // post-deletion value during the slide-up animation.
         Preferences.standard.set(piholes: piholes)
+        tableView.removeRows(at: rowIndexes, withAnimation: .slideUp)
+        
         if piholes.isEmpty {
             removeButton.isEnabled = false
             editButton.isEnabled = false
         }
-        delegate?.updatedConnections()
+        delegate?.updatedConnections(piholes)
     }
 
     @IBAction func checkboxAction(_: NSButtonCell) {
@@ -336,7 +344,7 @@ private extension PreferencesViewController {
             tableView.reloadData()
             tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
         }
-        delegate?.updatedConnections()
+        delegate?.updatedConnections(piholes)
     }
 }
 
@@ -382,7 +390,8 @@ extension PreferencesViewController: NSTableViewDelegate {
     }
 
     func tableViewSelectionDidChange(_: Notification) {
-        editButton.isEnabled = true
-        removeButton.isEnabled = true
+        let hasSelection = tableView.selectedRow >= 0
+        editButton.isEnabled = hasSelection
+        removeButton.isEnabled = hasSelection
     }
 }

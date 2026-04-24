@@ -56,13 +56,13 @@ PiGuard includes a searchable, sortable Query Log window.
 
 ## Download & Install
 
-### Current Public Build (build 702)
+### Current Public Build (build 704)
 
-**[⬇ Download PiGuard-3.4-702-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.4/PiGuard-3.4-702-macOS.dmg)**
+**[⬇ Download PiGuard-3.6-704-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.6/PiGuard-3.6-704-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-3.4-702-macOS.dmg**
+1. Download **PiGuard-3.6-704-macOS.dmg**
 2. Open the DMG — a window will appear showing the app and an Applications shortcut
 3. Drag the app into the **Applications** folder
 4. Eject the DMG

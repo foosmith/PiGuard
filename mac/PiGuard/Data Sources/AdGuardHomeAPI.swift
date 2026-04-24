@@ -55,6 +55,7 @@ struct AdGuardHomeFilterRefreshResponse: Decodable {
 }
 
 struct AdGuardHomeFullStatsResponse {
+    let topQueriedDomains: [TopItem]
     let topBlockedDomains: [TopItem]
     let topClients: [TopItem]
 }
@@ -136,12 +137,21 @@ final class AdGuardHomeAPI {
             guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return nil }
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
 
+            let topQueried = (json["top_queried_domains"] as? [[String: Int]]).map(parseTopItems) ?? []
             let topBlocked = (json["top_blocked_domains"] as? [[String: Int]]).map(parseTopItems) ?? []
             let topClients = (json["top_clients"] as? [[String: Int]]).map(parseTopItems) ?? []
-            return AdGuardHomeFullStatsResponse(topBlockedDomains: topBlocked, topClients: topClients)
+            return AdGuardHomeFullStatsResponse(
+                topQueriedDomains: topQueried,
+                topBlockedDomains: topBlocked,
+                topClients: topClients
+            )
         } catch {
             return nil
         }
+    }
+
+    func fetchTopQueries() async -> [TopItem] {
+        await fetchFullStats()?.topQueriedDomains ?? []
     }
 
     func fetchTopBlocked() async -> [TopItem] {
@@ -239,18 +249,67 @@ final class AdGuardHomeAPI {
         }
     }
 
+    private func blockRule(for domain: String) -> String {
+        "||\(domain)^$important"
+    }
+
+    private func allowRule(for domain: String) -> String {
+        "@@\(blockRule(for: domain))"
+    }
+
+    private func normalizedRules(_ rules: [String]) -> [String] {
+        var seen = Set<String>()
+        return rules.compactMap { rawRule in
+            let rule = rawRule.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !rule.isEmpty, seen.insert(rule).inserted else { return nil }
+            return rule
+        }
+    }
+
     func allowDomain(_ domain: String) async -> Bool {
         guard var rules = await fetchUserRules() else { return false }
-        let rule = "@@||\(domain)^"
-        if !rules.contains(rule) { rules.append(rule) }
-        return await setUserRules(rules)
+        let blockRule = blockRule(for: domain)
+        let allowRule = allowRule(for: domain)
+        rules.removeAll { $0 == blockRule }
+        if !rules.contains(allowRule) { rules.append(allowRule) }
+        let updatedRules = normalizedRules(rules)
+        let success = await setUserRules(updatedRules)
+        if success {
+            let persisted = await fetchUserRules() ?? []
+            let verified = persisted.contains(allowRule)
+            if verified {
+                Log.debug("AdGuard Home allowDomain succeeded for \(domain) on \(identifier)")
+            } else {
+                Log.warn("AdGuard Home allowDomain could not verify persisted rule for \(domain) on \(identifier)")
+            }
+            return verified
+        } else {
+            Log.warn("AdGuard Home allowDomain failed for \(domain) on \(identifier)")
+        }
+        return false
     }
 
     func blockDomain(_ domain: String) async -> Bool {
         guard var rules = await fetchUserRules() else { return false }
-        let rule = "||\(domain)^"
-        if !rules.contains(rule) { rules.append(rule) }
-        return await setUserRules(rules)
+        let blockRule = blockRule(for: domain)
+        let allowRule = allowRule(for: domain)
+        rules.removeAll { $0 == allowRule }
+        if !rules.contains(blockRule) { rules.append(blockRule) }
+        let updatedRules = normalizedRules(rules)
+        let success = await setUserRules(updatedRules)
+        if success {
+            let persisted = await fetchUserRules() ?? []
+            let verified = persisted.contains(blockRule)
+            if verified {
+                Log.debug("AdGuard Home blockDomain succeeded for \(domain) on \(identifier)")
+            } else {
+                Log.warn("AdGuard Home blockDomain could not verify persisted rule for \(domain) on \(identifier)")
+            }
+            return verified
+        } else {
+            Log.warn("AdGuard Home blockDomain failed for \(domain) on \(identifier)")
+        }
+        return false
     }
 
     private func request<T: Decodable>(

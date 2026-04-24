@@ -9,6 +9,7 @@ final class QueryLogViewController: NSViewController {
     private let piholes: [String: Pihole]
     private var entries: [QueryLogEntry] = []
     private var filteredEntries: [QueryLogEntry] = []
+    private var contextMenuEntry: QueryLogEntry?
     private let searchField = NSSearchField()
     private var searchText: String = ""
     private var currentSortDescriptors: [NSSortDescriptor] = []
@@ -18,6 +19,13 @@ final class QueryLogViewController: NSViewController {
     private let tableView = NSTableView()
     private let scrollView = NSScrollView()
     private let statusLabel = NSTextField(labelWithString: "")
+    private lazy var contextMenu: NSMenu = {
+        let menu = NSMenu()
+        menu.delegate = self
+        menu.addItem(NSMenuItem(title: "Allow Domain", action: #selector(allowDomainAction(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Block Domain", action: #selector(blockDomainAction(_:)), keyEquivalent: ""))
+        return menu
+    }()
 
     private var isLoading = false
 
@@ -65,11 +73,19 @@ final class QueryLogViewController: NSViewController {
         // Toolbar row
         let spacer = NSView()
         spacer.setContentHuggingPriority(.defaultLow - 1, for: .horizontal)
+        // Compress spacer before any other view — it absorbs all slack first.
+        // Raw value 50 is the "fitting size" compression level (AppKit has no named constant for it).
+        spacer.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(rawValue: 50), for: .horizontal)
         let toolbar = NSStackView(views: [searchField, serverFilterPopup, spacer, statusLabel, refreshButton])
         toolbar.orientation = .horizontal
         toolbar.alignment = .centerY
         toolbar.spacing = 8
         toolbar.translatesAutoresizingMaskIntoConstraints = false
+        // Hard floor on the search field — prevents NSStackView from compressing
+        // it during any layout pass triggered before or after the window appears
+        // (e.g. when the app is activated from the widget and a second AppKit
+        // layout pass fires after showWindow returns).
+        searchField.widthAnchor.constraint(greaterThanOrEqualToConstant: 150).isActive = true
 
         // Table
         let timeCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("time"))
@@ -103,9 +119,6 @@ final class QueryLogViewController: NSViewController {
         tableView.columnAutoresizingStyle = .lastColumnOnlyAutoresizingStyle
 
         // Context menu
-        let contextMenu = NSMenu()
-        contextMenu.addItem(NSMenuItem(title: "Allow Domain", action: #selector(allowDomainAction(_:)), keyEquivalent: ""))
-        contextMenu.addItem(NSMenuItem(title: "Block Domain", action: #selector(blockDomainAction(_:)), keyEquivalent: ""))
         tableView.menu = contextMenu
 
         scrollView.documentView = tableView
@@ -237,21 +250,27 @@ final class QueryLogViewController: NSViewController {
     // MARK: - Allow / Block
 
     @objc private func allowDomainAction(_ sender: NSMenuItem) {
-        pushDomainRule(allow: true)
+        pushDomainRule(allow: true, sender: sender)
     }
 
     @objc private func blockDomainAction(_ sender: NSMenuItem) {
-        pushDomainRule(allow: false)
+        pushDomainRule(allow: false, sender: sender)
     }
 
-    private func pushDomainRule(allow: Bool) {
-        let row = tableView.clickedRow
-        guard row >= 0, row < filteredEntries.count else { return }
-        let entry = filteredEntries[row]
-        let domain = entry.domain
+    private func pushDomainRule(allow: Bool, sender: NSMenuItem) {
+        guard let entry = selectedEntryForRuleAction(sender: sender) else { return }
+        guard let domain = normalizedRuleDomain(from: entry.domain) else {
+            statusLabel.stringValue = "Invalid domain"
+            return
+        }
         let action = allow ? "Allow" : "Block"
 
-        let targets = determineTargetServers()
+        let targets = determineTargetServers(for: entry)
+        guard !targets.isEmpty else {
+            statusLabel.stringValue = "Server unavailable"
+            return
+        }
+        Log.debug("Query Log \(action) request for domain \(domain) on server \(entry.serverIdentifier)")
         let serverNames = targets.map { $0.displayName }.joined(separator: ", ")
 
         let alert = NSAlert()
@@ -293,28 +312,45 @@ final class QueryLogViewController: NSViewController {
         }
     }
 
-    private func determineTargetServers() -> [Pihole] {
-        var targets: [Pihole] = []
+    private func normalizedRuleDomain(from rawDomain: String) -> String? {
+        let trimmed = rawDomain
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "."))
+            .lowercased()
 
-        let v6Servers = piholes.values.filter { $0.backendType == .piholeV6 }
-        let v5Servers = piholes.values.filter { $0.backendType == .piholeV5 }
-        let adguardServers = piholes.values.filter { $0.backendType == .adguardHome }
+        guard !trimmed.isEmpty else { return nil }
+        return trimmed
+    }
 
-        if v6Servers.count >= 2 && Preferences.standard.syncEnabled {
-            let primaryId = Preferences.standard.syncPrimaryIdentifier
-            if let primary = v6Servers.first(where: { $0.identifier == primaryId }) {
-                targets.append(primary)
-            } else {
-                targets.append(contentsOf: v6Servers)
-            }
-        } else {
-            targets.append(contentsOf: v6Servers)
+    private func selectedEntryForRuleAction(sender: NSMenuItem) -> QueryLogEntry? {
+        if let representedEntry = sender.representedObject as? QueryLogEntry {
+            Log.debug("Query Log action using sender.representedObject domain \(representedEntry.domain) server \(representedEntry.serverIdentifier)")
+            return representedEntry
         }
+        if let contextMenuEntry {
+            Log.debug("Query Log action using contextMenuEntry domain \(contextMenuEntry.domain) server \(contextMenuEntry.serverIdentifier)")
+            return contextMenuEntry
+        }
+        let candidateRows = [contextMenuRow(), tableView.clickedRow, tableView.selectedRow]
+        for row in candidateRows where row >= 0 && row < filteredEntries.count {
+            Log.debug("Query Log action falling back to row \(row) domain \(filteredEntries[row].domain) server \(filteredEntries[row].serverIdentifier)")
+            return filteredEntries[row]
+        }
+        return nil
+    }
 
-        targets.append(contentsOf: v5Servers)
-        targets.append(contentsOf: adguardServers)
+    private func determineTargetServers(for entry: QueryLogEntry) -> [Pihole] {
+        if let pihole = piholes[entry.serverIdentifier] {
+            return [pihole]
+        }
+        return []
+    }
 
-        return targets
+    private func contextMenuRow() -> Int {
+        guard let window = tableView.window else { return -1 }
+        let mouseLocationInWindow = window.mouseLocationOutsideOfEventStream
+        let mouseLocationInTable = tableView.convert(mouseLocationInWindow, from: nil)
+        return tableView.row(at: mouseLocationInTable)
     }
 }
 
@@ -375,5 +411,32 @@ extension QueryLogViewController: NSTableViewDelegate {
         }
 
         return cell
+    }
+}
+
+extension QueryLogViewController: NSMenuDelegate {
+    func menuWillOpen(_ menu: NSMenu) {
+        guard menu === contextMenu else { return }
+
+        contextMenuEntry = nil
+
+        let candidateRows = [contextMenuRow(), tableView.clickedRow, tableView.selectedRow]
+        for row in candidateRows where row >= 0 && row < filteredEntries.count {
+            tableView.selectRowIndexes(IndexSet(integer: row), byExtendingSelection: false)
+            contextMenuEntry = filteredEntries[row]
+            Log.debug("Query Log context menu resolved row \(row) domain \(filteredEntries[row].domain) server \(filteredEntries[row].serverIdentifier)")
+            break
+        }
+
+        let isEnabled = contextMenuEntry != nil
+        for item in menu.items {
+            item.target = self
+            item.isEnabled = isEnabled
+            item.representedObject = contextMenuEntry
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        guard menu === contextMenu else { return }
     }
 }

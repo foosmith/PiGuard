@@ -59,10 +59,7 @@ struct SmallWidgetView: View {
 
                 Spacer(minLength: 0)
 
-                Text(relativeTime(snapshot.updatedAt))
-                    .font(.system(size: 9))
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
+                WidgetFooterView(snapshot: snapshot, showTimestamp: true)
             }
             .padding(12)
         } else {
@@ -78,43 +75,90 @@ struct MediumWidgetView: View {
 
     var body: some View {
         if let snapshot = entry.snapshot {
-            HStack(alignment: .top, spacing: 14) {
-                // Left: status
-                VStack(alignment: .leading, spacing: 6) {
-                    Image(systemName: statusIconName(for: snapshot.networkStatus))
-                        .font(.title2)
-                        .foregroundStyle(statusColor(for: snapshot.networkStatus))
-                    Text(snapshot.networkStatus)
-                        .font(.caption)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(statusColor(for: snapshot.networkStatus))
-                        .lineLimit(2)
-                    Spacer(minLength: 0)
-                    Text(relativeTime(snapshot.updatedAt))
-                        .font(.system(size: 9))
-                        .foregroundStyle(.tertiary)
-                        .lineLimit(1)
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                Divider()
-
-                // Right: 2×2 stats grid
-                Grid(horizontalSpacing: 12, verticalSpacing: 8) {
-                    GridRow {
-                        StatCell(label: "Queries", value: snapshot.totalQueriesToday.formatted())
-                        StatCell(label: "Blocked", value: snapshot.adsBlockedToday.formatted())
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: statusIconName(for: snapshot.networkStatus))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(statusColor(for: snapshot.networkStatus))
+                            Text(snapshot.networkStatus)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(statusColor(for: snapshot.networkStatus))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.8)
+                        }
+                        Text(relativeTime(snapshot.updatedAt))
+                            .font(.system(size: 9))
+                            .foregroundStyle(.tertiary)
+                            .lineLimit(1)
                     }
-                    GridRow {
-                        StatCell(label: "Block Rate", value: blockRateString(snapshot.adsPercentageToday))
-                        StatCell(label: "Blocklist", value: abbreviatedCount(snapshot.averageBlocklist))
+                    .frame(width: 72, alignment: .leading)
+
+                    HStack(alignment: .top, spacing: 10) {
+                        CompactStatCell(label: "Queries", value: snapshot.totalQueriesToday.formatted())
+                        CompactStatCell(label: "Blocked", value: snapshot.adsBlockedToday.formatted())
+                        CompactStatCell(label: "Rate", value: blockRateString(snapshot.adsPercentageToday))
+                        CompactStatCell(label: "List", value: abbreviatedCount(snapshot.averageBlocklist))
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+
+                HStack(alignment: .top, spacing: 14) {
+                    RankedListColumn(
+                        title: "Top blocked",
+                        items: Array(snapshot.topBlocked.prefix(3)),
+                        emptyLabel: "No blocked domains"
+                    )
+
+                    RankedListColumn(
+                        title: "Top queries",
+                        items: Array(snapshot.topQueries.prefix(3)),
+                        emptyLabel: "No query domains"
+                    )
+                }
+
+                WidgetFooterView(snapshot: snapshot, showTimestamp: false)
             }
             .padding(14)
         } else {
             PlaceholderWidgetView()
+        }
+    }
+}
+
+// MARK: - Widget Footer
+
+/// Shows "Query Log →" when the app is running, or a "not running / cached" warning when stale.
+struct WidgetFooterView: View {
+    let snapshot: WidgetSnapshot
+    /// Small widget: show the timestamp on the left. Medium: timestamp is already in the header.
+    let showTimestamp: Bool
+
+    var body: some View {
+        HStack(spacing: 3) {
+            if showTimestamp {
+                Text(relativeTime(snapshot.updatedAt))
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+            Spacer(minLength: 0)
+            if isStale(snapshot.updatedAt) {
+                Image(systemName: "exclamationmark.circle")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(.orange.opacity(0.7))
+                Text("App not running · cached")
+                    .font(.system(size: 8))
+                    .foregroundStyle(.orange.opacity(0.7))
+            } else {
+                Image(systemName: "list.bullet")
+                    .font(.system(size: 8, weight: .medium))
+                    .foregroundStyle(.tertiary)
+                Text("Query Log")
+                    .font(.system(size: 8))
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 }
@@ -128,12 +172,69 @@ struct StatCell: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             Text(value)
-                .font(.system(.callout, design: .rounded, weight: .semibold))
-                .minimumScaleFactor(0.7)
+                .font(.system(.title3, design: .rounded, weight: .bold))
+                .minimumScaleFactor(0.6)
                 .lineLimit(1)
+            Text(label)
+                .font(.system(size: 10))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct CompactStatCell: View {
+    let label: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(value)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .monospacedDigit()
             Text(label)
                 .font(.system(size: 9))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct RankedListColumn: View {
+    let title: String
+    let items: [String]
+    let emptyLabel: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 10, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            if items.isEmpty {
+                Text(emptyLabel)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(items.enumerated()), id: \.offset) { index, item in
+                        HStack(spacing: 8) {
+                            Text("\(index + 1)")
+                                .font(.system(size: 9, weight: .bold, design: .rounded))
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 10, alignment: .leading)
+                            Text(item)
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .lineLimit(1)
+                            Spacer(minLength: 0)
+                        }
+                    }
+                }
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -143,16 +244,7 @@ struct StatCell: View {
 
 struct PlaceholderWidgetView: View {
     var body: some View {
-        let containerOK = FileManager.default.containerURL(
-            forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
-        ) != nil
-        let fileExists: Bool = {
-            guard let url = FileManager.default.containerURL(
-                forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard"
-            )?.appendingPathComponent("widget_snapshot.json") else { return false }
-            return FileManager.default.fileExists(atPath: url.path)
-        }()
-        return VStack(spacing: 8) {
+        VStack(spacing: 8) {
             Image(systemName: "shield.slash")
                 .font(.title3)
                 .foregroundStyle(.secondary)
@@ -161,8 +253,8 @@ struct PlaceholderWidgetView: View {
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(12)
     }
 }
 
@@ -203,4 +295,9 @@ private func abbreviatedCount(_ n: Int) -> String {
 
 private func blockRateString(_ pct: Double) -> String {
     String(format: "%.1f%%", pct)
+}
+
+/// PiGuard polls every 10 s. If the snapshot is older than 2 minutes, the app isn't running.
+private func isStale(_ date: Date) -> Bool {
+    -date.timeIntervalSinceNow > 120
 }

@@ -78,6 +78,7 @@ class PiholeV6SettingsViewController: NSViewController {
                     if result.session.valid {
                         self.passwordProtected = true
                         self.testConnectionLabel.stringValue = "Connected"
+                        self.testConnectionLabel.textColor = .labelColor
                         self.saveAndCloseButton.isEnabled = true
                     } else {
                         self.testConnectionLabel.stringValue = "Invalid app password"
@@ -205,6 +206,7 @@ class PiholeV6SettingsViewController: NSViewController {
                 _ = try await api.fetchSummary()
                 self.passwordProtected = connection.passwordProtected
                 self.testConnectionLabel.stringValue = "Success"
+                self.testConnectionLabel.textColor = .labelColor
                 self.saveAndCloseButton.isEnabled = true
             } catch {
                 Log.error(error)

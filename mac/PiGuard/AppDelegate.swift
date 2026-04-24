@@ -16,6 +16,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Remove legacy v1 plaintext token that may be sitting in UserDefaults
         UserDefaults.standard.removeObject(forKey: "token")
 
+        // Register Apple Event handler for piguard:// URLs.
+        // application(_:open:urls:) is unreliable for LSUIElement agent apps;
+        // the Apple Event manager fires reliably for all app types.
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
+
         #if !APPSTORE
         if Preferences.standard.automaticallyCheckForUpdates {
             UpdateManager.shared.checkForUpdatesInBackground()
@@ -23,12 +33,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         #endif
     }
 
+    @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent _: NSAppleEventDescriptor) {
+        guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
+              let url = URL(string: urlString),
+              url.scheme == "piguard"
+        else { return }
+        Log.debug("URL event received: \(urlString)")
+        NotificationCenter.default.post(name: .piGuardOpenQueryLog, object: nil)
+    }
+
     func applicationWillTerminate(_: Notification) {
-        // Insert code here to tear down your application
+        // Remove the PID lockfile so the next launch doesn't see a stale entry.
+        let pidURL = Log.logFileURL.deletingLastPathComponent()
+            .appendingPathComponent("piguard.pid")
+        try? FileManager.default.removeItem(at: pidURL)
     }
 
     func application(_ application: NSApplication, open urls: [URL]) {
-        NSApp.activate(ignoringOtherApps: true)
+        // Fallback for environments where Apple Events are not delivered.
+        if urls.contains(where: { $0.scheme == "piguard" }) {
+            Log.debug("application(_:open:urls:) received piguard:// URL")
+            NotificationCenter.default.post(name: .piGuardOpenQueryLog, object: nil)
+        }
     }
 
     public static func bringToFront(window: NSWindow) {

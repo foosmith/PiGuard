@@ -8,13 +8,21 @@
 import Foundation
 
 extension WidgetSnapshot {
-    init(from overview: PiholeNetworkOverview) {
-        self.networkStatus = overview.networkStatus.rawValue
-        self.totalQueriesToday = overview.totalQueriesToday
-        self.adsBlockedToday = overview.adsBlockedToday
-        self.adsPercentageToday = overview.adsPercentageToday
-        self.averageBlocklist = overview.averageBlocklist
-        self.updatedAt = Date()
-        self.serverCount = overview.piholes.count
+    init(
+        from overview: PiholeNetworkOverview,
+        topBlocked: [String] = [],
+        topQueries: [String] = []
+    ) {
+        self.init(
+            networkStatus: overview.networkStatus.rawValue,
+            totalQueriesToday: overview.totalQueriesToday,
+            adsBlockedToday: overview.adsBlockedToday,
+            adsPercentageToday: overview.adsPercentageToday,
+            averageBlocklist: overview.averageBlocklist,
+            updatedAt: Date(),
+            serverCount: overview.piholes.count,
+            topBlocked: topBlocked,
+            topQueries: topQueries
+        )
     }
 }

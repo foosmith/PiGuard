@@ -32,6 +32,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private var cachedTopBlocked: [String: [TopItem]] = [:]
     private var cachedTopClients: [String: [TopItem]] = [:]
     private var queryLogWindowController: QueryLogWindowController?
+    private var pendingOpenQueryLog = false
+    private var flagWatchSource: DispatchSourceFileSystemObject?
 
     // MARK: - Internal Views
 
@@ -155,6 +157,15 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         NSApp.activate(ignoringOtherApps: true)
     }
 
+    @objc private func handleOpenQueryLog() {
+        Log.debug("Widget tap received — opening Query Log (networkOverview ready: \(networkOverview != nil))")
+        if networkOverview != nil {
+            queryLogAction(queryLogMenuItem)
+        } else {
+            pendingOpenQueryLog = true
+        }
+    }
+
     // MARK: - View Lifecycle
 
     override init() {
@@ -191,14 +202,89 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityEnded), name: .piGuardGravityEnded, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleOpenQueryLog), name: .piGuardOpenQueryLog, object: nil)
+
+        // DistributedNotificationCenter: widget tap or second-instance signal → open Query Log.
+        startDarwinNotificationListener()
+
+        // File-based fallback: if the flag was written while we were not running
+        // (no Darwin listener active), consume it at startup.
+        startFlagFileWatcher()
 
         if let viewController = preferencesWindowController?.contentViewController as? PreferencesViewController {
             viewController.delegate = self
         }
     }
 
+    private func startDarwinNotificationListener() {
+        // Local notification — received when perform() runs in the main app
+        // process (openAppWhenRun = true routes the intent here on macOS).
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleOpenQueryLog),
+            name: Notification.Name("com.foosmith.PiGuard.openQueryLog"),
+            object: nil
+        )
+
+        // Distributed notification — received when perform() runs in the widget
+        // extension process, or when a second app instance signals via main.swift.
+        // Goes through distnoted and crosses the sandbox boundary.
+        DistributedNotificationCenter.default().addObserver(
+            self,
+            selector: #selector(handleOpenQueryLog),
+            name: Notification.Name("com.foosmith.PiGuard.openQueryLog"),
+            object: nil
+        )
+    }
+
+    private func startFlagFileWatcher() {
+        // Watch the App Group container — writable by both the widget extension
+        // (via AppIntent) and by any second instance of the main app.
+        guard let groupURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard")
+        else {
+            Log.debug("Widget watcher: App Group container unavailable")
+            return
+        }
+        let flagURL = groupURL.appendingPathComponent("open_query_log.flag")
+
+        // Consume any flag that was written while we were not running.
+        if FileManager.default.fileExists(atPath: flagURL.path) {
+            try? FileManager.default.removeItem(at: flagURL)
+            Log.debug("Widget tap flag found at startup — will open Query Log when ready")
+            pendingOpenQueryLog = true
+        }
+
+        // Open the directory for vnode watching (O_EVTONLY = watch only, no I/O).
+        let fd = Darwin.open(groupURL.path, O_EVTONLY)
+        guard fd >= 0 else { return }
+
+        let source = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd,
+            eventMask: .write,
+            queue: .main
+        )
+        source.setEventHandler { [weak self] in
+            guard let self else { return }
+            guard FileManager.default.fileExists(atPath: flagURL.path) else { return }
+            try? FileManager.default.removeItem(at: flagURL)
+            Log.debug("Widget tap flag detected — opening Query Log")
+            self.handleOpenQueryLog()
+        }
+        source.setCancelHandler { Darwin.close(fd) }
+        source.resume()
+        flagWatchSource = source
+    }
+
     deinit {
         NotificationCenter.default.removeObserver(self)
+        DistributedNotificationCenter.default().removeObserver(
+            self,
+            name: Notification.Name("com.foosmith.PiGuard.openQueryLog"),
+            object: nil
+        )
+        flagWatchSource?.cancel()
+        flagWatchSource = nil
         menuBarActivityTimer?.invalidate()
     }
 
@@ -222,10 +308,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     // MARK: - Delegate Methods
 
-    internal func updatedConnections() {
+    internal func updatedConnections(_ connections: [PiholeConnectionV4]) {
         Log.debug("Connections Updated")
         clearSubmenus()
-        manager.loadConnections()
+        manager.loadConnections(connections)
         DispatchQueue.main.async {
             self.setupWebAdminMenus()
         }
@@ -236,6 +322,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         updateInterface()
         DispatchQueue.main.async {
             self.setupWebAdminMenus()
+        }
+        if pendingOpenQueryLog {
+            pendingOpenQueryLog = false
+            DispatchQueue.main.async { self.queryLogAction(self.queryLogMenuItem) }
         }
     }
 

@@ -112,13 +112,18 @@ final class AdGuardHomeSettingsViewController: NSViewController {
         formStack.spacing = 12
         formStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let buttonRow = NSStackView(views: [testConnectionButton, testConnectionLabel, NSView(), closeButton, saveAndCloseButton])
+        let statusRow = NSStackView(views: [testConnectionLabel])
+        statusRow.orientation = .horizontal
+        statusRow.alignment = .leading
+        statusRow.translatesAutoresizingMaskIntoConstraints = false
+
+        let buttonRow = NSStackView(views: [testConnectionButton, NSView(), closeButton, saveAndCloseButton])
         buttonRow.orientation = .horizontal
         buttonRow.alignment = .centerY
         buttonRow.spacing = 10
         buttonRow.translatesAutoresizingMaskIntoConstraints = false
 
-        let rootStack = NSStackView(views: [titleLabel, subtitleLabel, formStack, buttonRow])
+        let rootStack = NSStackView(views: [titleLabel, subtitleLabel, formStack, statusRow, buttonRow])
         rootStack.orientation = .vertical
         rootStack.alignment = .leading
         rootStack.spacing = 16
@@ -137,6 +142,7 @@ final class AdGuardHomeSettingsViewController: NSViewController {
             usernameCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
             passwordCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
             adminURLCol.trailingAnchor.constraint(equalTo: formStack.trailingAnchor),
+            statusRow.trailingAnchor.constraint(equalTo: rootStack.trailingAnchor),
             buttonRow.trailingAnchor.constraint(equalTo: rootStack.trailingAnchor),
         ])
 

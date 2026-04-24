@@ -29,6 +29,8 @@ class PiGuardManager: NSObject {
     private var syncTimer: Timer?
     private var updateInterval: TimeInterval
     private var lastSnapshot: WidgetSnapshot?
+    private var cachedTopBlocked: [String] = []
+    private var cachedTopQueries: [String] = []
     private var snapshotRequestObserver: Any?
     private let operationQueue: OperationQueue = OperationQueue()
     private let syncQueue: OperationQueue = {
@@ -66,13 +68,13 @@ class PiGuardManager: NSObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self, let snapshot = self.lastSnapshot,
-                  let data = try? JSONEncoder().encode(snapshot),
-                  let json = String(data: data, encoding: .utf8) else { return }
+            guard let self else { return }
+            // Just broadcast that data is available; the widget will read it
+            // from the secure Keychain or App Group store.
             DistributedNotificationCenter.default().postNotificationName(
                 Notification.Name(WidgetSnapshotStore.distributedNotificationName),
                 object: Bundle.main.bundleIdentifier,
-                userInfo: ["json": json],
+                userInfo: nil,
                 deliverImmediately: true
             )
         }
@@ -84,8 +86,8 @@ class PiGuardManager: NSObject {
 
     weak var delegate: PiGuardManagerDelegate?
 
-    func loadConnections() {
-        createPiholes(Preferences.standard.piholes)
+    func loadConnections(_ connections: [PiholeConnectionV4]? = nil) {
+        createPiholes(connections ?? Preferences.standard.piholes)
     }
 
     func updateGravityOnNetwork() {
@@ -372,7 +374,16 @@ class PiGuardManager: NSObject {
         )
         networkOverview = newOverview
 
-        let snapshot = WidgetSnapshot(from: newOverview)
+        publishSnapshot(for: newOverview)
+        refreshTopListsSnapshot(for: Array(newOverview.piholes.values))
+    }
+
+    private func publishSnapshot(for overview: PiholeNetworkOverview) {
+        let snapshot = WidgetSnapshot(
+            from: overview,
+            topBlocked: cachedTopBlocked,
+            topQueries: cachedTopQueries
+        )
         lastSnapshot = snapshot
         WidgetSnapshotStore.write(snapshot)
 
@@ -389,6 +400,93 @@ class PiGuardManager: NSObject {
         }
 
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private func refreshTopListsSnapshot(for piholes: [Pihole]) {
+        Task { [weak self] in
+            guard let self else { return }
+
+            async let topBlocked = self.fetchTopBlocked(from: piholes)
+            async let topQueries = self.fetchTopQueries(from: piholes)
+
+            self.cachedTopBlocked = await topBlocked
+            self.cachedTopQueries = await topQueries
+            self.publishSnapshot(for: self.networkOverview)
+        }
+    }
+
+    private func fetchTopBlocked(from piholes: [Pihole]) async -> [String] {
+        var countsByDomain: [String: Int] = [:]
+
+        await withTaskGroup(of: [TopItem].self) { group in
+            for pihole in piholes {
+                group.addTask {
+                    if let api = pihole.api {
+                        return await api.fetchTopBlocked()
+                    }
+                    if let api6 = pihole.api6 {
+                        return await api6.fetchTopBlocked()
+                    }
+                    if let apiAdguard = pihole.apiAdguard {
+                        return await apiAdguard.fetchTopBlocked()
+                    }
+                    return []
+                }
+            }
+
+            for await items in group {
+                for item in items {
+                    countsByDomain[item.name, default: 0] += item.count
+                }
+            }
+        }
+
+        return countsByDomain
+            .sorted {
+                if $0.value == $1.value {
+                    return $0.key < $1.key
+                }
+                return $0.value > $1.value
+            }
+            .prefix(5)
+            .map(\.key)
+    }
+
+    private func fetchTopQueries(from piholes: [Pihole]) async -> [String] {
+        var countsByDomain: [String: Int] = [:]
+
+        await withTaskGroup(of: [TopItem].self) { group in
+            for pihole in piholes {
+                group.addTask {
+                    if let api = pihole.api {
+                        return await api.fetchTopQueries()
+                    }
+                    if let api6 = pihole.api6 {
+                        return await api6.fetchTopQueries()
+                    }
+                    if let apiAdguard = pihole.apiAdguard {
+                        return await apiAdguard.fetchTopQueries()
+                    }
+                    return []
+                }
+            }
+
+            for await items in group {
+                for item in items {
+                    countsByDomain[item.name, default: 0] += item.count
+                }
+            }
+        }
+
+        return countsByDomain
+            .sorted {
+                if $0.value == $1.value {
+                    return $0.key < $1.key
+                }
+                return $0.value > $1.value
+            }
+            .prefix(5)
+            .map(\.key)
     }
 
     private func networkTotalQueries() -> Int {

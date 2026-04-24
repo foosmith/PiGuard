@@ -175,6 +175,17 @@ class PiholeAPI: NSObject {
             .map { $0 }
     }
 
+    func fetchTopQueries() async -> [TopItem] {
+        guard let string = await getAsync(Endpoints.topItems) else { return [] }
+        guard let data = string.data(using: .utf8),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let topQueries = json["top_queries"] as? [String: Int] else { return [] }
+        return topQueries.map { TopItem(name: $0.key, count: $0.value) }
+            .sorted { $0.count > $1.count }
+            .prefix(10)
+            .map { $0 }
+    }
+
     func fetchTopClients() async -> [TopItem] {
         guard let string = await getAsync(Endpoints.topClients) else { return [] }
         guard let data = string.data(using: .utf8),
@@ -217,14 +228,26 @@ class PiholeAPI: NSObject {
         guard let encoded = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return false }
         let endpoint = PiholeAPIEndpoint(queryParameter: "list=white&add=\(encoded)", authorizationRequired: true)
         let result = await getAsync(endpoint)
-        return result != nil
+        let success = result != nil
+        if success {
+            Log.debug("Pi-hole v5 allowDomain succeeded for \(domain) on \(identifier)")
+        } else {
+            Log.warn("Pi-hole v5 allowDomain failed for \(domain) on \(identifier)")
+        }
+        return success
     }
 
     func blockDomain(_ domain: String) async -> Bool {
         guard let encoded = domain.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return false }
         let endpoint = PiholeAPIEndpoint(queryParameter: "list=black&add=\(encoded)", authorizationRequired: true)
         let result = await getAsync(endpoint)
-        return result != nil
+        let success = result != nil
+        if success {
+            Log.debug("Pi-hole v5 blockDomain succeeded for \(domain) on \(identifier)")
+        } else {
+            Log.warn("Pi-hole v5 blockDomain failed for \(domain) on \(identifier)")
+        }
+        return success
     }
 
     func disable(seconds: Int? = nil, completion: @escaping (Bool) -> Void) {

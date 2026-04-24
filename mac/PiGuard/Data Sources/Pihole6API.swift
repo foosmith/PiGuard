@@ -305,6 +305,21 @@ class Pihole6API: NSObject {
         }
     }
 
+    func fetchTopQueries() async -> [TopItem] {
+        do {
+            let data = try await getData("/stats/top_domains")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let domains = json["domains"] as? [[String: Any]] else { return [] }
+            return domains.prefix(10).compactMap { dict -> TopItem? in
+                guard let domain = dict["domain"] as? String,
+                      let count = dict["count"] as? Int else { return nil }
+                return TopItem(name: domain, count: count)
+            }
+        } catch {
+            return []
+        }
+    }
+
     func fetchTopClients() async -> [TopItem] {
         do {
             let data = try await getData("/stats/top_clients")
@@ -358,8 +373,10 @@ class Pihole6API: NSObject {
     func allowDomain(_ domain: String) async -> Bool {
         do {
             _ = try await postData("/domains/allow/exact", body: DomainRuleRequest(domain: domain, comment: "Added via PiGuard"))
+            Log.debug("Pi-hole v6 allowDomain succeeded for \(domain) on \(identifier)")
             return true
         } catch {
+            Log.warn("Pi-hole v6 allowDomain failed for \(domain) on \(identifier): \(error)")
             return false
         }
     }
@@ -367,8 +384,10 @@ class Pihole6API: NSObject {
     func blockDomain(_ domain: String) async -> Bool {
         do {
             _ = try await postData("/domains/deny/exact", body: DomainRuleRequest(domain: domain, comment: "Added via PiGuard"))
+            Log.debug("Pi-hole v6 blockDomain succeeded for \(domain) on \(identifier)")
             return true
         } catch {
+            Log.warn("Pi-hole v6 blockDomain failed for \(domain) on \(identifier): \(error)")
             return false
         }
     }

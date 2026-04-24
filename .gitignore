@@ -106,6 +106,9 @@ buildServer.json
 # Local documentation (not published to GitHub)
 docs/
 
+# Node.js
+node_modules/
+
 # Windows system/IDE files
 Thumbs.db
 .vs/

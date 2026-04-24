@@ -17,6 +17,8 @@ extension Notification.Name {
     static let piGuardGravityBegan = Notification.Name("PiGuard.Gravity.Began")
     /// Posted on the main thread when a gravity update ends.
     static let piGuardGravityEnded = Notification.Name("PiGuard.Gravity.Ended")
+    /// Posted when a widget tap requests the Query Log window.
+    static let piGuardOpenQueryLog = Notification.Name("com.foosmith.PiGuard.openQueryLog")
 }
 
 enum SyncProgress {
