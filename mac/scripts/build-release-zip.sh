@@ -32,7 +32,6 @@ EOF
 }
 
 ARTIFACT_NAME=""
-CODE_SIGNING_ALLOWED="NO"
 SIGN_IDENTITY=""
 NOTARY_PROFILE=""
 
@@ -139,16 +138,21 @@ xcodebuild_args=(
     -configuration "$CONFIGURATION"
     -sdk macosx
     -derivedDataPath "$DERIVED_DATA_PATH"
-    "CODE_SIGNING_ALLOWED=${CODE_SIGNING_ALLOWED}"
 )
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
+    # Allow signing so EXPANDED_CODE_SIGN_IDENTITY is set for embedded build
+    # phase scripts (e.g. LaunchAtLogin copy-helper). Post-build steps below
+    # re-sign everything with --force using the correct entitlements.
     xcodebuild_args+=(
+        "CODE_SIGNING_ALLOWED=YES"
         "CODE_SIGN_STYLE=Manual"
         "CODE_SIGN_IDENTITY=${SIGN_IDENTITY}"
         "DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM}"
         "OTHER_CODE_SIGN_FLAGS=--timestamp"
     )
+else
+    xcodebuild_args+=("CODE_SIGNING_ALLOWED=NO")
 fi
 
 xcodebuild "${xcodebuild_args[@]}" build
