@@ -13,8 +13,8 @@
             <sparkle:releaseNotesLink>https://github.com/foosmith/PiGuard/releases/tag/v3.6</sparkle:releaseNotesLink>
             <enclosure
                 url="https://github.com/foosmith/PiGuard/releases/download/v3.6/PiGuard-3.6-704-macOS.dmg"
-                sparkle:edSignature="kLjuTte6D+89rOSj/A6IneHNWXLlR0YnXKPcr8k0My40KOw61nbUG6k2tJPY+TJ4jsp/3lrJf67XXN0jSlAUCA=="
-                length="4872366"
+                sparkle:edSignature="XOcxP2xmh1OQbTaRZNBjWw1WsuzluLJ+eQaT0QfXZ9/ryCGYRdhE5VvPbnFuiSdmsHGAhGNU2uKYMlabsio/Bg=="
+                length="4874413"
                 type="application/octet-stream"
             />
         </item>
