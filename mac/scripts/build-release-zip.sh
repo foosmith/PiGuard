@@ -7,7 +7,10 @@ PROJECT_PATH="$ROOT_DIR/PiGuard.xcodeproj"
 SCHEME="PiGuard AppStore"
 CONFIGURATION="Release"
 OUTPUT_DIR="$ROOT_DIR/build/release"
-DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
+# DerivedData is placed outside the OneDrive-synced project tree so that
+# OneDrive's file provider does not add com.apple.FinderInfo xattrs to newly
+# created directories (which codesign rejects as "detritus").
+DERIVED_DATA_PATH="/tmp/PiGuard-release-build/DerivedData"
 
 function usage() {
     cat <<'EOF'
@@ -109,9 +112,35 @@ WIDGET_ENTITLEMENTS_PATH="$ROOT_DIR/PiGuardWidget/PiGuardWidget.entitlements"
 WIDGET_ENTITLEMENTS_XML_PATH="$OUTPUT_DIR/PiGuardWidget.release.entitlements"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
+    # Try to extract team from "Name (TEAMID)" format first
     team_from_identity="$(printf '%s\n' "$SIGN_IDENTITY" | sed -nE 's/^.*\(([A-Z0-9]+)\)$/\1/p')"
-    if [[ "$team_from_identity" != "$SIGN_IDENTITY" && -n "$team_from_identity" ]]; then
+    if [[ -n "$team_from_identity" ]]; then
         DEVELOPMENT_TEAM="$team_from_identity"
+    else
+        # SHA1 fingerprint passed — extract TeamIdentifier from the certificate itself
+        team_from_cert="$(security find-certificate -a -p login.keychain-db 2>/dev/null \
+            | awk -v sha="${SIGN_IDENTITY}" '
+                /BEGIN CERTIFICATE/ { pem="" }
+                { pem = pem $0 "\n" }
+                /END CERTIFICATE/ {
+                    cmd = "echo \"" pem "\" | openssl x509 -noout -fingerprint -sha1 2>/dev/null"
+                    if ((cmd | getline fp) > 0) {
+                        gsub(/SHA1 Fingerprint=|:/, "", fp)
+                        if (toupper(fp) == toupper(sha)) found=1
+                    }
+                    close(cmd)
+                    if (found) {
+                        cmd2 = "echo \"" pem "\" | openssl x509 -noout -subject 2>/dev/null"
+                        while ((cmd2 | getline subj) > 0) print subj
+                        close(cmd2)
+                        found=0
+                        exit
+                    }
+                }
+            ' | grep -oE "OU=[A-Z0-9]+" | head -1 | cut -d= -f2)"
+        if [[ -n "$team_from_cert" ]]; then
+            DEVELOPMENT_TEAM="$team_from_cert"
+        fi
     fi
 fi
 
@@ -132,6 +161,8 @@ LOGIN_HELPER_RESOURCE_BUNDLE_PATH="$APP_PATH/Contents/Resources/LaunchAtLogin_La
 mkdir -p "$OUTPUT_DIR"
 
 echo "Building ${APP_NAME}.app..."
+WIDGET_APPEX_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/PiGuardWidget.appex"
+
 xcodebuild_args=(
     -project "$PROJECT_PATH"
     -scheme "$SCHEME"
@@ -141,21 +172,27 @@ xcodebuild_args=(
 )
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
-    # Allow signing so EXPANDED_CODE_SIGN_IDENTITY is set for embedded build
-    # phase scripts (e.g. LaunchAtLogin copy-helper). Post-build steps below
-    # re-sign everything with --force using the correct entitlements.
+    # CODE_SIGN_ENTITLEMENTS="" (empty) bypasses GatherProvisioningInputs:
+    #   - keychain-access-groups would normally require a provisioning profile
+    #   - clearing CODE_SIGN_ENTITLEMENTS removes that trigger while still allowing signing
+    # CODE_SIGNING_ALLOWED=YES lets Xcode sign the widget during the build, so
+    # embeddedBinaryValidationUtility sees a properly signed extension.
+    # All final re-signing (with correct entitlements) is done by post-build steps below.
     xcodebuild_args+=(
         "CODE_SIGNING_ALLOWED=YES"
         "CODE_SIGN_STYLE=Manual"
         "CODE_SIGN_IDENTITY=${SIGN_IDENTITY}"
+        "EXPANDED_CODE_SIGN_IDENTITY=${SIGN_IDENTITY}"
         "DEVELOPMENT_TEAM=${DEVELOPMENT_TEAM}"
+        "CODE_SIGN_ENTITLEMENTS="
         "OTHER_CODE_SIGN_FLAGS=--timestamp"
     )
+
+    xcodebuild "${xcodebuild_args[@]}" build
 else
     xcodebuild_args+=("CODE_SIGNING_ALLOWED=NO")
+    xcodebuild "${xcodebuild_args[@]}" build
 fi
-
-xcodebuild "${xcodebuild_args[@]}" build
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "Build succeeded but ${APP_PATH} was not found." >&2

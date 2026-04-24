@@ -411,19 +411,9 @@
 				TargetAttributes = {
 					449395D12471ABD600FA0C34 = {
 						CreatedOnToolsVersion = 11.4.1;
-						SystemCapabilities = {
-							com.apple.ApplicationGroups.macOS = {
-								enabled = 1;
-							};
-						};
 					};
 					PGWT0002PGWT0002PGWT0002 = {
 						CreatedOnToolsVersion = 16.2;
-						SystemCapabilities = {
-							com.apple.ApplicationGroups.macOS = {
-								enabled = 1;
-							};
-						};
 					};
 				};
 			};

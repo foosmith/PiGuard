@@ -4,7 +4,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 OUTPUT_DIR="$ROOT_DIR/build/release"
-DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
+# DerivedData is placed outside the OneDrive-synced project tree so that
+# OneDrive's file provider does not add com.apple.FinderInfo xattrs to newly
+# created directories (which codesign rejects as "detritus").
+DERIVED_DATA_PATH="/tmp/PiGuard-release-build/DerivedData"
 CONFIGURATION="Release"
 ARTIFACT_NAME=""
 SIGN_IDENTITY=""
