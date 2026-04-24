@@ -106,6 +106,8 @@ BUILD_NUMBER="$(read_project_setting CURRENT_PROJECT_VERSION)"
 APP_NAME="PiGuard"
 DEVELOPMENT_TEAM="$(read_project_setting DEVELOPMENT_TEAM)"
 APP_ENTITLEMENTS_PATH="$ROOT_DIR/PiGuard/PiGuard.entitlements"
+WIDGET_ENTITLEMENTS_PATH="$ROOT_DIR/PiGuardWidget/PiGuardWidget.entitlements"
+WIDGET_ENTITLEMENTS_XML_PATH="$OUTPUT_DIR/PiGuardWidget.release.entitlements"
 
 if [[ -n "$SIGN_IDENTITY" ]]; then
     team_from_identity="$(printf '%s\n' "$SIGN_IDENTITY" | sed -nE 's/^.*\(([A-Z0-9]+)\)$/\1/p')"
@@ -212,6 +214,7 @@ if [[ -n "$SIGN_IDENTITY" ]]; then
     done
 
     # Sign app extensions (e.g. widgets in PlugIns/)
+    normalize_entitlements "$WIDGET_ENTITLEMENTS_PATH" "$WIDGET_ENTITLEMENTS_XML_PATH"
     find "$APP_PATH/Contents/PlugIns" -name "*.appex" 2>/dev/null | while read -r item; do
         xattr -cr "$item" 2>/dev/null || true
         echo "Re-signing app extension: $item"
@@ -220,6 +223,7 @@ if [[ -n "$SIGN_IDENTITY" ]]; then
             --sign "$SIGN_IDENTITY" \
             --timestamp \
             --options runtime \
+            --entitlements "$WIDGET_ENTITLEMENTS_XML_PATH" \
             "$item"
     done
 
