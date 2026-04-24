@@ -4,7 +4,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 PROJECT_PATH="$ROOT_DIR/PiGuard.xcodeproj"
-SCHEME="PiGuard"
+SCHEME="PiGuard AppStore"
 CONFIGURATION="Release"
 OUTPUT_DIR="$ROOT_DIR/build/release"
 DERIVED_DATA_PATH="$OUTPUT_DIR/DerivedData"
@@ -191,6 +191,7 @@ if [[ -n "$SIGN_IDENTITY" ]]; then
             "$ver_path/Updater.app" \
             "$ver_path/Autoupdate"; do
             if [[ -e "$item" ]]; then
+                xattr -cr "$item" 2>/dev/null || true
                 /usr/bin/codesign \
                     --force \
                     --sign "$SIGN_IDENTITY" \
@@ -202,6 +203,18 @@ if [[ -n "$SIGN_IDENTITY" ]]; then
     done
     # Sign remaining frameworks and dylibs
     find "$APP_PATH/Contents/Frameworks" \( -name "*.dylib" -o -name "*.framework" \) 2>/dev/null | while read -r item; do
+        /usr/bin/codesign \
+            --force \
+            --sign "$SIGN_IDENTITY" \
+            --timestamp \
+            --options runtime \
+            "$item"
+    done
+
+    # Sign app extensions (e.g. widgets in PlugIns/)
+    find "$APP_PATH/Contents/PlugIns" -name "*.appex" 2>/dev/null | while read -r item; do
+        xattr -cr "$item" 2>/dev/null || true
+        echo "Re-signing app extension: $item"
         /usr/bin/codesign \
             --force \
             --sign "$SIGN_IDENTITY" \
