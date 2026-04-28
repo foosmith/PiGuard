@@ -219,6 +219,16 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         if let viewController = preferencesWindowController?.contentViewController as? PreferencesViewController {
             viewController.delegate = self
         }
+
+        // Show preferences on first launch so the app presents a window immediately.
+        // Without this, LSUIElement apps appear to do nothing when opened.
+        if Preferences.standard.piholes.isEmpty {
+            DispatchQueue.main.async {
+                self.preferencesWindowController?.showWindow(self)
+                NSApp.activate(ignoringOtherApps: true)
+            }
+        }
+
         _trace("awakeFromNib() — complete")
     }
 
