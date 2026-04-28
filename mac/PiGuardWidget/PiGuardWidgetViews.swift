@@ -144,7 +144,7 @@ struct WidgetFooterView: View {
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
-            if isStale(snapshot.updatedAt) {
+            if isViewStale(snapshot.updatedAt) {
                 Image(systemName: "exclamationmark.circle")
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(.orange.opacity(0.7))
@@ -298,6 +298,12 @@ private func blockRateString(_ pct: Double) -> String {
 }
 
 /// PiGuard polls every 10 s. If the snapshot is older than 2 minutes, the app isn't running.
-private func isStale(_ date: Date) -> Bool {
+func isStale(_ date: Date) -> Bool {
     -date.timeIntervalSinceNow > 120
+}
+
+/// Widget timeline refreshes every 15 minutes. Show "cached" only if the snapshot is
+/// older than 20 minutes — meaning a scheduled refresh has already been missed.
+func isViewStale(_ date: Date) -> Bool {
+    -date.timeIntervalSinceNow > 1200
 }

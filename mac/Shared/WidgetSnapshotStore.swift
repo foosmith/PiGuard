@@ -5,19 +5,20 @@
 //  Shared between the PiGuard main app target and the PiGuardWidget extension target.
 //  Must not import AppKit or Cocoa.
 //
-//  Primary channel: Keychain (team-scoped access group GB7Z2TZ8LT.com.foosmith.PiGuard).
-//    Both targets have keychain-access-groups: ["GB7Z2TZ8LT.*"] in their provisioning
-//    profiles, so no additional App Group portal registration is needed.
-//  Secondary channel: App Group shared file container (works when fully provisioned).
-//  Tertiary channel: NSDistributedNotificationCenter local cache.
+//  Primary channel: App Group shared file container.
+//  Secondary channel: NSDistributedNotificationCenter push from main app to widget.
+//    Notification name MUST start with the widget's bundle ID so the sandboxed
+//    widget extension is allowed to receive it (macOS sandbox restriction).
+//  Tertiary channel: widget's own UserDefaults local cache.
 
 import Foundation
 import Security
 
 enum WidgetSnapshotStore {
     static let appGroupID = "group.com.foosmith.PiGuard"
-    static let distributedNotificationName = "com.foosmith.PiGuard.widgetSnapshot"
-    static let snapshotRequestNotificationName = "com.foosmith.PiGuard.widgetSnapshotRequest"
+    // Must start with widget bundle ID for sandbox-restricted DistributedNotificationCenter delivery.
+    static let distributedNotificationName = "com.foosmith.PiGuard.PiGuardWidget.snapshot"
+    static let snapshotRequestNotificationName = "com.foosmith.PiGuard.PiGuardWidget.snapshotRequest"
     private static let localCacheKey = "com.foosmith.PiGuard.cachedSnapshot"
 
     // MARK: - Keychain (primary — works with team wildcard, no App Group portal setup needed)
@@ -44,6 +45,9 @@ enum WidgetSnapshotStore {
             add[kSecValueData]              = data
             add[kSecAttrAccessible]         = kSecAttrAccessibleAfterFirstUnlock
             status = SecItemAdd(add as CFDictionary, nil)
+        }
+        if status != errSecSuccess {
+            print("[WidgetSnapshotStore] keychain write failed: \(status) (errSecMissingEntitlement=-34018)")
         }
     }
 

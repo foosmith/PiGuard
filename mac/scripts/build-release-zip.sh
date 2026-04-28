@@ -150,7 +150,7 @@ fi
 
 APP_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/${APP_NAME}.app"
 ZIP_PATH="$OUTPUT_DIR/${ARTIFACT_NAME}.zip"
-NOTARY_STAGING_DIR="$OUTPUT_DIR/notary-staging"
+NOTARY_STAGING_DIR="/tmp/PiGuard-notary-staging"
 APP_ENTITLEMENTS_XML_PATH="$OUTPUT_DIR/PiGuard.release.entitlements"
 LAUNCH_AT_LOGIN_RESOURCES_PATH="$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION/LaunchAtLogin_LaunchAtLogin.bundle/Contents/Resources"
 LOGIN_HELPER_APP_PATH="$APP_PATH/Contents/Library/LoginItems/LaunchAtLoginHelper.app"
@@ -317,6 +317,9 @@ if [[ -n "$NOTARY_PROFILE" ]]; then
 
     echo "Validating stapled ticket..."
     xcrun stapler validate "$NOTARY_STAGING_DIR/${APP_NAME}.app"
+
+    echo "Stripping extended attributes before repacking..."
+    xattr -cr "$NOTARY_STAGING_DIR" 2>/dev/null || true
 
     echo "Repacking notarized ZIP..."
     rm -f "$ZIP_PATH"

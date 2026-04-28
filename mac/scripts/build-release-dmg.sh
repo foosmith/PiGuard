@@ -96,7 +96,7 @@ fi
 ZIP_ARTIFACT_NAME="${ARTIFACT_NAME}-app"
 ZIP_PATH="$OUTPUT_DIR/${ZIP_ARTIFACT_NAME}.zip"
 DMG_PATH="$OUTPUT_DIR/${ARTIFACT_NAME}.dmg"
-STAGING_DIR="$OUTPUT_DIR/dmg-staging"
+STAGING_DIR="/tmp/PiGuard-dmg-staging"
 VOLUME_NAME="${APP_NAME} ${MARKETING_VERSION} (${BUILD_NUMBER})"
 
 zip_build_args=(
@@ -119,6 +119,9 @@ rm -rf "$STAGING_DIR"
 mkdir -p "$STAGING_DIR"
 /usr/bin/ditto -x -k "$ZIP_PATH" "$STAGING_DIR"
 ln -s /Applications "$STAGING_DIR/Applications"
+
+echo "Stripping extended attributes from DMG staging..."
+xattr -cr "$STAGING_DIR" 2>/dev/null || true
 
 echo "Creating ${DMG_PATH}..."
 rm -f "$DMG_PATH"

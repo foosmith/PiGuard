@@ -23,26 +23,33 @@ struct PiGuardWidgetProvider: TimelineProvider {
             completion(Timeline(entries: [entry], policy: .after(next)))
         }
 
-        // Fast path: Keychain or cached data already available.
-        if let snapshot = WidgetSnapshotStore.readBest() {
+        // Fast path: use cached data only when it's fresh (main app is actively running).
+        if let snapshot = WidgetSnapshotStore.readBest(), !isStale(snapshot.updatedAt) {
             finish(with: snapshot)
             return
         }
 
-        // Slow path: Wait up to 5s for the main app to update the secure store
-        // and send a 'ping' notification.
+        // Slow path: request a snapshot from the main app and wait up to 5 s.
+        // The main app embeds the full JSON payload in the notification's userInfo,
+        // so we don't rely on any shared storage channel (keychain or App Group).
         let sem = DispatchSemaphore(value: 0)
         let notifQueue = OperationQueue()
+        var received: WidgetSnapshot?
 
         let token = DistributedNotificationCenter.default().addObserver(
             forName: Notification.Name(WidgetSnapshotStore.distributedNotificationName),
             object: nil,
             queue: notifQueue
-        ) { _ in
+        ) { notification in
+            if let json = notification.userInfo?["json"] as? String,
+               let data = json.data(using: .utf8),
+               let snapshot = try? JSONDecoder().decode(WidgetSnapshot.self, from: data) {
+                received = snapshot
+                WidgetSnapshotStore.writeLocalCache(snapshot)
+            }
             sem.signal()
         }
 
-        // Ask the main app to update the snapshot and notify us.
         DistributedNotificationCenter.default().postNotificationName(
             Notification.Name(WidgetSnapshotStore.snapshotRequestNotificationName),
             object: nil,
@@ -53,9 +60,7 @@ struct PiGuardWidgetProvider: TimelineProvider {
         DispatchQueue.global(qos: .userInitiated).async {
             _ = sem.wait(timeout: .now() + 5)
             DistributedNotificationCenter.default().removeObserver(token)
-            
-            // Re-read from the secure store now that we've been signaled (or timed out)
-            finish(with: WidgetSnapshotStore.readBest())
+            finish(with: received ?? WidgetSnapshotStore.readBest())
         }
     }
 }

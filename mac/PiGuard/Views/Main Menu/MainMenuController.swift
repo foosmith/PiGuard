@@ -170,15 +170,20 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     override init() {
         super.init()
+        _trace("MainMenuController.init()")
         manager.delegate = self
     }
 
     override func awakeFromNib() {
+        _trace("awakeFromNib() — setting up status bar item")
         if let statusBarButton = statusBarItem.button {
             let image = menuBarImage()
             statusBarButton.image = image
             statusBarButton.imagePosition = image == nil ? .noImage : .imageLeading
             statusBarButton.title = "Initializing"
+            _trace("awakeFromNib() — statusBarButton configured, image=\(image != nil), hideMenuBarIcon=\(Preferences.standard.hideMenuBarIcon)")
+        } else {
+            _trace("awakeFromNib() — WARNING: statusBarItem.button is nil (no space in menu bar?)")
         }
         statusBarItem.menu = mainMenu
         mainMenu.delegate = self
@@ -214,6 +219,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         if let viewController = preferencesWindowController?.contentViewController as? PreferencesViewController {
             viewController.delegate = self
         }
+        _trace("awakeFromNib() — complete")
     }
 
     private func startDarwinNotificationListener() {

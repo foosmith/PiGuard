@@ -29,6 +29,8 @@ class PiGuardManager: NSObject {
     private var syncTimer: Timer?
     private var updateInterval: TimeInterval
     private var lastSnapshot: WidgetSnapshot?
+    private var lastPublishedStatus: PiholeNetworkStatus?
+    private var lastTopListsWereEmpty: Bool = true
     private var cachedTopBlocked: [String] = []
     private var cachedTopQueries: [String] = []
     private var snapshotRequestObserver: Any?
@@ -68,13 +70,16 @@ class PiGuardManager: NSObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            guard let self else { return }
-            // Just broadcast that data is available; the widget will read it
-            // from the secure Keychain or App Group store.
+            guard let self, let snapshot = self.lastSnapshot else { return }
+            var userInfo: [String: Any]? = nil
+            if let data = try? JSONEncoder().encode(snapshot),
+               let json = String(data: data, encoding: .utf8) {
+                userInfo = ["json": json]
+            }
             DistributedNotificationCenter.default().postNotificationName(
                 Notification.Name(WidgetSnapshotStore.distributedNotificationName),
                 object: Bundle.main.bundleIdentifier,
-                userInfo: nil,
+                userInfo: userInfo,
                 deliverImmediately: true
             )
         }
@@ -386,6 +391,7 @@ class PiGuardManager: NSObject {
         )
         lastSnapshot = snapshot
         WidgetSnapshotStore.write(snapshot)
+        Log.debug("publishSnapshot: wrote snapshot, status=\(overview.networkStatus)")
 
         // Broadcast via distributed notification so the widget extension can cache
         // the data even when App Group file access is blocked by sandboxing.
@@ -397,9 +403,23 @@ class PiGuardManager: NSObject {
                 userInfo: ["json": json],
                 deliverImmediately: true
             )
+            Log.debug("publishSnapshot: posted DistributedNotification (\(json.count) bytes)")
         }
 
-        WidgetCenter.shared.reloadAllTimelines()
+        // Only ask WidgetKit to reload on meaningful changes to avoid exhausting
+        // the widget's refresh budget (called every 3 s otherwise).
+        let currentStatus = overview.networkStatus
+        let topListsNowEmpty = snapshot.topBlocked.isEmpty && snapshot.topQueries.isEmpty
+        let topListsJustPopulated = lastTopListsWereEmpty && !topListsNowEmpty
+
+        if currentStatus != lastPublishedStatus || topListsJustPopulated {
+            Log.debug("publishSnapshot: reloading widget — status=\(currentStatus) topListsJustPopulated=\(topListsJustPopulated)")
+            lastPublishedStatus = currentStatus
+            lastTopListsWereEmpty = topListsNowEmpty
+            WidgetCenter.shared.reloadAllTimelines()
+        } else {
+            lastTopListsWereEmpty = topListsNowEmpty
+        }
     }
 
     private func refreshTopListsSnapshot(for piholes: [Pihole]) {
