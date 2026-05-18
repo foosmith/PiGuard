@@ -134,6 +134,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     #endif
 
     @IBAction func syncSettingsAction(_: NSMenuItem) {
+        NSApp.setActivationPolicy(.regular)
         syncSettingsWindow.makeKeyAndOrderFront(self)
         NSApp.activate(ignoringOtherApps: true)
     }
@@ -148,6 +149,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     @IBAction func queryLogAction(_: NSMenuItem) {
         guard let networkOverview = networkOverview else { return }
+        NSApp.setActivationPolicy(.regular)
         if queryLogWindowController?.window?.isVisible == true {
             queryLogWindowController?.window?.makeKeyAndOrderFront(self)
         } else {
@@ -208,6 +210,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityEnded), name: .piGuardGravityEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleOpenQueryLog), name: .piGuardOpenQueryLog, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleWindowClosed(_:)), name: NSWindow.willCloseNotification, object: nil)
 
         // DistributedNotificationCenter: widget tap or second-instance signal → open Query Log.
         startDarwinNotificationListener()
@@ -221,10 +224,19 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
 
         // Show preferences on first launch so the app presents a window immediately.
-        // Without this, LSUIElement apps appear to do nothing when opened.
-        if Preferences.standard.piholes.isEmpty {
-            DispatchQueue.main.async {
-                self.preferencesWindowController?.showWindow(self)
+        // Without this, LSUIElement apps appear to do nothing when opened from Finder.
+        // "hasShownWelcomeWindow" is new in 3.6.5 — unset for all installs (fresh or update),
+        // so reviewers and new users both see a window on first launch of this build.
+        let hasShownWelcome = Preferences.standard.bool(forKey: "hasShownWelcomeWindow")
+        if !hasShownWelcome || Preferences.standard.piholes.isEmpty {
+            Preferences.standard.set(true, forKey: "hasShownWelcomeWindow")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                guard let pwc = self.preferencesWindowController else {
+                    Log.warn("preferencesWindowController is nil on first launch")
+                    return
+                }
+                NSApp.setActivationPolicy(.regular)
+                pwc.showWindow(self)
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
@@ -386,6 +398,12 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     func menuDidClose(_ menu: NSMenu) {
         guard menu == mainMenu else { return }
         isFetchingTopItems = false
+    }
+
+    @objc private func handleWindowClosed(_ notification: Notification) {
+        DispatchQueue.main.async {
+            AppDelegate.revertToAccessoryPolicyIfNeeded()
+        }
     }
 
     // MARK: - Functions

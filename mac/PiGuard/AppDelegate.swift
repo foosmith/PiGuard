@@ -58,8 +58,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public static func bringToFront(window: NSWindow) {
+        // Switch to regular policy so the window can steal focus reliably on macOS 14+.
+        // Accessory-policy apps (LSUIElement) can no longer use activate(ignoringOtherApps:)
+        // reliably. The policy reverts to .accessory when all windows close.
+        NSApp.setActivationPolicy(.regular)
         window.center()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    public static func revertToAccessoryPolicyIfNeeded() {
+        let hasVisibleWindows = NSApp.windows.contains { $0.isVisible }
+        if !hasVisibleWindows {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
