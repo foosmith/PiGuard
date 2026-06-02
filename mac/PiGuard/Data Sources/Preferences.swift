@@ -125,7 +125,11 @@ extension UserDefaults {
                     token = keychainToken
                 } else if !connection.token.isEmpty {
                     // First launch after update: migrate plaintext token from UserDefaults to Keychain
-                    try? KeychainCredentialStore.shared.upsertString(connection.token, account: tokenKey)
+                    do {
+                        try KeychainCredentialStore.shared.upsertString(connection.token, account: tokenKey)
+                    } catch {
+                        Log.warn("Keychain token migration failed for \(tokenKey): \(error)")
+                    }
                     token = connection.token
                     needsResave = true
                 } else {
@@ -136,7 +140,11 @@ extension UserDefaults {
                 if let keychainUsername = try? KeychainCredentialStore.shared.readString(account: usernameKey) {
                     username = keychainUsername
                 } else if !connection.username.isEmpty {
-                    try? KeychainCredentialStore.shared.upsertString(connection.username, account: usernameKey)
+                    do {
+                        try KeychainCredentialStore.shared.upsertString(connection.username, account: usernameKey)
+                    } catch {
+                        Log.warn("Keychain username migration failed for \(usernameKey): \(error)")
+                    }
                     username = connection.username
                     needsResave = true
                 } else {

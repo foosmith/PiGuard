@@ -258,7 +258,7 @@ class PiGuardManager: NSObject {
         stopTimer()
         piholes.removeAll()
         createNewNetwork()
-        
+
         for connection in connections {
             Log.debug("Manager: Updating Connection: \(connection.hostname)")
             switch connection.backendType {
@@ -528,7 +528,7 @@ class PiGuardManager: NSObject {
     private func networkPercentageBlocked() -> Double {
         let totalQueries = networkTotalQueries()
         let blockedQueries = networkBlockedQueries()
-        if totalQueries == 0 || blockedQueries == 0 {
+        if totalQueries == 0 {
             return 0.0
         }
         return Double(blockedQueries) / Double(totalQueries) * 100.0

@@ -56,19 +56,24 @@ PiGuard includes a searchable, sortable Query Log window.
 
 ## Download & Install
 
-### Current Public Build (build 708)
+### Current Public Build (build 709)
 
-**[⬇ Download PiGuard-3.6.3-708-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.6.3/PiGuard-3.6.3-708-macOS.dmg)**
+**[⬇ Download PiGuard-3.6.4-709-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.6.4/PiGuard-3.6.4-709-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-3.6.3-708-macOS.dmg**
+1. Download **PiGuard-3.6.4-709-macOS.dmg**
 2. Open the DMG — a window will appear showing the app and an Applications shortcut
 3. Drag the app into the **Applications** folder
 4. Eject the DMG
 5. Open PiGuard from **Launchpad** or **Applications** — it will appear in your menu bar
 
 > **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
+
+### What's New in v3.6.4
+
+- **Widget** — fixed DistributedNotification names so the sandboxed widget extension can receive updates; snapshot data now embedded in notification userInfo as a fallback; corrected stale-data threshold from 2 minutes to 20 minutes to match the 15-minute refresh cycle; throttled `reloadAllTimelines()` to avoid exhausting the system widget refresh budget
+- **First launch** — preferences window now opens automatically on first launch
 
 ### What's New in v3.4
 

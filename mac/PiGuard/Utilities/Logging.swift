@@ -83,7 +83,7 @@ open class Log {
 
     private static let dateformatter: DateFormatter = {
         let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "Y-MM-dd H:m:ss.SSSS"
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
         return dateFormatter
     }()
 
