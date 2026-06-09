@@ -10,10 +10,8 @@
 //  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import Cocoa
-import HotKey
 
 class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuardManagerDelegate {
-    private let toggleHotKey = HotKey(key: .p, modifiers: [.command, .option, .shift])
     private let activitySymbolNames = [
         "arrow.triangle.2.circlepath",
         "arrow.clockwise",
@@ -204,7 +202,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
         #endif
 
-        enableKeyboardShortcut()
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
@@ -314,24 +311,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         flagWatchSource?.cancel()
         flagWatchSource = nil
         menuBarActivityTimer?.invalidate()
-    }
-
-    // MARK: - Keyboard Shortcut
-
-    fileprivate func enableKeyboardShortcut() {
-        if Preferences.standard.shortcutEnabled {
-            toggleHotKey.isPaused = false
-            toggleHotKey.keyDownHandler = {
-                Log.debug("Toggling Network from Keyboard Shortcut")
-                self.manager.toggleNetwork()
-            }
-        }
-    }
-
-    fileprivate func disableKeyboardShortcut() {
-        if !Preferences.standard.shortcutEnabled {
-            toggleHotKey.isPaused = true
-        }
     }
 
     // MARK: - Delegate Methods
@@ -445,12 +424,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         Log.debug("Preferences Updated")
 
         updateInterface()
-
-        if Preferences.standard.shortcutEnabled {
-            enableKeyboardShortcut()
-        } else if !Preferences.standard.shortcutEnabled {
-            disableKeyboardShortcut()
-        }
 
         manager.setPollingRate(to: Preferences.standard.pollingRate)
         manager.restartSyncTimer()

@@ -40,7 +40,8 @@ class PiholeAPI: NSObject {
             username: "",
             passwordProtected: true,
             adminPanelURL: "http://pi.hole/admin/",
-            backendType: .piholeV5
+            backendType: .piholeV5,
+            isEnabled: true
         )
         super.init()
     }

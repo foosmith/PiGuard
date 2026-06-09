@@ -30,7 +30,7 @@ class PreferencesViewController: NSViewController {
         }
         return controller
     }()
-    
+
     lazy var piholeV6SheetController: PiholeV6SettingsViewController? = {
         guard let controller = self.storyboard!.instantiateController(
             withIdentifier: "piHoleDialogV6"
@@ -56,7 +56,6 @@ class PreferencesViewController: NSViewController {
     @IBOutlet var showLabelsCheckbox: NSButton!
     @IBOutlet var verboseLabelsCheckbox: NSButton!
 
-    @IBOutlet var shortcutEnabledCheckbox: NSButton!
     @IBOutlet var launchAtLogincheckbox: NSButton!
     @IBOutlet var pollingRateTextField: NSTextField!
 
@@ -129,7 +128,7 @@ class PreferencesViewController: NSViewController {
         controller.currentIndex = index
         presentAsSheet(controller)
     }
-    
+
     func handleCancel() {
         Log.debug("Cancel selected")
     }
@@ -154,13 +153,13 @@ class PreferencesViewController: NSViewController {
 
         var piholes = Preferences.standard.piholes
         piholes.remove(atOffsets: rowIndexes)
-        
+
         // Save the model before animating the row out so that numberOfRows(in:),
         // which reads Preferences.standard.piholes.count, returns the correct
         // post-deletion value during the slide-up animation.
         Preferences.standard.set(piholes: piholes)
         tableView.removeRows(at: rowIndexes, withAnimation: .slideUp)
-        
+
         if piholes.isEmpty {
             removeButton.isEnabled = false
             editButton.isEnabled = false
@@ -171,12 +170,12 @@ class PreferencesViewController: NSViewController {
     @IBAction func checkboxAction(_: NSButtonCell) {
         saveSettings()
     }
-    
+
     @IBAction func launchAtLoginAction(_ sender: NSButton) {
         LaunchAtLogin.isEnabled = sender.state == .on
         updateUI()
     }
-    
+
     @IBAction func pollingRateTextFieldAction(_: NSTextField) {
         saveSettings()
     }
@@ -195,16 +194,12 @@ class PreferencesViewController: NSViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Insert "Hide menu bar icon" between the shortcut checkbox and Launch at Login.
-        // The storyboard pins launchAtLogin.top to shortcutEnabled.bottom — find and
-        // remove that constraint, then re-pin with our new checkbox in the middle.
-        if let parent = shortcutEnabledCheckbox.superview {
+        if let parent = launchAtLogincheckbox.superview {
             let existing = parent.constraints.first(where: {
                 ($0.firstItem as? NSView) == launchAtLogincheckbox &&
-                $0.firstAttribute == .top &&
-                ($0.secondItem as? NSView) == shortcutEnabledCheckbox &&
-                $0.secondAttribute == .bottom
+                $0.firstAttribute == .top
             })
+            guard let anchorView = existing?.secondItem as? NSView else { return }
             existing?.isActive = false
 
             hideMenuBarIconCheckbox.translatesAutoresizingMaskIntoConstraints = false
@@ -214,16 +209,16 @@ class PreferencesViewController: NSViewController {
             automaticallyCheckForUpdatesCheckbox.translatesAutoresizingMaskIntoConstraints = false
             parent.addSubview(automaticallyCheckForUpdatesCheckbox)
             NSLayoutConstraint.activate([
-                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
-                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
-                automaticallyCheckForUpdatesCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
+                automaticallyCheckForUpdatesCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
                 automaticallyCheckForUpdatesCheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
                 launchAtLogincheckbox.topAnchor.constraint(equalTo: automaticallyCheckForUpdatesCheckbox.bottomAnchor, constant: 8),
             ])
             #else
             NSLayoutConstraint.activate([
-                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: shortcutEnabledCheckbox.leadingAnchor),
-                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: shortcutEnabledCheckbox.bottomAnchor, constant: 8),
+                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
+                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
                 launchAtLogincheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
             ])
             #endif
@@ -231,10 +226,18 @@ class PreferencesViewController: NSViewController {
 
         updateUI()
 
-        shortcutEnabledCheckbox.toolTip = "This shortcut lets you quickly enable or disable blocking on your configured servers"
         launchAtLogincheckbox.toolTip = "Automatically launch PiGuard when you log in to your Mac"
 
         pollingRateTextField.toolTip = "Polling rate cannot be less than 3 seconds"
+
+        let enabledCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("enabledColumn"))
+        enabledCol.title = ""
+        enabledCol.width = 24
+        enabledCol.minWidth = 24
+        enabledCol.maxWidth = 24
+        enabledCol.resizingMask = []
+        tableView.addTableColumn(enabledCol)
+        tableView.moveColumn(tableView.numberOfColumns - 1, toColumn: 0)
     }
 
     func updateUI() {
@@ -246,7 +249,6 @@ class PreferencesViewController: NSViewController {
 
         showLabelsCheckbox.state = Preferences.standard.showLabels ? .on : .off
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
-        shortcutEnabledCheckbox.state = Preferences.standard.shortcutEnabled ? .on : .off
         hideMenuBarIconCheckbox.state = Preferences.standard.hideMenuBarIcon ? .on : .off
         #if !APPSTORE
         automaticallyCheckForUpdatesCheckbox.state = Preferences.standard.automaticallyCheckForUpdates ? .on : .off
@@ -259,7 +261,7 @@ class PreferencesViewController: NSViewController {
             showLabelsCheckbox.isEnabled = true
             verboseLabelsCheckbox.isEnabled = showLabelsCheckbox.state == .on ? true : false
         }
-        
+
         launchAtLogincheckbox.state = LaunchAtLogin.isEnabled ? .on : .off
 
         pollingRateTextField.stringValue = "\(Preferences.standard.pollingRate)"
@@ -282,8 +284,6 @@ class PreferencesViewController: NSViewController {
         Preferences.standard.set(showLabels: showLabelsCheckbox.state == .on ? true : false)
         Preferences.standard.set(verboseLabels: verboseLabelsCheckbox.state == .on ? true : false)
 
-        Preferences.standard.set(shortcutEnabled: shortcutEnabledCheckbox.state == .on ? true : false)
-        
         if launchAtLogincheckbox.state == .on {
             LaunchAtLogin.isEnabled = true
         } else {
@@ -339,7 +339,7 @@ private extension PreferencesViewController {
             tableView.insertRows(at: newRowIndexSet, withAnimation: .slideDown)
             tableView.selectRowIndexes(newRowIndexSet, byExtendingSelection: false)
         } else {
-            piholes[index] = connection
+            piholes[index] = connection.copying(isEnabled: piholes[index].isEnabled)
             Preferences.standard.set(piholes: piholes)
             tableView.reloadData()
             tableView.selectRowIndexes(IndexSet(integer: index), byExtendingSelection: false)
@@ -368,23 +368,52 @@ extension PreferencesViewController: NSTableViewDataSource {
 
 extension PreferencesViewController: NSTableViewDelegate {
     func tableView(_ tableView: NSTableView, viewFor tableColumn: NSTableColumn?, row: Int) -> NSView? {
-        var text: String = ""
-        var cellIdentifier: NSUserInterfaceItemIdentifier = NSUserInterfaceItemIdentifier(rawValue: "")
-
         let pihole = Preferences.standard.piholes[row]
-        if tableColumn == tableView.tableColumns[0] {
-            text = pihole.hostname
-            cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "hostnameCell")
-        } else if tableColumn == tableView.tableColumns[1] {
-            text = "\(pihole.port)"
-            cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "portCell")
-        } else if tableColumn == tableView.tableColumns[2] {
-            text = pihole.backendType.displayName
-            cellIdentifier = NSUserInterfaceItemIdentifier(rawValue: "versionCell")
-        }
-        if let cell = tableView.makeView(withIdentifier: cellIdentifier, owner: nil) as? NSTableCellView {
-            cell.textField?.stringValue = text
-            return cell
+
+        switch tableColumn?.identifier.rawValue {
+        case "enabledColumn":
+            let id = NSUserInterfaceItemIdentifier("enabledCheckboxCell")
+            let checkbox: NSButton
+            if let existing = tableView.makeView(withIdentifier: id, owner: nil) as? NSButton {
+                checkbox = existing
+            } else {
+                checkbox = NSButton()
+                checkbox.identifier = id
+                checkbox.setButtonType(.switch)
+                checkbox.title = ""
+            }
+            checkbox.state = pihole.isEnabled ? .on : .off
+            checkbox.tag = row
+            checkbox.target = self
+            checkbox.action = #selector(serverEnabledToggled(_:))
+            return checkbox
+
+        case "hostnameColumn":
+            let id = NSUserInterfaceItemIdentifier("hostnameCell")
+            if let cell = tableView.makeView(withIdentifier: id, owner: nil) as? NSTableCellView {
+                cell.textField?.stringValue = pihole.hostname
+                cell.textField?.textColor = pihole.isEnabled ? .controlTextColor : .disabledControlTextColor
+                return cell
+            }
+
+        case "portColumn":
+            let id = NSUserInterfaceItemIdentifier("portCell")
+            if let cell = tableView.makeView(withIdentifier: id, owner: nil) as? NSTableCellView {
+                cell.textField?.stringValue = "\(pihole.port)"
+                cell.textField?.textColor = pihole.isEnabled ? .controlTextColor : .disabledControlTextColor
+                return cell
+            }
+
+        case "versionColumn":
+            let id = NSUserInterfaceItemIdentifier("versionCell")
+            if let cell = tableView.makeView(withIdentifier: id, owner: nil) as? NSTableCellView {
+                cell.textField?.stringValue = pihole.backendType.displayName
+                cell.textField?.textColor = pihole.isEnabled ? .controlTextColor : .disabledControlTextColor
+                return cell
+            }
+
+        default:
+            break
         }
         return nil
     }
@@ -393,5 +422,16 @@ extension PreferencesViewController: NSTableViewDelegate {
         let hasSelection = tableView.selectedRow >= 0
         editButton.isEnabled = hasSelection
         removeButton.isEnabled = hasSelection
+    }
+
+    @objc private func serverEnabledToggled(_ sender: NSButton) {
+        let row = sender.tag
+        var piholes = Preferences.standard.piholes
+        guard row >= 0, row < piholes.count else { return }
+        piholes[row].isEnabled = sender.state == .on
+        Preferences.standard.set(piholes: piholes)
+        tableView.reloadData(forRowIndexes: IndexSet(integer: row),
+                             columnIndexes: IndexSet(integersIn: 0..<tableView.numberOfColumns))
+        delegate?.updatedConnections(piholes)
     }
 }

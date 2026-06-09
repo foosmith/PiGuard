@@ -74,7 +74,8 @@ class PiholeSettingsViewController: NSViewController {
             username: "",
             passwordProtected: passwordProtected,
             adminPanelURL: adminPanelURL,
-            backendType: .piholeV5
+            backendType: .piholeV5,
+            isEnabled: true
         ), at: currentIndex)
         dismiss(self)
     }
@@ -154,7 +155,8 @@ class PiholeSettingsViewController: NSViewController {
             username: "",
             passwordProtected: passwordProtected,
             adminPanelURL: "",
-            backendType: .piholeV5
+            backendType: .piholeV5,
+            isEnabled: true
         )
 
         let api = PiholeAPI(connection: connection)

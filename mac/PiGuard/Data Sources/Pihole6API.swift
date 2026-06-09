@@ -29,7 +29,7 @@ struct Queries: Decodable {
     let types: QueryTypes
     let status: QueryStatus
     let replies: QueryReplies
-    
+
     enum CodingKeys: String, CodingKey {
         case total, blocked, forwarded, cached, frequency, types, status, replies
         case percentBlocked = "percent_blocked"
@@ -103,7 +103,7 @@ struct Clients: Decodable {
 struct Gravity: Decodable {
     let domainsBeingBlocked: Int
     let lastUpdate: Int
-    
+
     enum CodingKeys: String, CodingKey {
         case domainsBeingBlocked = "domains_being_blocked"
         case lastUpdate = "last_update"
@@ -177,7 +177,8 @@ class Pihole6API: NSObject {
             username: "",
             passwordProtected: true,
             adminPanelURL: "http://pi.hole/admin/",
-            backendType: .piholeV6
+            backendType: .piholeV6,
+            isEnabled: true
         )
         super.init()
     }
@@ -193,7 +194,7 @@ class Pihole6API: NSObject {
         let prefix = connection.useSSL ? "https" : "http"
         return "\(prefix)://\(connection.hostname):\(connection.port)\(path)"
     }
-    
+
     var userAgent: String = "PiGuard:2.3:https://github.com/foosmith/PiGuard"
 
     var admin: URL? {

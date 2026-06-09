@@ -156,6 +156,7 @@ struct PiholeConnectionV4: Codable {
     let passwordProtected: Bool
     let adminPanelURL: String
     let backendType: BackendType
+    var isEnabled: Bool
 }
 
 extension PiholeConnectionV4 {
@@ -170,6 +171,19 @@ extension PiholeConnectionV4 {
         return "\(hostname) (\(scheme):\(port))"
     }
     var isV6: Bool { backendType == .piholeV6 }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        hostname = try c.decode(String.self, forKey: .hostname)
+        port = try c.decode(Int.self, forKey: .port)
+        useSSL = try c.decode(Bool.self, forKey: .useSSL)
+        token = try c.decode(String.self, forKey: .token)
+        username = try c.decode(String.self, forKey: .username)
+        passwordProtected = try c.decode(Bool.self, forKey: .passwordProtected)
+        adminPanelURL = try c.decode(String.self, forKey: .adminPanelURL)
+        backendType = try c.decode(BackendType.self, forKey: .backendType)
+        isEnabled = try c.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
+    }
 
     init?(data: Data) {
         let jsonDecoder = JSONDecoder()
@@ -191,6 +205,13 @@ extension PiholeConnectionV4 {
         self.passwordProtected = connection.passwordProtected
         self.adminPanelURL = connection.adminPanelURL
         self.backendType = connection.isV6 ? .piholeV6 : .piholeV5
+        self.isEnabled = true
+    }
+
+    func copying(isEnabled newValue: Bool) -> PiholeConnectionV4 {
+        PiholeConnectionV4(hostname: hostname, port: port, useSSL: useSSL,
+            token: token, username: username, passwordProtected: passwordProtected,
+            adminPanelURL: adminPanelURL, backendType: backendType, isEnabled: newValue)
     }
 
     func encode() -> Data? {

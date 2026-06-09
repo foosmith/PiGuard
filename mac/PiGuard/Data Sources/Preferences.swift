@@ -22,7 +22,6 @@ struct Preferences {
         static let showPercentage = "showPercentage"
         static let showLabels = "showLabels"
         static let verboseLabels = "verboseLabels"
-        static let shortcutEnabled = "shortcutEnabled"
         static let pollingRate = "pollingRate"
         static let syncEnabled = "syncEnabled"
         static let syncPrimaryIdentifier = "syncPrimaryIdentifier"
@@ -54,7 +53,6 @@ struct Preferences {
             Key.showPercentage: true,
             Key.showLabels: false,
             Key.verboseLabels: false,
-            Key.shortcutEnabled: true,
             Key.pollingRate: 3,
             Key.syncEnabled: false,
             Key.syncPrimaryIdentifier: "",
@@ -92,7 +90,7 @@ extension UserDefaults {
             if !piholesV2.isEmpty {
                 for pihole in piholesV2 {
                     Log.debug("Converting V2 Pi-hole to V4")
-                    piholesV4.append(PiholeConnectionV4(hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL, token: pihole.token, username: "", passwordProtected: pihole.passwordProtected, adminPanelURL: pihole.adminPanelURL, backendType: .piholeV5))
+                    piholesV4.append(PiholeConnectionV4(hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL, token: pihole.token, username: "", passwordProtected: pihole.passwordProtected, adminPanelURL: pihole.adminPanelURL, backendType: .piholeV5, isEnabled: true))
                 }
                 set([], for: Preferences.Key.piholesV2)
                 set(piholes: piholesV4)
@@ -154,7 +152,8 @@ extension UserDefaults {
                 piholesV4.append(PiholeConnectionV4(
                     hostname: connection.hostname, port: connection.port, useSSL: connection.useSSL,
                     token: token, username: username, passwordProtected: connection.passwordProtected,
-                    adminPanelURL: connection.adminPanelURL, backendType: connection.backendType
+                    adminPanelURL: connection.adminPanelURL, backendType: connection.backendType,
+                    isEnabled: connection.isEnabled
                 ))
             }
             if needsResave {
@@ -191,7 +190,8 @@ extension UserDefaults {
             PiholeConnectionV4(
                 hostname: pihole.hostname, port: pihole.port, useSSL: pihole.useSSL,
                 token: "", username: "", passwordProtected: pihole.passwordProtected,
-                adminPanelURL: pihole.adminPanelURL, backendType: pihole.backendType
+                adminPanelURL: pihole.adminPanelURL, backendType: pihole.backendType,
+                isEnabled: pihole.isEnabled
             )
         }
         let array = stripped.compactMap { pihole -> Data? in
@@ -242,14 +242,6 @@ extension UserDefaults {
 
     func set(verboseLabels: Bool) {
         set(verboseLabels, for: Preferences.Key.verboseLabels)
-    }
-
-    var shortcutEnabled: Bool {
-        return bool(forKey: Preferences.Key.shortcutEnabled)
-    }
-
-    func set(shortcutEnabled: Bool) {
-        set(shortcutEnabled, for: Preferences.Key.shortcutEnabled)
     }
 
     var pollingRate: Int {

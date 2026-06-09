@@ -61,11 +61,12 @@ class PiholeV6SettingsViewController: NSViewController {
             username: "",
             passwordProtected: !password.isEmpty,
             adminPanelURL: "",
-            backendType: .piholeV6
+            backendType: .piholeV6,
+            isEnabled: true
         )
 
         let api = Pihole6API(connection: connection)
-        
+
         Task {
             do {
                 if password.isEmpty {
@@ -91,9 +92,9 @@ class PiholeV6SettingsViewController: NSViewController {
                 self.saveAndCloseButton.isEnabled = false
             }
         }
-        
+
     }
-    
+
     @IBAction func testConnectionButtonAction(_: NSButton) {
         testConnection()
     }
@@ -116,7 +117,8 @@ class PiholeV6SettingsViewController: NSViewController {
             username: "",
             passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: adminPanelURL,
-            backendType: .piholeV6
+            backendType: .piholeV6,
+            isEnabled: true
         ), at: currentIndex)
         dismiss(self)
     }
@@ -197,7 +199,8 @@ class PiholeV6SettingsViewController: NSViewController {
             username: "",
             passwordProtected: !passwordTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
             adminPanelURL: "",
-            backendType: .piholeV6
+            backendType: .piholeV6,
+            isEnabled: true
         )
         let api = Pihole6API(connection: connection)
 

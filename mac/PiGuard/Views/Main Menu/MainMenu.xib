@@ -338,7 +338,8 @@
                 </menuItem>
                 <menuItem isSeparatorItem="YES" id="FBM-SP-002"/>
                 <menuItem isSeparatorItem="YES" id="gzf-LJ-6hp"/>
-                <menuItem title="Enable Blocking" hidden="YES" enabled="NO" keyEquivalent="p" id="BI6-Ri-lBb">
+                <menuItem title="Enable Blocking" hidden="YES" enabled="NO" id="BI6-Ri-lBb">
+                    <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="enableMenuBarAction:" target="Ufk-kp-3MV" id="6rU-7E-Pgf"/>
                     </connections>
@@ -347,28 +348,33 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="Disable Blocking" id="mSa-eh-NuK">
                         <items>
-                            <menuItem title="10 Seconds" tag="10" enabled="NO" keyEquivalent="1" id="0Iq-7i-Fo4">
+                            <menuItem title="10 Seconds" tag="10" enabled="NO" id="0Iq-7i-Fo4">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="disableMenuBarAction:" target="Ufk-kp-3MV" id="E8p-ht-c1I"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="30 Seconds" tag="30" enabled="NO" keyEquivalent="2" id="N6W-pQ-Rf1">
+                            <menuItem title="30 Seconds" tag="30" enabled="NO" id="N6W-pQ-Rf1">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="disableMenuBarAction:" target="Ufk-kp-3MV" id="0FB-jO-JR0"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="5 Minutes" tag="300" enabled="NO" keyEquivalent="3" id="rPH-lb-tXy">
+                            <menuItem title="5 Minutes" tag="300" enabled="NO" id="rPH-lb-tXy">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="disableMenuBarAction:" target="Ufk-kp-3MV" id="QyK-iR-d1c"/>
                                 </connections>
                             </menuItem>
-                            <menuItem title="1 Hour" tag="3600" enabled="NO" keyEquivalent="4" id="3dR-gU-cLA">
+                            <menuItem title="1 Hour" tag="3600" enabled="NO" id="3dR-gU-cLA">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="disableMenuBarAction:" target="Ufk-kp-3MV" id="19B-om-hG5"/>
                                 </connections>
                             </menuItem>
                             <menuItem isSeparatorItem="YES" id="cwa-at-z1e"/>
-                            <menuItem title="Permanently" enabled="NO" keyEquivalent="p" id="caA-v2-h25">
+                            <menuItem title="Permanently" enabled="NO" id="caA-v2-h25">
+                                <modifierMask key="keyEquivalentModifierMask"/>
                                 <connections>
                                     <action selector="disableMenuBarAction:" target="Ufk-kp-3MV" id="R8G-UP-f9a"/>
                                 </connections>
@@ -376,9 +382,12 @@
                         </items>
                     </menu>
                 </menuItem>
-                <menuItem title="Admin Console" enabled="NO" keyEquivalent="a" id="3md-Pe-xgY"/>
+                <menuItem title="Admin Console" enabled="NO" id="3md-Pe-xgY">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                </menuItem>
                 <menuItem isSeparatorItem="YES" id="eIX-16-hgV"/>
-                <menuItem title="Preferences" keyEquivalent="," id="A0X-KF-WHH">
+                <menuItem title="Preferences" id="A0X-KF-WHH">
+                    <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="configureMenuBarAction:" target="Ufk-kp-3MV" id="vGa-8p-QNC"/>
                     </connections>
@@ -408,7 +417,8 @@
                         <action selector="aboutAction:" target="Ufk-kp-3MV" id="pAS-t6-Vla"/>
                     </connections>
                 </menuItem>
-                <menuItem title="Quit PiGuard" keyEquivalent="q" id="ETE-5r-Mpn">
+                <menuItem title="Quit PiGuard" id="ETE-5r-Mpn">
+                    <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="quitMenuBarAction:" target="Ufk-kp-3MV" id="BIl-j0-uBf"/>
                     </connections>

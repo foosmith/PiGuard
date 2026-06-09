@@ -255,16 +255,6 @@ This project is not affiliated with either company.</string>
                                                 </connections>
                                             </buttonCell>
                                         </button>
-                                        <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="xv5-Li-uDo">
-                                            <rect key="frame" x="20" y="164" width="230" height="16"/>
-                                            <buttonCell key="cell" type="check" title="Enable ⌘⌥⇧P Shortcut" bezelStyle="regularSquare" imagePosition="left" state="on" inset="2" id="L41-Mt-pHb">
-                                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                <font key="font" metaFont="system"/>
-                                                <connections>
-                                                    <action selector="checkboxAction:" target="GTm-9k-36S" id="WHU-h8-VKk"/>
-                                                </connections>
-                                            </buttonCell>
-                                        </button>
                                         <textField verticalHuggingPriority="750" verticalCompressionResistancePriority="751" misplaced="YES" translatesAutoresizingMaskIntoConstraints="NO" id="gxv-8Y-s1p">
                                             <rect key="frame" x="20" y="80" width="65" height="24"/>
                                             <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" borderStyle="bezel" alignment="right" title="3" drawsBackground="YES" id="hPe-ED-ESL">
@@ -334,7 +324,7 @@ This project is not affiliated with either company.</string>
                                         <constraint firstItem="gxv-8Y-s1p" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" id="NTO-27-Spd"/>
                                         <constraint firstItem="LiH-xW-Xt3" firstAttribute="bottom" secondItem="gxv-8Y-s1p" secondAttribute="bottom" constant="-2" id="Pdu-hB-7cg"/>
                                         <constraint firstItem="V5k-NI-f2s" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" id="Rco-T1-Imi"/>
-                                        <constraint firstItem="lkS-8r-6ja" firstAttribute="top" secondItem="xv5-Li-uDo" secondAttribute="bottom" constant="8" id="SRv-i4-ULL"/>
+                                        <constraint firstItem="lkS-8r-6ja" firstAttribute="top" secondItem="pm7-2a-Lcf" secondAttribute="bottom" constant="8" id="SRv-i4-ULL"/>
                                         <constraint firstItem="u9t-W8-YCX" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" id="UlM-hB-E1I"/>
                                         <constraint firstItem="pTP-wb-bab" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" id="WmB-me-bcj"/>
                                         <constraint firstAttribute="trailing" secondItem="u9t-W8-YCX" secondAttribute="trailing" constant="20" id="XwA-vb-UiM"/>
@@ -342,10 +332,10 @@ This project is not affiliated with either company.</string>
                                         <constraint firstItem="fXy-Gb-chu" firstAttribute="top" secondItem="MiM-8y-LcW" secondAttribute="bottom" constant="8" id="cOs-MK-bnJ"/>
                                         <constraint firstItem="pTP-wb-bab" firstAttribute="top" secondItem="XD6-Xz-dyn" secondAttribute="bottom" constant="8" id="dWA-pw-XhA"/>
                                         <constraint firstItem="lkS-8r-6ja" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" symbolic="YES" id="dXE-Gv-jBr"/>
-                                        <constraint firstAttribute="trailing" secondItem="xv5-Li-uDo" secondAttribute="trailing" constant="20" id="eBP-sg-boq"/>
+
                                         <constraint firstItem="MiM-8y-LcW" firstAttribute="top" secondItem="rAy-oa-e4o" secondAttribute="bottom" constant="8" id="eCi-LE-HQ6"/>
                                         <constraint firstAttribute="trailing" secondItem="pTP-wb-bab" secondAttribute="trailing" constant="20" id="ehD-w0-KF6"/>
-                                        <constraint firstItem="xv5-Li-uDo" firstAttribute="leading" secondItem="lOO-sf-eYN" secondAttribute="leading" constant="20" id="gDg-mU-2H6"/>
+
                                         <constraint firstItem="XD6-Xz-dyn" firstAttribute="top" secondItem="fhh-w3-SVx" secondAttribute="bottom" constant="8" id="gbj-kL-mJC"/>
                                         <constraint firstAttribute="trailing" secondItem="fhh-w3-SVx" secondAttribute="trailing" constant="20" id="hce-iC-SR4"/>
                                         <constraint firstAttribute="trailing" secondItem="MiM-8y-LcW" secondAttribute="trailing" constant="20" id="hnG-3l-pPj"/>
@@ -359,7 +349,7 @@ This project is not affiliated with either company.</string>
                                         <constraint firstItem="gxv-8Y-s1p" firstAttribute="top" secondItem="V5k-NI-f2s" secondAttribute="bottom" constant="8" id="rAT-Zw-P5f"/>
                                         <constraint firstAttribute="trailing" secondItem="XD6-Xz-dyn" secondAttribute="trailing" constant="20" id="u51-8W-YbO"/>
                                         <constraint firstItem="V5k-NI-f2s" firstAttribute="top" secondItem="lkS-8r-6ja" secondAttribute="bottom" constant="12" id="wt3-z2-Pfk"/>
-                                        <constraint firstItem="xv5-Li-uDo" firstAttribute="top" secondItem="pm7-2a-Lcf" secondAttribute="bottom" constant="8" id="z4x-Pk-hed"/>
+
                                     </constraints>
                                 </view>
                             </box>
@@ -385,14 +375,14 @@ This project is not affiliated with either company.</string>
                                                 <rect key="frame" x="1" y="1" width="329" height="331"/>
                                                 <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                 <subviews>
-                                                    <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="none" columnReordering="NO" columnSelection="YES" columnResizing="NO" multipleSelection="NO" emptySelection="NO" autosaveColumns="NO" rowSizeStyle="automatic" headerView="lI7-le-hIe" viewBased="YES" id="ILp-pd-N6u">
+                                                    <tableView verticalHuggingPriority="750" allowsExpansionToolTips="YES" columnAutoresizingStyle="lastColumnOnly" columnReordering="NO" columnSelection="YES" columnResizing="YES" multipleSelection="NO" emptySelection="NO" autosaveColumns="YES" autosaveName="PreferencesServersTable" rowSizeStyle="automatic" headerView="lI7-le-hIe" viewBased="YES" id="ILp-pd-N6u">
                                                         <rect key="frame" x="0.0" y="0.0" width="329" height="303"/>
                                                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                                                         <size key="intercellSpacing" width="3" height="2"/>
                                                         <color key="backgroundColor" name="controlBackgroundColor" catalog="System" colorSpace="catalog"/>
                                                         <color key="gridColor" name="gridColor" catalog="System" colorSpace="catalog"/>
                                                         <tableColumns>
-                                                            <tableColumn width="175" minWidth="40" maxWidth="1000" id="6Az-AI-g5G">
+                                                            <tableColumn identifier="hostnameColumn" width="175" minWidth="40" maxWidth="1000" id="6Az-AI-g5G">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" title="Hostname">
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" name="headerColor" catalog="System" colorSpace="catalog"/>
@@ -431,7 +421,7 @@ This project is not affiliated with either company.</string>
                                                                     </tableCellView>
                                                                 </prototypeCellViews>
                                                             </tableColumn>
-                                                            <tableColumn width="57" minWidth="10" maxWidth="3.4028234663852886e+38" id="bXZ-MT-Are">
+                                                            <tableColumn identifier="portColumn" width="57" minWidth="10" maxWidth="3.4028234663852886e+38" id="bXZ-MT-Are">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" alignment="left" title="Port">
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -470,7 +460,7 @@ This project is not affiliated with either company.</string>
                                                                     </tableCellView>
                                                                 </prototypeCellViews>
                                                             </tableColumn>
-                                                            <tableColumn width="130" minWidth="10" maxWidth="3.4028234663852886e+38" id="nSC-9K-KwA">
+                                                            <tableColumn identifier="versionColumn" width="130" minWidth="10" maxWidth="3.4028234663852886e+38" id="nSC-9K-KwA">
                                                                 <tableHeaderCell key="headerCell" lineBreakMode="truncatingTail" borderStyle="border" title="Version">
                                                                     <color key="textColor" name="headerTextColor" catalog="System" colorSpace="catalog"/>
                                                                     <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
@@ -606,7 +596,7 @@ This project is not affiliated with either company.</string>
                         <outlet property="launchAtLogincheckbox" destination="lkS-8r-6ja" id="xrG-iP-eRM"/>
                         <outlet property="pollingRateTextField" destination="gxv-8Y-s1p" id="1WS-E7-ekX"/>
                         <outlet property="removeButton" destination="tFg-7b-Rry" id="Hnp-f3-vw3"/>
-                        <outlet property="shortcutEnabledCheckbox" destination="xv5-Li-uDo" id="2X1-v2-Zg4"/>
+
                         <outlet property="showBlockedCheckbox" destination="MiM-8y-LcW" id="BLs-6A-5qO"/>
                         <outlet property="showLabelsCheckbox" destination="XD6-Xz-dyn" id="VFz-Wn-r3f"/>
                         <outlet property="showLogFileButton" destination="FBL-E0-004" id="FBL-E0-014"/>

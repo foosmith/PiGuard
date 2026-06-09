@@ -259,7 +259,8 @@ class PiGuardManager: NSObject {
         piholes.removeAll()
         createNewNetwork()
 
-        for connection in connections {
+        let activeConnections = connections.filter { $0.isEnabled }
+        for connection in activeConnections {
             Log.debug("Manager: Updating Connection: \(connection.hostname)")
             switch connection.backendType {
             case .piholeV6:

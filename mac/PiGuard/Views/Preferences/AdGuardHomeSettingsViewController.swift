@@ -271,7 +271,8 @@ final class AdGuardHomeSettingsViewController: NSViewController {
             username: usernameTextField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines),
             passwordProtected: true,
             adminPanelURL: adminURL,
-            backendType: .adguardHome
+            backendType: .adguardHome,
+            isEnabled: true
         )
     }
 

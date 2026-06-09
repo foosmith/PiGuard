@@ -50,25 +50,29 @@ PiGuard includes a searchable, sortable Query Log window.
 - Supports multiple server connections across Pi-hole and AdGuard Home
 - Mixed-backend menu wording adapts to whichever servers are connected
 - Launch at login, configurable from Preferences
-- Global keyboard shortcut for quick menu bar access
 - Configurable polling interval
 - Opt-in diagnostic logging to a local log file
 
 ## Download & Install
 
-### Current Public Build (build 714)
+### Current Public Build (build 715)
 
-**[⬇ Download PiGuard-3.6.4-714-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.6.4/PiGuard-3.6.4-714-macOS.dmg)**
+**[⬇ Download PiGuard-3.6.5-macOS.dmg](https://github.com/foosmith/PiGuard/releases/download/v3.6.5/PiGuard-3.6.5-macOS.dmg)**
 
 Requires macOS 13 or later.
 
-1. Download **PiGuard-3.6.4-714-macOS.dmg**
+1. Download **PiGuard-3.6.5-macOS.dmg**
 2. Open the DMG — a window will appear showing the app and an Applications shortcut
 3. Drag the app into the **Applications** folder
 4. Eject the DMG
 5. Open PiGuard from **Launchpad** or **Applications** — it will appear in your menu bar
 
-> **Gatekeeper on first launch:** This release is signed and notarized, so macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
+> **Gatekeeper on first launch:** macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
+
+### What's New in v3.6.5
+
+- **Preferences** — per-server enable/disable toggle in the server list; disabled servers are excluded from polling and control actions
+- **Shortcuts removed** — keyboard shortcut feature (⌘⌥⇧P) and all menu key equivalents removed
 
 ### What's New in v3.6.4
 
