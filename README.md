@@ -72,6 +72,7 @@ Requires macOS 13 or later.
 
 ### What's New in v3.6.4
 
+- **Icons** — updated app icon, menu bar icon, and About page image to new artwork
 - **Widget** — fixed DistributedNotification names so the sandboxed widget extension can receive updates; snapshot data now embedded in notification userInfo as a fallback; corrected stale-data threshold from 2 minutes to 20 minutes to match the 15-minute refresh cycle; throttled `reloadAllTimelines()` to avoid exhausting the system widget refresh budget
 - **First launch** — preferences window now opens automatically on first launch
 
