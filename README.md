@@ -69,34 +69,6 @@ Requires macOS 13 or later.
 
 > **Gatekeeper on first launch:** macOS should open it without prompting. If Finder warns anyway due to quarantine caching, eject the DMG, reopen it, and launch the app from **Applications** directly.
 
-### What's New in v3.6.5
-
-- **Preferences** — per-server enable/disable toggle in the server list; disabled servers are excluded from polling and control actions
-- **Shortcuts removed** — keyboard shortcut feature (⌘⌥⇧P) and all menu key equivalents removed
-
-### What's New in v3.6.4
-
-- **Icons** — updated app icon, menu bar icon, and About page image to new artwork
-- **Widget** — fixed DistributedNotification names so the sandboxed widget extension can receive updates; snapshot data now embedded in notification userInfo as a fallback; corrected stale-data threshold from 2 minutes to 20 minutes to match the 15-minute refresh cycle; throttled `reloadAllTimelines()` to avoid exhausting the system widget refresh budget
-- **First launch** — preferences window now opens automatically on first launch
-
-### What's New in v3.4
-
-- **Security** — credentials migrated from UserDefaults to Keychain; orphaned Keychain entries cleaned up on connection removal
-- **Stability** — thread-safety fixes for operation state and session token caching; force-unwrap crash paths eliminated
-- **UI** — warning shown when Pi-hole v5 token is sent over plain HTTP
-
-### What's New in v3.3
-
-- **Stability** — credential caching, atomic settings writes, view error handling improvements
-- **Security** — tokens redacted from diagnostic logs, force-unwraps removed
-
-### What's New in v3.2
-
-- **Query Log search** — filter rows instantly across domain, client, status, and server
-- **Query Log sort** — click column headers to sort; click again to reverse
-- **Pi-hole v6 sync** — fixed Windows tray actions and corrected sync payload key casing
-
 All releases: [GitHub Releases](https://github.com/foosmith/PiGuard/releases)
 
 ## About This Fork
