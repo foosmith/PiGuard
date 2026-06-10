@@ -5,7 +5,36 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-            <item>
+                <item>
+        <title>PiGuard v3.6.6 (build 716)</title>
+        <pubDate>Wed, 10 Jun 2026 21:46:29 GMT</pubDate>
+        <sparkle:version>716</sparkle:version>
+        <sparkle:shortVersionString>3.6.6</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.6.6/PiGuard-3.6.6-716-macOS.dmg"
+            length="5651708"
+            type="application/octet-stream"
+            sparkle:edSignature="yFZiKsl3bqfEQ1bZFgKkihqT81PDEOMTvDDXesOrCIerz1a8Gh98mHz2XsXVodkDyKMA4Lv2zqhE6bX6ezaBDw==" />
+        <description><![CDATA[<h2>Bug Fixes</h2>
+<ul>
+<li><strong>Auto-update repaired</strong> — the Sparkle appcast pipeline had been failing silently, so apps on 3.6.1–3.6.4 were never offered updates. The feed is fixed and updates flow again.</li>
+<li><strong>Update loop fixed</strong> — the app's build number (<code>CFBundleVersion</code>) was stuck at 713 regardless of the released build, which could cause Sparkle to re-offer the same update repeatedly.</li>
+</ul>
+<h2>Security Hardening</h2>
+<ul>
+<li>Pi-hole API token is now percent-encoded in request URLs, so tokens containing reserved characters (<code>&amp;</code>, <code>=</code>, <code>+</code>, <code>#</code>, <code>?</code>) can no longer break or alter the request</li>
+<li>Debug log file is now restricted to owner-only permissions (it can contain DNS query history)</li>
+<li>Release-notes rendering in the update feed hardened against XML/CDATA injection</li>
+</ul>
+<h2>Install</h2>
+<ol>
+<li>Download <strong>PiGuard-3.6.6-716-macOS.dmg</strong></li>
+<li>Open the DMG and drag PiGuard into <strong>Applications</strong></li>
+<li>Launch from Launchpad or Applications</li>
+</ol>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.5 (build 715)</title>
         <pubDate>Tue, 09 Jun 2026 21:14:44 GMT</pubDate>
         <sparkle:version>715</sparkle:version>
