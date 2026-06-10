@@ -19,17 +19,10 @@ env:
 
 jobs:
   update-appcast:
-    runs-on: ubuntu-latest
+    # sign_update is a Mach-O binary; must run on macOS
+    runs-on: macos-latest
 
     steps:
-      - name: Download Sparkle tools
-        run: |
-          # Sparkle 2.7+ ships .tar.xz (older releases were .tar.bz2)
-          curl -fL "https://github.com/sparkle-project/Sparkle/releases/download/${{ env.SPARKLE_VERSION }}/Sparkle-${{ env.SPARKLE_VERSION }}.tar.xz" -o sparkle.tar.xz
-          mkdir sparkle-tools
-          tar -xJf sparkle.tar.xz -C sparkle-tools
-          chmod +x sparkle-tools/bin/sign_update
-
       - name: Checkout gh-pages
         uses: actions/checkout@v4
         with:
@@ -41,6 +34,17 @@ jobs:
           ref: master
           path: master-src
           sparse-checkout: .github/scripts
+
+      # After the checkouts: actions/checkout cleans the workspace, so
+      # anything downloaded earlier would be deleted. Tools live in
+      # RUNNER_TEMP to stay out of the git workspace entirely.
+      - name: Download Sparkle tools
+        run: |
+          # Sparkle 2.7+ ships .tar.xz (older releases were .tar.bz2)
+          curl -fL "https://github.com/sparkle-project/Sparkle/releases/download/${{ env.SPARKLE_VERSION }}/Sparkle-${{ env.SPARKLE_VERSION }}.tar.xz" -o "$RUNNER_TEMP/sparkle.tar.xz"
+          mkdir "$RUNNER_TEMP/sparkle-tools"
+          tar -xJf "$RUNNER_TEMP/sparkle.tar.xz" -C "$RUNNER_TEMP/sparkle-tools"
+          chmod +x "$RUNNER_TEMP/sparkle-tools/bin/sign_update"
 
       - name: Download release DMG
         env:
@@ -64,12 +68,13 @@ jobs:
         env:
           SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
         run: |
-          SIGNATURE=$(echo "$SPARKLE_PRIVATE_KEY" | ./sparkle-tools/bin/sign_update "$DMG_FILE" --ed-key-file - -p)
+          SIGNATURE=$(echo "$SPARKLE_PRIVATE_KEY" | "$RUNNER_TEMP/sparkle-tools/bin/sign_update" "$DMG_FILE" --ed-key-file - -p)
           echo "SIGNATURE=$SIGNATURE" >> $GITHUB_ENV
 
       - name: Get DMG file size
         run: |
-          DMG_LENGTH=$(stat -c%s "$DMG_FILE")
+          # BSD stat (macOS runner); GNU would be stat -c%s
+          DMG_LENGTH=$(stat -f%z "$DMG_FILE")
           echo "DMG_LENGTH=$DMG_LENGTH" >> $GITHUB_ENV
 
       - name: Get release metadata
@@ -92,7 +97,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Install markdown Python package
-        run: pip install markdown
+        run: python3 -m pip install --break-system-packages markdown || python3 -m pip install markdown
 
       - name: Update appcast
         run: |
