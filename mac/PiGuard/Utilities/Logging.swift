@@ -62,6 +62,8 @@ open class Log {
         let url = logFileURL
         try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? "".write(to: url, atomically: true, encoding: .utf8)
+        // Log contains DNS query history (domains, client names) — owner-only access
+        try? FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: url.path)
         fileHandle = try? FileHandle(forWritingTo: url)
         handler = { _, message in
             guard let data = (message + "\n").data(using: .utf8),

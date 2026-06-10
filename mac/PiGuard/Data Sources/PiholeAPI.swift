@@ -54,8 +54,9 @@ class PiholeAPI: NSObject {
     private func get(_ endpoint: PiholeAPIEndpoint, argument: String? = nil, completion: @escaping (String?) -> Void) {
         var builtURLString = baseURL
 
+        let encodedToken = connection.token.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&=+#?"))) ?? connection.token
         if endpoint.authorizationRequired {
-            builtURLString.append(contentsOf: "?auth=\(connection.token)&\(endpoint.queryParameter)")
+            builtURLString.append(contentsOf: "?auth=\(encodedToken)&\(endpoint.queryParameter)")
         } else {
             builtURLString.append(contentsOf: "?\(endpoint.queryParameter)")
         }
@@ -64,7 +65,7 @@ class PiholeAPI: NSObject {
             builtURLString.append(contentsOf: "=\(argument)")
         }
 
-        Log.debug("Built API String: \(builtURLString.replacingOccurrences(of: "auth=\(connection.token)", with: "auth=<REDACTED>"))")
+        Log.debug("Built API String: \(builtURLString.replacingOccurrences(of: "auth=\(encodedToken)", with: "auth=<REDACTED>"))")
 
         guard let builtURL = URL(string: builtURLString) else { return completion(nil) }
 
