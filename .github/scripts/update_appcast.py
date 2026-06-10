@@ -17,6 +17,13 @@ Usage:
 import argparse
 from email.utils import formatdate
 from datetime import datetime
+from xml.sax.saxutils import escape, quoteattr
+
+
+def cdata_safe(html_text: str) -> str:
+    # "]]>" inside a CDATA section would terminate it early and allow
+    # injecting arbitrary XML into the appcast; split the sequence apart.
+    return html_text.replace("]]>", "]]]]><![CDATA[>")
 
 
 def markdown_to_html(md_text: str) -> str:
@@ -41,17 +48,17 @@ def build_item(
 ) -> str:
     return (
         f"    <item>\n"
-        f"        <title>{title}</title>\n"
-        f"        <pubDate>{pub_date_rfc}</pubDate>\n"
-        f"        <sparkle:version>{version}</sparkle:version>\n"
-        f"        <sparkle:shortVersionString>{short_version}</sparkle:shortVersionString>\n"
-        f"        <sparkle:minimumSystemVersion>{min_os}</sparkle:minimumSystemVersion>\n"
+        f"        <title>{escape(title)}</title>\n"
+        f"        <pubDate>{escape(pub_date_rfc)}</pubDate>\n"
+        f"        <sparkle:version>{escape(version)}</sparkle:version>\n"
+        f"        <sparkle:shortVersionString>{escape(short_version)}</sparkle:shortVersionString>\n"
+        f"        <sparkle:minimumSystemVersion>{escape(min_os)}</sparkle:minimumSystemVersion>\n"
         f"        <enclosure\n"
-        f"            url=\"{dmg_url}\"\n"
-        f"            length=\"{dmg_length}\"\n"
+        f"            url={quoteattr(dmg_url)}\n"
+        f"            length={quoteattr(dmg_length)}\n"
         f"            type=\"application/octet-stream\"\n"
-        f"            sparkle:edSignature=\"{signature}\" />\n"
-        f"        <description><![CDATA[{release_notes_html}]]></description>\n"
+        f"            sparkle:edSignature={quoteattr(signature)} />\n"
+        f"        <description><![CDATA[{cdata_safe(release_notes_html)}]]></description>\n"
         f"    </item>"
     )
 

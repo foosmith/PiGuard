@@ -3,12 +3,19 @@ name: Update Appcast
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to (re)publish to the appcast, e.g. v3.6.5"
+        required: true
+        type: string
 
 permissions:
   contents: write
 
 env:
   SPARKLE_VERSION: "2.9.1"  # Keep in sync with Package.resolved
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.event.release.tag_name }}
 
 jobs:
   update-appcast:
@@ -17,9 +24,10 @@ jobs:
     steps:
       - name: Download Sparkle tools
         run: |
-          curl -L "https://github.com/sparkle-project/Sparkle/releases/download/${{ env.SPARKLE_VERSION }}/Sparkle-${{ env.SPARKLE_VERSION }}.tar.bz2" -o sparkle.tar.bz2
+          # Sparkle 2.7+ ships .tar.xz (older releases were .tar.bz2)
+          curl -fL "https://github.com/sparkle-project/Sparkle/releases/download/${{ env.SPARKLE_VERSION }}/Sparkle-${{ env.SPARKLE_VERSION }}.tar.xz" -o sparkle.tar.xz
           mkdir sparkle-tools
-          tar -xjf sparkle.tar.bz2 -C sparkle-tools
+          tar -xJf sparkle.tar.xz -C sparkle-tools
           chmod +x sparkle-tools/bin/sign_update
 
       - name: Checkout gh-pages
@@ -38,7 +46,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "${{ github.event.release.tag_name }}" \
+          gh release download "$RELEASE_TAG" \
             --repo "${{ github.repository }}" \
             --pattern "*.dmg"
           DMG_FILE=$(ls *.dmg | head -1)
@@ -68,20 +76,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "${{ github.event.release.tag_name }}" \
+          gh release view "$RELEASE_TAG" \
             --repo "${{ github.repository }}" \
             --json name,body,publishedAt > release_meta.json
 
           python3 -c "import json; d=json.load(open('release_meta.json')); open('RELEASE_NAME.txt','w').write(d['name']); open('release_body.txt','w').write(d['body']); open('PUB_DATE.txt','w').write(d['publishedAt'])"
-          echo "RELEASE_NAME=$(cat RELEASE_NAME.txt)" >> $GITHUB_ENV
-          echo "PUB_DATE=$(cat PUB_DATE.txt)" >> $GITHUB_ENV
+          # Heredoc form prevents env-var injection via newlines in the release name
+          {
+            echo "RELEASE_NAME<<PIGUARD_EOF_$GITHUB_RUN_ID"
+            printf '%s\n' "$(cat RELEASE_NAME.txt)"
+            echo "PIGUARD_EOF_$GITHUB_RUN_ID"
+            echo "PUB_DATE<<PIGUARD_EOF_$GITHUB_RUN_ID"
+            printf '%s\n' "$(cat PUB_DATE.txt)"
+            echo "PIGUARD_EOF_$GITHUB_RUN_ID"
+          } >> "$GITHUB_ENV"
 
       - name: Install markdown Python package
         run: pip install markdown
 
       - name: Update appcast
         run: |
-          DMG_URL="https://github.com/${{ github.repository }}/releases/download/${{ github.event.release.tag_name }}/$DMG_FILE"
+          DMG_URL="https://github.com/${{ github.repository }}/releases/download/$RELEASE_TAG/$DMG_FILE"
 
           python3 master-src/.github/scripts/update_appcast.py \
             --appcast appcast.xml \
@@ -99,5 +114,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add appcast.xml
-          git commit -m "chore: update appcast for ${{ github.event.release.tag_name }}"
+          git commit -m "chore: update appcast for $RELEASE_TAG"
           git push origin gh-pages
