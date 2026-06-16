@@ -5,7 +5,25 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                <item>
+                    <item>
+        <title>PiGuard v3.6.7 (build 717)</title>
+        <pubDate>Tue, 16 Jun 2026 14:24:14 GMT</pubDate>
+        <sparkle:version>PiGuard-3.6.7-macOS.dmg</sparkle:version>
+        <sparkle:shortVersionString>3.6.7</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.6.7/PiGuard-3.6.7-macOS.dmg"
+            length="5653820"
+            type="application/octet-stream"
+            sparkle:edSignature="0CjbbApi3Z48CecHPixNNhplvbYsyh5qZpnvy5Sr2Ah1uGrs3KaA+3K4iHkqUq/VUEeBULeLNXgmwWKSgM4oCw==" />
+        <description><![CDATA[<h2>What's new</h2>
+<ul>
+<li><strong>Fix: Desktop widget now opens the Query Log when clicked.</strong> Replaced the AppIntent-based tap handler with a <code>widgetURL</code> deep link (<code>piguard://open-query-log</code>), which is reliably handled by macOS on macOS 26 for LSUIElement apps. The previous approach using <code>Button(intent:)</code> with <code>openAppWhenRun = true</code> was not consistently routing the intent to the main app process or activating the window.</li>
+</ul>
+<h2>Requirements</h2>
+<p>macOS 13 or later.</p>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.6 (build 716)</title>
         <pubDate>Wed, 10 Jun 2026 21:46:29 GMT</pubDate>
         <sparkle:version>716</sparkle:version>
