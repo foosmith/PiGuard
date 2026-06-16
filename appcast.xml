@@ -8,7 +8,7 @@
                     <item>
         <title>PiGuard v3.6.7 (build 717)</title>
         <pubDate>Tue, 16 Jun 2026 14:24:14 GMT</pubDate>
-        <sparkle:version>PiGuard-3.6.7-macOS.dmg</sparkle:version>
+        <sparkle:version>717</sparkle:version>
         <sparkle:shortVersionString>3.6.7</sparkle:shortVersionString>
         <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
         <enclosure
@@ -91,3 +91,4 @@
         </item>
     </channel>
 </rss>
+
