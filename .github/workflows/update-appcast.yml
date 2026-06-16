@@ -56,11 +56,12 @@ jobs:
           DMG_FILE=$(ls *.dmg | head -1)
           echo "DMG_FILE=$DMG_FILE" >> $GITHUB_ENV
 
-      - name: Extract version info from DMG filename
+      - name: Extract version info from app bundle
         run: |
-          # DMG filename convention: PiGuard-{SHORT_VERSION}-{BUILD_NUMBER}-macOS.dmg
           SHORT_VERSION=$(echo "$DMG_FILE" | sed 's/PiGuard-\([^-]*\)-.*/\1/')
-          BUILD_NUMBER=$(echo "$DMG_FILE" | sed 's/PiGuard-[^-]*-\([^-]*\)-.*/\1/')
+          hdiutil attach "$DMG_FILE" -mountpoint /tmp/dmg-mount -nobrowse -quiet
+          BUILD_NUMBER=$(/usr/libexec/PlistBuddy -c "Print CFBundleVersion" /tmp/dmg-mount/PiGuard.app/Contents/Info.plist)
+          hdiutil detach /tmp/dmg-mount -quiet
           echo "SHORT_VERSION=$SHORT_VERSION" >> $GITHUB_ENV
           echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV
 
