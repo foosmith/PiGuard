@@ -31,7 +31,6 @@
 		44E390C92D87ED53002196DC /* PiholeV6SettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44E390C82D87ED49002196DC /* PiholeV6SettingsViewController.swift */; };
 		44FFB092247627B100DCEDEC /* PiGuardManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44FFB091247627B100DCEDEC /* PiGuardManager.swift */; };
 		52B6B0BB2F9A69B000B3E0F6 /* OpenQueryLogIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B6B0BA2F9A69AF00B3E0F6 /* OpenQueryLogIntent.swift */; };
-		PGSH001APGSH001APGSH001A /* OpenQueryLogIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B6B0BA2F9A69AF00B3E0F6 /* OpenQueryLogIntent.swift */; };
 		52E46A4E2F92D5590013DD87 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 52E46A4D2F92D5590013DD87 /* Sparkle */; };
 		FBAA0002FBAA0002FBAA0002 /* SyncPrimarySecondaryOperation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0001FBAA0001FBAA0001 /* SyncPrimarySecondaryOperation.swift */; };
 		FBAA0004FBAA0004FBAA0004 /* SyncProgress.swift in Sources */ = {isa = PBXBuildFile; fileRef = FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */; };
@@ -49,6 +48,7 @@
 		PGSH0006PGSH0006PGSH0006 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0001PGSH0001PGSH0001 /* WidgetSnapshot.swift */; };
 		PGSH0007PGSH0007PGSH0007 /* WidgetSnapshotStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0002PGSH0002PGSH0002 /* WidgetSnapshotStore.swift */; };
 		PGSH0009PGSH0009PGSH0009 /* WidgetSnapshot+PiGuard.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGSH0008PGSH0008PGSH0008 /* WidgetSnapshot+PiGuard.swift */; };
+		PGSH001APGSH001APGSH001A /* OpenQueryLogIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 52B6B0BA2F9A69AF00B3E0F6 /* OpenQueryLogIntent.swift */; };
 		PGWT0011PGWT0011PGWT0011 /* PiGuardWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000BPGWT000BPGWT000B /* PiGuardWidget.swift */; };
 		PGWT0012PGWT0012PGWT0012 /* PiGuardWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000CPGWT000CPGWT000C /* PiGuardWidgetBundle.swift */; };
 		PGWT0013PGWT0013PGWT0013 /* PiGuardWidgetEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = PGWT000DPGWT000DPGWT000D /* PiGuardWidgetEntry.swift */; };
@@ -165,7 +165,6 @@
 			files = (
 				52E46A4E2F92D5590013DD87 /* Sparkle in Frameworks */,
 				44E390C72D87C3E2002196DC /* LaunchAtLogin in Frameworks */,
-
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -804,7 +803,7 @@
 				COPY_PHASE_STRIP = NO;
 				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = GB7Z2TZ8LT;
+				DEVELOPMENT_TEAM = 2Y9M69QJKZ;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -849,7 +848,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
 				MARKETING_VERSION = 3.6.7;
-				OTHER_LDFLAGS = "-weak_framework Sparkle";
+				OTHER_LDFLAGS = (
+					"-weak_framework",
+					Sparkle,
+				);
 				PRODUCT_BUNDLE_IDENTIFIER = com.foosmith.PiGuard;
 				PRODUCT_MODULE_NAME = PiGuard;
 				PRODUCT_NAME = "$(TARGET_NAME)";

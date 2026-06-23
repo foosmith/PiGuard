@@ -83,4 +83,4 @@ try? "\(ProcessInfo.processInfo.processIdentifier)"
     .write(to: _pidURL, atomically: true, encoding: .utf8)
 _trace("wrote PID file, calling NSApplicationMain")
 
-NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)
+_ = NSApplicationMain(CommandLine.argc, CommandLine.unsafeArgv)

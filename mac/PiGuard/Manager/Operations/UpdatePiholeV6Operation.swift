@@ -26,8 +26,8 @@ final class UpdatePiholeV6Operation: AsyncOperation, @unchecked Sendable {
         Log.debug("Updating Pi-hole: \(pihole.identifier)")
         Task {
             var enabled: Bool? = true
-            var online = true
-            var canBeManaged: Bool = true
+            let online = true
+            let canBeManaged: Bool = true
 
             do {
                 let result = try await api6.fetchSummary()

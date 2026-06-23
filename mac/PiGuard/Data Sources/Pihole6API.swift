@@ -473,12 +473,9 @@ class Pihole6API: NSObject {
         }
 
         // Fast path: return cached session if still valid (read under lock, no await)
-        sessionLock.lock()
-        if let cachedID = sessionID, let expiry = sessionExpiry, expiry > Date() {
-            sessionLock.unlock()
+        if let cachedID = cachedSessionToken() {
             return cachedID
         }
-        sessionLock.unlock()
 
         guard !connection.token.isEmpty else {
             throw APIError.invalidResponse(statusCode: 401, content: "Missing Pi-hole v6 app password")
@@ -495,17 +492,32 @@ class Pihole6API: NSObject {
         }
 
         // Write back under lock
+        return storeSession(id: response.session.sid, validity: response.session.validity)
+    }
+
+    /// Returns the cached session ID if still valid, otherwise nil. Synchronous so
+    /// the NSLock is never acquired from an async context — that is unavailable in
+    /// Swift 6 (and warns today).
+    private func cachedSessionToken() -> String? {
         sessionLock.lock()
-        sessionID = response.session.sid
-        if response.session.validity > 0 {
-            sessionExpiry = Date().addingTimeInterval(TimeInterval(max(response.session.validity - 5, 0)))
+        defer { sessionLock.unlock() }
+        if let cachedID = sessionID, let expiry = sessionExpiry, expiry > Date() {
+            return cachedID
+        }
+        return nil
+    }
+
+    /// Stores a freshly authenticated session under the lock and returns it.
+    private func storeSession(id: String?, validity: Int) -> String? {
+        sessionLock.lock()
+        defer { sessionLock.unlock() }
+        sessionID = id
+        if validity > 0 {
+            sessionExpiry = Date().addingTimeInterval(TimeInterval(max(validity - 5, 0)))
         } else {
             sessionExpiry = nil
         }
-        let newID = sessionID
-        sessionLock.unlock()
-
-        return newID
+        return sessionID
     }
 
 }

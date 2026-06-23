@@ -158,11 +158,14 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     }
 
     @objc private func handleOpenQueryLog() {
+        _trace("MainMenuController.handleOpenQueryLog — networkOverview=\(networkOverview != nil)")
         Log.debug("Widget tap received — opening Query Log (networkOverview ready: \(networkOverview != nil))")
         if networkOverview != nil {
             queryLogAction(queryLogMenuItem)
+            _trace("MainMenuController.handleOpenQueryLog — called queryLogAction")
         } else {
             pendingOpenQueryLog = true
+            _trace("MainMenuController.handleOpenQueryLog — networkOverview not ready, queued")
         }
     }
 
