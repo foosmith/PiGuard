@@ -93,3 +93,48 @@ The following are required for App Store Connect submission but are outside the 
 - Screenshots (1280×800 or 1440×900 for macOS)
 - Archiving and uploading the build via Xcode Organizer using the "PiGuard AppStore" scheme
 - Submitting for review in App Store Connect
+
+## App Store Connect Metadata (Guideline 4.1 compliant)
+
+Apple rejected the listing twice under Guideline 4.1 (copycat/impersonation) because the
+**subtitle** led with the third-party trademarks "Pi-hole" and "AdGuard," creating a
+misleading association with those developers' apps. The brand names must not lead in the
+**name, subtitle, or keywords**; they may appear in the **description body** only as a
+factual compatibility statement with trademark attribution and a non-affiliation disclaimer.
+This copy is recorded here so the compliant listing text is version-controlled.
+
+- **Name:** `PiGuard`
+- **Subtitle (≤30 chars):** `DNS ad-blocking dashboard`
+- **Keywords:** must NOT include `pihole`, `pi-hole`, or `adguard` (trademark terms in
+  keywords are a 4.1 trigger). Use generic terms, e.g.
+  `dns,adblock,ad blocker,menu bar,network,privacy,blocklist,dashboard,monitor`
+- **Description body** — leads with function (no brand name in the opening line), keeps
+  brand mentions factual and minimal, and ends with the attribution block (mirrors the
+  in-app About box in `Main.storyboard`). Finalized copy:
+
+  ```
+  Designed for home labs and self-hosted networks, PiGuard gives you a fast, native macOS
+  control point for daily status checks and common actions across modern DNS filtering setups.
+
+  With PiGuard, you can:
+
+  - Monitor your servers — Pi-hole® v5, Pi-hole® v6, and AdGuard Home®
+  - Manage mixed-backend environments in one app session
+  - Enable or disable blocking right from the menu bar
+  - Trigger gravity and filter refresh actions
+  - Review recent query log activity
+  - View top blocked domains and top clients
+  - Run primary-to-secondary sync workflows for supported v6 servers
+  - Configure launch at login and keyboard shortcuts
+  - Glance at live blocking stats from your desktop with the macOS widget
+
+  PiGuard is built for people who already run their own DNS filtering server and want a
+  lightweight, native macOS control center for it.
+
+  Pi-hole® is a registered trademark of Pi-hole LLC. AdGuard® is a registered trademark of
+  AdGuard Software Ltd. PiGuard is independent and is not affiliated with, endorsed by, or
+  sponsored by either company.
+  ```
+
+Do NOT use the "attach documentary evidence" reply path — that is only for holders of the
+trademark rights.
