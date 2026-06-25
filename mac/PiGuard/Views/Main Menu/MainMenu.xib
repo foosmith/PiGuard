@@ -5,7 +5,11 @@
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24765"/>
     </dependencies>
     <objects>
-        <customObject id="-2" userLabel="File's Owner"/>
+        <customObject id="-2" userLabel="File's Owner">
+            <connections>
+                <outlet property="delegate" destination="FU8-KO-8vo" id="XG5-ia-nhZ"/>
+            </connections>
+        </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
         <customObject id="FU8-KO-8vo" userLabel="App Delegate" customClass="AppDelegate" customModule="PiGuard" customModuleProvider="target"/>
@@ -424,9 +428,6 @@
                     </connections>
                 </menuItem>
             </items>
-            <connections>
-                <outlet property="delegate" destination="FU8-KO-8vo" id="XG5-ia-nhZ"/>
-            </connections>
             <point key="canvasLocation" x="156.5" y="86"/>
         </menu>
         <menuItem title="Item" id="wcI-fJ-Tha">
