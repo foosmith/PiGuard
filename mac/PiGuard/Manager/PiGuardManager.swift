@@ -30,6 +30,7 @@ class PiGuardManager: NSObject {
     private var updateInterval: TimeInterval
     private var lastSnapshot: WidgetSnapshot?
     private var lastPublishedStatus: PiholeNetworkStatus?
+    private var lastWidgetReload: Date?
     private var lastTopListsWereEmpty: Bool = true
     private var cachedTopBlocked: [String] = []
     private var cachedTopQueries: [String] = []
@@ -408,15 +409,20 @@ class PiGuardManager: NSObject {
         }
 
         // Only ask WidgetKit to reload on meaningful changes to avoid exhausting
-        // the widget's refresh budget (called every 3 s otherwise).
+        // the widget's refresh budget (called every 3 s otherwise). A periodic
+        // fallback also reloads at least every 15 min so the widget can't get
+        // stuck showing a stale entry when the status holds steady (e.g. after
+        // recovering from an offline period without a further status change).
         let currentStatus = overview.networkStatus
         let topListsNowEmpty = snapshot.topBlocked.isEmpty && snapshot.topQueries.isEmpty
         let topListsJustPopulated = lastTopListsWereEmpty && !topListsNowEmpty
+        let periodicReloadDue = lastWidgetReload.map { Date().timeIntervalSince($0) >= 900 } ?? true
 
-        if currentStatus != lastPublishedStatus || topListsJustPopulated {
-            Log.debug("publishSnapshot: reloading widget — status=\(currentStatus) topListsJustPopulated=\(topListsJustPopulated)")
+        if currentStatus != lastPublishedStatus || topListsJustPopulated || periodicReloadDue {
+            Log.debug("publishSnapshot: reloading widget — status=\(currentStatus) topListsJustPopulated=\(topListsJustPopulated) periodic=\(periodicReloadDue)")
             lastPublishedStatus = currentStatus
             lastTopListsWereEmpty = topListsNowEmpty
+            lastWidgetReload = Date()
             WidgetCenter.shared.reloadAllTimelines()
         } else {
             lastTopListsWereEmpty = topListsNowEmpty
