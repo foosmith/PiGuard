@@ -5,7 +5,27 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                    <item>
+                        <item>
+        <title>PiGuard v3.6.8 (build 718)</title>
+        <pubDate>Fri, 26 Jun 2026 15:31:40 GMT</pubDate>
+        <sparkle:version>718</sparkle:version>
+        <sparkle:shortVersionString>3.6.8</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.6.8/PiGuard-3.6.8-macOS.dmg"
+            length="5656602"
+            type="application/octet-stream"
+            sparkle:edSignature="OtZUjchQk5J4KrKLyqF/jHi3wNiuesNtSpIVZInpEDe0AXd4IMGDMSMefbVA6n0T08/3cJgN5444wx54D1Z4Dw==" />
+        <description><![CDATA[<h2>What's new</h2>
+<ul>
+<li><strong>Fix: Tapping the desktop widget now actually opens the Query Log.</strong> The previous release's <code>widgetURL</code> deep link never ran because the app's <code>AppDelegate</code> was not connected as the application delegate (the delegate outlet in MainMenu.xib was attached to the menu instead of File's Owner), so the <code>piguard://</code> URL was never handled. The delegate is now wired correctly.</li>
+<li><strong>Fix: Clearer Local Network permission prompt.</strong> Added <code>NSLocalNetworkUsageDescription</code> so macOS explains why PiGuard needs local network access to reach your Pi-hole servers. (If your servers show offline after updating, enable PiGuard under System Settings → Privacy &amp; Security → Local Network.)</li>
+<li><strong>Fix: Widget no longer gets stuck on a stale status.</strong> The widget timeline now refreshes at least every 15 minutes, so it recovers promptly after the Pi-holes go from offline back to online even without a status change.</li>
+</ul>
+<h2>Requirements</h2>
+<p>macOS 13 or later.</p>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.7 (build 717)</title>
         <pubDate>Tue, 16 Jun 2026 14:24:14 GMT</pubDate>
         <sparkle:version>717</sparkle:version>
