@@ -5,7 +5,33 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                        <item>
+                            <item>
+        <title>PiGuard v3.6.8 (build 718)</title>
+        <pubDate>Thu, 02 Jul 2026 12:32:28 GMT</pubDate>
+        <sparkle:version>718</sparkle:version>
+        <sparkle:shortVersionString>3.6.8</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.6.8/PiGuard-3.6.8-macOS.dmg"
+            length="5642530"
+            type="application/octet-stream"
+            sparkle:edSignature="Oi3Rxf4y2/DvVUcMC5eUbHaqZgjwvfvuGIf/eltC1OlglowDRbb/otqeLFylW9EjUdvbj5of/SwU2OcY/JgaCA==" />
+        <description><![CDATA[<h2>What's new</h2>
+<ul>
+<li><strong>Fix: Desktop widget now shows live data instead of stale cached statistics.</strong> The app group was renamed to the team-prefixed form (<code>GB7Z2TZ8LT.com.foosmith.PiGuard</code>) — the iOS-style <code>group.</code> prefix requires provisioning-profile authorization on macOS 15+, which blocked the sandboxed widget from reading the snapshot file the app publishes. The widget now reads fresh data directly on every refresh.</li>
+<li><strong>Fix: Widget timestamp ticks in real time.</strong> The "X min ago" label now updates continuously on screen instead of freezing at the last render.</li>
+<li><strong>Fix: "App not running · cached" warning is now reliable.</strong> The warning is pre-scheduled into the widget timeline, so it appears on time even when macOS throttles widget refreshes — and no longer shows while data is actually fresh.</li>
+<li>Removed the defunct keychain snapshot channel.</li>
+<li>Widget timeline reloads at least every 15 minutes to avoid a stale display (carried over from the unreleased 3.6.8 bump).</li>
+<li>Widget tap opens the Query Log via AppDelegate wiring (carried over from the unreleased 3.6.8 bump).</li>
+</ul>
+<h2>Requirements</h2>
+<p>macOS 13 or later.</p>
+<blockquote>
+<p>Note: this build is Developer ID-signed but <strong>not notarized</strong> — on first launch use right-click → Open if Gatekeeper objects.</p>
+</blockquote>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.8 (build 718)</title>
         <pubDate>Fri, 26 Jun 2026 15:31:40 GMT</pubDate>
         <sparkle:version>718</sparkle:version>
