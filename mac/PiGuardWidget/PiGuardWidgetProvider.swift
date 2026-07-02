@@ -8,6 +8,9 @@ import Foundation
 struct PiGuardWidgetProvider: TimelineProvider {
     typealias Entry = PiGuardWidgetEntry
 
+    /// Snapshot older than this renders the "App not running · cached" warning.
+    private static let cachedWarningAge: TimeInterval = 1200
+
     func placeholder(in context: Context) -> PiGuardWidgetEntry {
         PiGuardWidgetEntry(date: Date(), snapshot: nil)
     }
@@ -18,12 +21,29 @@ struct PiGuardWidgetProvider: TimelineProvider {
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<PiGuardWidgetEntry>) -> Void) {
         func finish(with snapshot: WidgetSnapshot?) {
-            let entry = PiGuardWidgetEntry(date: Date(), snapshot: snapshot)
-            let next = Calendar.current.date(byAdding: .minute, value: 15, to: Date())!
-            completion(Timeline(entries: [entry], policy: .after(next)))
+            let now = Date()
+            let next = Calendar.current.date(byAdding: .minute, value: 15, to: now)!
+            var entries: [PiGuardWidgetEntry] = []
+
+            if let snapshot {
+                let warnDate = snapshot.updatedAt.addingTimeInterval(Self.cachedWarningAge)
+                if warnDate > now {
+                    entries.append(PiGuardWidgetEntry(date: now, snapshot: snapshot))
+                    // Pre-schedule the warning so it appears even if WidgetKit
+                    // throttles the next reload — no getTimeline run needed.
+                    entries.append(PiGuardWidgetEntry(date: warnDate, snapshot: snapshot, showsCachedWarning: true))
+                } else {
+                    entries.append(PiGuardWidgetEntry(date: now, snapshot: snapshot, showsCachedWarning: true))
+                }
+            } else {
+                entries.append(PiGuardWidgetEntry(date: now, snapshot: nil))
+            }
+
+            completion(Timeline(entries: entries, policy: .after(next)))
         }
 
-        // Fast path: use cached data only when it's fresh (main app is actively running).
+        // Fast path: use stored data when it's fresh (main app is actively running
+        // and the widget can read the App Group file it publishes to).
         if let snapshot = WidgetSnapshotStore.readBest(), !isStale(snapshot.updatedAt) {
             finish(with: snapshot)
             return
@@ -31,7 +51,7 @@ struct PiGuardWidgetProvider: TimelineProvider {
 
         // Slow path: request a snapshot from the main app and wait up to 5 s.
         // The main app embeds the full JSON payload in the notification's userInfo,
-        // so we don't rely on any shared storage channel (keychain or App Group).
+        // so this works even if the App Group file can't be read.
         let sem = DispatchSemaphore(value: 0)
         let notifQueue = OperationQueue()
         var received: WidgetSnapshot?

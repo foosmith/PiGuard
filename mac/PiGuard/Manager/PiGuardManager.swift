@@ -395,8 +395,8 @@ class PiGuardManager: NSObject {
         WidgetSnapshotStore.write(snapshot)
         Log.debug("publishSnapshot: wrote snapshot, status=\(overview.networkStatus)")
 
-        // Broadcast via distributed notification so the widget extension can cache
-        // the data even when App Group file access is blocked by sandboxing.
+        // Broadcast via distributed notification as a fallback so the widget
+        // extension can cache the data even if it cannot read the App Group file.
         if let data = try? JSONEncoder().encode(snapshot),
            let json = String(data: data, encoding: .utf8) {
             DistributedNotificationCenter.default().postNotificationName(

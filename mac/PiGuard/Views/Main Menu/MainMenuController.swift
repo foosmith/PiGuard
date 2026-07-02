@@ -269,7 +269,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         // Watch the App Group container — writable by both the widget extension
         // (via AppIntent) and by any second instance of the main app.
         guard let groupURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard")
+            .containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID)
         else {
             Log.debug("Widget watcher: App Group container unavailable")
             return

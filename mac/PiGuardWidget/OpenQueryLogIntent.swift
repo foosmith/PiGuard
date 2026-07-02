@@ -50,7 +50,7 @@ struct OpenQueryLogIntent: AppIntent {
         // Path 3: App not running — flag file consumed by startFlagFileWatcher()
         // or at next launch.
         if let groupURL = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.com.foosmith.PiGuard") {
+            .containerURL(forSecurityApplicationGroupIdentifier: WidgetSnapshotStore.appGroupID) {
             let flagURL = groupURL.appendingPathComponent("open_query_log.flag")
             try? "1".write(to: flagURL, atomically: true, encoding: .utf8)
         }

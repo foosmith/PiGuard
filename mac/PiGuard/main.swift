@@ -56,7 +56,7 @@ if let runningPID = _runningPID(at: _pidURL) {
     )
     // App Group flag file as fallback in case the running instance isn't
     // listening yet (e.g. it just started).
-    let groupID = "group.com.foosmith.PiGuard"
+    let groupID = WidgetSnapshotStore.appGroupID
     if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupID) {
         let groupFlagURL = groupURL.appendingPathComponent("open_query_log.flag")
         try? "1".write(to: groupFlagURL, atomically: true, encoding: .utf8)

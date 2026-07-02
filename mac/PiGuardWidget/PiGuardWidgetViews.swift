@@ -59,7 +59,11 @@ struct SmallWidgetView: View {
 
                 Spacer(minLength: 0)
 
-                WidgetFooterView(snapshot: snapshot, showTimestamp: true)
+                WidgetFooterView(
+                    snapshot: snapshot,
+                    showTimestamp: true,
+                    showsCachedWarning: entry.showsCachedWarning
+                )
             }
             .padding(12)
         } else {
@@ -88,7 +92,7 @@ struct MediumWidgetView: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.8)
                         }
-                        Text(relativeTime(snapshot.updatedAt))
+                        updatedAgoText(snapshot.updatedAt)
                             .font(.system(size: 9))
                             .foregroundStyle(.tertiary)
                             .lineLimit(1)
@@ -118,7 +122,11 @@ struct MediumWidgetView: View {
                     )
                 }
 
-                WidgetFooterView(snapshot: snapshot, showTimestamp: false)
+                WidgetFooterView(
+                    snapshot: snapshot,
+                    showTimestamp: false,
+                    showsCachedWarning: entry.showsCachedWarning
+                )
             }
             .padding(14)
         } else {
@@ -134,17 +142,20 @@ struct WidgetFooterView: View {
     let snapshot: WidgetSnapshot
     /// Small widget: show the timestamp on the left. Medium: timestamp is already in the header.
     let showTimestamp: Bool
+    /// Per-entry flag from the provider — WidgetKit archives entry views at timeline
+    /// creation, so staleness must be decided per entry, not at render time.
+    let showsCachedWarning: Bool
 
     var body: some View {
         HStack(spacing: 3) {
             if showTimestamp {
-                Text(relativeTime(snapshot.updatedAt))
+                updatedAgoText(snapshot.updatedAt)
                     .font(.system(size: 9))
                     .foregroundStyle(.tertiary)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)
-            if isViewStale(snapshot.updatedAt) {
+            if showsCachedWarning {
                 Image(systemName: "exclamationmark.circle")
                     .font(.system(size: 8, weight: .medium))
                     .foregroundStyle(.orange.opacity(0.7))
@@ -280,11 +291,10 @@ private func statusIconName(for rawStatus: String) -> String {
     }
 }
 
-private func relativeTime(_ date: Date) -> String {
-    let diff = Int(-date.timeIntervalSinceNow)
-    if diff < 60   { return "Just now" }
-    if diff < 3600 { return "\(diff / 60)m ago" }
-    return "\(diff / 3600)h ago"
+/// Auto-updating "X ago" label — Text date styles keep counting up on screen
+/// between timeline renders, so the displayed age never freezes and lies.
+private func updatedAgoText(_ date: Date) -> Text {
+    Text("\(Text(date, style: .relative)) ago")
 }
 
 private func abbreviatedCount(_ n: Int) -> String {
@@ -300,10 +310,4 @@ private func blockRateString(_ pct: Double) -> String {
 /// PiGuard polls every 10 s. If the snapshot is older than 2 minutes, the app isn't running.
 func isStale(_ date: Date) -> Bool {
     -date.timeIntervalSinceNow > 120
-}
-
-/// Widget timeline refreshes every 15 minutes. Show "cached" only if the snapshot is
-/// older than 20 minutes — meaning a scheduled refresh has already been missed.
-func isViewStale(_ date: Date) -> Bool {
-    -date.timeIntervalSinceNow > 1200
 }

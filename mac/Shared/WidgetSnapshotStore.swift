@@ -5,69 +5,26 @@
 //  Shared between the PiGuard main app target and the PiGuardWidget extension target.
 //  Must not import AppKit or Cocoa.
 //
-//  Primary channel: App Group shared file container.
+//  Primary channel: App Group shared file container. The group ID is team-prefixed
+//    (not "group."-prefixed) — on macOS the team-prefixed form is authorized by the
+//    code signature alone, so the sandboxed widget can read it without a
+//    provisioning profile. The iOS-style "group." prefix requires provisioning
+//    profile authorization on macOS 15+, which Developer ID builds don't have.
 //  Secondary channel: NSDistributedNotificationCenter push from main app to widget.
 //    Notification name MUST start with the widget's bundle ID so the sandboxed
 //    widget extension is allowed to receive it (macOS sandbox restriction).
 //  Tertiary channel: widget's own UserDefaults local cache.
 
 import Foundation
-import Security
 
 enum WidgetSnapshotStore {
-    static let appGroupID = "group.com.foosmith.PiGuard"
+    static let appGroupID = "GB7Z2TZ8LT.com.foosmith.PiGuard"
     // Must start with widget bundle ID for sandbox-restricted DistributedNotificationCenter delivery.
     static let distributedNotificationName = "com.foosmith.PiGuard.PiGuardWidget.snapshot"
     static let snapshotRequestNotificationName = "com.foosmith.PiGuard.PiGuardWidget.snapshotRequest"
     private static let localCacheKey = "com.foosmith.PiGuard.cachedSnapshot"
 
-    // MARK: - Keychain (primary — works with team wildcard, no App Group portal setup needed)
-
-    private static let keychainService = "com.foosmith.PiGuard.widgetSnapshot"
-    private static let keychainAccount = "snapshot"
-    private static let keychainAccessGroup = "GB7Z2TZ8LT.com.foosmith.PiGuard"
-
-    static func writeKeychain(_ snapshot: WidgetSnapshot) {
-        guard let data = try? JSONEncoder().encode(snapshot) else { return }
-
-        let query: [CFString: Any] = [
-            kSecClass:                      kSecClassGenericPassword,
-            kSecAttrService:                keychainService,
-            kSecAttrAccount:                keychainAccount,
-            kSecAttrAccessGroup:            keychainAccessGroup,
-            kSecUseDataProtectionKeychain:  true,
-        ]
-        let update: [CFString: Any] = [kSecValueData: data]
-
-        var status = SecItemUpdate(query as CFDictionary, update as CFDictionary)
-        if status == errSecItemNotFound {
-            var add = query
-            add[kSecValueData]              = data
-            add[kSecAttrAccessible]         = kSecAttrAccessibleAfterFirstUnlock
-            status = SecItemAdd(add as CFDictionary, nil)
-        }
-        if status != errSecSuccess {
-            print("[WidgetSnapshotStore] keychain write failed: \(status) (errSecMissingEntitlement=-34018)")
-        }
-    }
-
-    static func readKeychain() -> WidgetSnapshot? {
-        let query: [CFString: Any] = [
-            kSecClass:                      kSecClassGenericPassword,
-            kSecAttrService:                keychainService,
-            kSecAttrAccount:                keychainAccount,
-            kSecAttrAccessGroup:            keychainAccessGroup,
-            kSecUseDataProtectionKeychain:  true,
-            kSecReturnData:                 true,
-            kSecMatchLimit:                 kSecMatchLimitOne,
-        ]
-        var result: AnyObject?
-        guard SecItemCopyMatching(query as CFDictionary, &result) == errSecSuccess,
-              let data = result as? Data else { return nil }
-        return try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
-    }
-
-    // MARK: - App Group file (secondary)
+    // MARK: - App Group file (primary)
 
     private static var snapshotURL: URL? {
         FileManager.default
@@ -76,7 +33,6 @@ enum WidgetSnapshotStore {
     }
 
     static func write(_ snapshot: WidgetSnapshot) {
-        writeKeychain(snapshot)
         guard let url = snapshotURL,
               let data = try? JSONEncoder().encode(snapshot) else { return }
         try? data.write(to: url, options: .atomic)
@@ -88,7 +44,7 @@ enum WidgetSnapshotStore {
         return try? JSONDecoder().decode(WidgetSnapshot.self, from: data)
     }
 
-    // MARK: - Local UserDefaults cache (tertiary — widget's own container)
+    // MARK: - Local UserDefaults cache (fallback — widget's own container)
 
     static func writeLocalCache(_ snapshot: WidgetSnapshot) {
         guard let data = try? JSONEncoder().encode(snapshot) else { return }
@@ -102,8 +58,11 @@ enum WidgetSnapshotStore {
 
     // MARK: - Best available
 
-    /// Tries Keychain first, then App Group file, then local notification cache.
+    /// Returns the freshest snapshot across all channels, so one channel gone
+    /// stale (or frozen by a failed writer) can never mask newer data in another.
     static func readBest() -> WidgetSnapshot? {
-        readKeychain() ?? read() ?? readLocalCache()
+        [read(), readLocalCache()]
+            .compactMap { $0 }
+            .max { $0.updatedAt < $1.updatedAt }
     }
 }
