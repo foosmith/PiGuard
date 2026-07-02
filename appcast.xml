@@ -5,7 +5,26 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                            <item>
+                                <item>
+        <title>PiGuard v3.6.9 (build 719)</title>
+        <pubDate>Thu, 02 Jul 2026 14:20:28 GMT</pubDate>
+        <sparkle:version>719</sparkle:version>
+        <sparkle:shortVersionString>3.6.9</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.6.9/PiGuard-3.6.9-719-macOS.dmg"
+            length="5647286"
+            type="application/octet-stream"
+            sparkle:edSignature="iLqVaSavuB5ef10wombQBi2TBzd7LvUnUd5PQSCXnMg+3egnXyFZS9sQj42Ez+AwMcwRCBCV/j1Fo4MpAuS8Bg==" />
+        <description><![CDATA[<h2>What's new</h2>
+<ul>
+<li>Fixed the desktop widget showing outdated statistics</li>
+<li>Widget now refreshes its display at least every 15 minutes</li>
+</ul>
+<h2>Requirements</h2>
+<p>macOS 13 or later.</p>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.8 (build 718)</title>
         <pubDate>Thu, 02 Jul 2026 12:32:28 GMT</pubDate>
         <sparkle:version>718</sparkle:version>
