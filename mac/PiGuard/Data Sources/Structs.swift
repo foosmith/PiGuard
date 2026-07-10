@@ -13,36 +13,6 @@ import Foundation
 
 // MARK: - Pi-hole Connections
 
-// PiGuard legacy v1.0 format
-struct PiholeConnectionV1: Codable {
-    let hostname: String
-    let port: Int
-    let useSSL: Bool
-    let token: String
-}
-
-extension PiholeConnectionV1 {
-    init?(data: Data) {
-        let jsonDecoder = JSONDecoder()
-        do {
-            let object = try jsonDecoder.decode(PiholeConnectionV1.self, from: data)
-            self = object
-        } catch {
-            Log.debug("Couldn't decode connection: \(error.localizedDescription)")
-            return nil
-        }
-    }
-
-    func encode() -> Data? {
-        let jsonEncoder = JSONEncoder()
-        if let data = try? jsonEncoder.encode(self) {
-            return data
-        } else {
-            return nil
-        }
-    }
-}
-
 // PiGuard legacy v1.1 format
 struct PiholeConnectionV2: Codable {
     let hostname: String

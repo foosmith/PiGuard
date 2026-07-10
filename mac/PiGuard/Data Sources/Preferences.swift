@@ -39,10 +39,54 @@ struct Preferences {
         static let enableLogging = "enableLogging"
         static let hideMenuBarIcon = "hideMenuBarIcon"
         static let automaticallyCheckForUpdates = "SUEnableAutomaticChecks"
+        static let hasShownWelcomeWindow = "hasShownWelcomeWindow"
+        static let didMigrateToGroupDefaults = "didMigrateToGroupDefaults"
     }
 
-    static var standard: UserDefaults {
-        let database = UserDefaults.standard
+    /// Settings live in the shared App Group store so every build flavor sees
+    /// the same data. The sandboxed App Store build resolves
+    /// UserDefaults.standard to its container plist while non-sandboxed
+    /// Developer ID builds use ~/Library/Preferences, so switching flavors
+    /// looked like a fresh install. First access migrates whatever the current
+    /// flavor had accumulated in its standard defaults.
+    static let standard: UserDefaults = {
+        // Sparkle reads this key from UserDefaults.standard itself, so it is
+        // registered there and never moves to the group store.
+        UserDefaults.standard.register(defaults: [Key.automaticallyCheckForUpdates: false])
+
+        guard let database = UserDefaults(suiteName: WidgetSnapshotStore.appGroupID) else {
+            return registeringDefaults(UserDefaults.standard)
+        }
+        migrateStandardDefaultsIfNeeded(into: database)
+        return registeringDefaults(database)
+    }()
+
+    /// Copies known keys from this flavor's UserDefaults.standard into the
+    /// group store, once. Runs before registration so registered defaults
+    /// can't masquerade as persisted values.
+    private static func migrateStandardDefaultsIfNeeded(into database: UserDefaults) {
+        guard !database.bool(forKey: Key.didMigrateToGroupDefaults) else { return }
+        let source = UserDefaults.standard
+        let keys = [
+            Key.piholes, Key.piholesV2, Key.piholesV3, Key.piholesV4,
+            Key.showBlocked, Key.showQueries, Key.showPercentage,
+            Key.showLabels, Key.verboseLabels, Key.pollingRate,
+            Key.syncEnabled, Key.syncPrimaryIdentifier, Key.syncSecondaryIdentifier,
+            Key.syncIntervalMinutes, Key.syncIntervalUsesCustom,
+            Key.syncSkipGroups, Key.syncSkipAdlists, Key.syncSkipDomains,
+            Key.syncDryRunEnabled, Key.syncWipeSecondaryBeforeSync,
+            Key.syncLastRunAt, Key.syncLastStatus, Key.syncLastMessage,
+            Key.enableLogging, Key.hideMenuBarIcon, Key.hasShownWelcomeWindow,
+        ]
+        for key in keys where database.object(forKey: key) == nil {
+            if let value = source.object(forKey: key) {
+                database.set(value, forKey: key)
+            }
+        }
+        database.set(true, forKey: Key.didMigrateToGroupDefaults)
+    }
+
+    private static func registeringDefaults(_ database: UserDefaults) -> UserDefaults {
         database.register(defaults: [
             Key.piholes: [],
             Key.piholesV2: [],
@@ -68,9 +112,7 @@ struct Preferences {
             Key.syncLastMessage: "",
             Key.enableLogging: false,
             Key.hideMenuBarIcon: false,
-            Key.automaticallyCheckForUpdates: false,
         ])
-
         return database
     }
 }
@@ -319,8 +361,15 @@ extension UserDefaults {
 
     // MARK: - Updates
 
-    var automaticallyCheckForUpdates: Bool { bool(forKey: Preferences.Key.automaticallyCheckForUpdates) }
-    func set(automaticallyCheckForUpdates: Bool) { set(automaticallyCheckForUpdates, for: Preferences.Key.automaticallyCheckForUpdates) }
+    // Sparkle reads SUEnableAutomaticChecks from UserDefaults.standard, so
+    // this setting stays there regardless of which instance it's accessed on.
+    var automaticallyCheckForUpdates: Bool {
+        UserDefaults.standard.bool(forKey: Preferences.Key.automaticallyCheckForUpdates)
+    }
+
+    func set(automaticallyCheckForUpdates: Bool) {
+        UserDefaults.standard.set(automaticallyCheckForUpdates, forKey: Preferences.Key.automaticallyCheckForUpdates)
+    }
 }
 
 private extension UserDefaults {

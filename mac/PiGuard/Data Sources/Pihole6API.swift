@@ -168,21 +168,6 @@ class Pihole6API: NSObject {
     private let path: String = "/api"
     private let timeout: TimeInterval = 5
 
-    override init() {
-        connection = PiholeConnectionV4(
-            hostname: "pi.hole",
-            port: 80,
-            useSSL: false,
-            token: "",
-            username: "",
-            passwordProtected: true,
-            adminPanelURL: "http://pi.hole/admin/",
-            backendType: .piholeV6,
-            isEnabled: true
-        )
-        super.init()
-    }
-
     init(connection: PiholeConnectionV4) {
         self.connection = connection
         super.init()

@@ -158,14 +158,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     }
 
     @objc private func handleOpenQueryLog() {
-        _trace("MainMenuController.handleOpenQueryLog — networkOverview=\(networkOverview != nil)")
         Log.debug("Widget tap received — opening Query Log (networkOverview ready: \(networkOverview != nil))")
         if networkOverview != nil {
             queryLogAction(queryLogMenuItem)
-            _trace("MainMenuController.handleOpenQueryLog — called queryLogAction")
         } else {
             pendingOpenQueryLog = true
-            _trace("MainMenuController.handleOpenQueryLog — networkOverview not ready, queued")
         }
     }
 
@@ -173,20 +170,17 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     override init() {
         super.init()
-        _trace("MainMenuController.init()")
         manager.delegate = self
     }
 
     override func awakeFromNib() {
-        _trace("awakeFromNib() — setting up status bar item")
         if let statusBarButton = statusBarItem.button {
             let image = menuBarImage()
             statusBarButton.image = image
             statusBarButton.imagePosition = image == nil ? .noImage : .imageLeading
             statusBarButton.title = "Initializing"
-            _trace("awakeFromNib() — statusBarButton configured, image=\(image != nil), hideMenuBarIcon=\(Preferences.standard.hideMenuBarIcon)")
         } else {
-            _trace("awakeFromNib() — WARNING: statusBarItem.button is nil (no space in menu bar?)")
+            Log.warn("statusBarItem.button is nil (no space in menu bar?)")
         }
         statusBarItem.menu = mainMenu
         mainMenu.delegate = self
@@ -240,8 +234,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
                 NSApp.activate(ignoringOtherApps: true)
             }
         }
-
-        _trace("awakeFromNib() — complete")
     }
 
     private func startDarwinNotificationListener() {

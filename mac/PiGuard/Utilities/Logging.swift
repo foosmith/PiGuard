@@ -136,13 +136,4 @@ open class Log {
     ) {
         log(object(), level: .debug, fileName, functionName, line)
     }
-
-    public static func verbose<T>(
-        _ object: @autoclosure () -> T,
-        _ fileName: String = #file,
-        _ functionName: String = #function,
-        _ line: Int = #line
-    ) {
-        log(object(), level: .verbose, fileName, functionName, line)
-    }
 }

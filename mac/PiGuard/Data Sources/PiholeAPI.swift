@@ -23,27 +23,10 @@ class PiholeAPI: NSObject {
 
     private enum Endpoints {
         static let summary = PiholeAPIEndpoint(queryParameter: "summaryRaw", authorizationRequired: true)
-        static let overTimeData10mins = PiholeAPIEndpoint(queryParameter: "overTimeData10mins", authorizationRequired: true)
         static let topItems = PiholeAPIEndpoint(queryParameter: "topItems", authorizationRequired: true)
         static let topClients = PiholeAPIEndpoint(queryParameter: "topClients", authorizationRequired: true)
         static let enable = PiholeAPIEndpoint(queryParameter: "enable", authorizationRequired: true)
         static let disable = PiholeAPIEndpoint(queryParameter: "disable", authorizationRequired: true)
-        static let recentBlocked = PiholeAPIEndpoint(queryParameter: "recentBlocked", authorizationRequired: true)
-    }
-
-    override init() {
-        connection = PiholeConnectionV4(
-            hostname: "pi.hole",
-            port: 80,
-            useSSL: false,
-            token: "",
-            username: "",
-            passwordProtected: true,
-            adminPanelURL: "http://pi.hole/admin/",
-            backendType: .piholeV5,
-            isEnabled: true
-        )
-        super.init()
     }
 
     init(connection: PiholeConnectionV4) {
