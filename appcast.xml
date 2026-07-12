@@ -5,7 +5,33 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                                <item>
+                                    <item>
+        <title>PiGuard v3.7.0 (build 721)</title>
+        <pubDate>Sun, 12 Jul 2026 19:53:57 GMT</pubDate>
+        <sparkle:version>721</sparkle:version>
+        <sparkle:shortVersionString>3.7.0</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.7.0/PiGuard-3.7.0-721-macOS.dmg"
+            length="5753864"
+            type="application/octet-stream"
+            sparkle:edSignature="Tv4GOEuR+ES+Y66/E/0zepD6lXF4EeIzgPQDI9IWO4RFTKSRZP4lpdbhpMMnQdLoHUcxh71dgkoIDTuvJaZRBg==" />
+        <description><![CDATA[<h2>What's New</h2>
+<ul>
+<li><strong>Activity graph</strong>: the main menu now shows a 24-hour queries/blocked graph (Pi-hole v6)</li>
+<li><strong>Diagnosis notifications</strong>: optional macOS notifications when Pi-hole reports new diagnosis messages (Pi-hole v6)</li>
+<li><strong>Server enable/disable improvements</strong>: hover the checkbox in Preferences for an explanation; disabled servers are now excluded from sync with a clear skip message</li>
+<li>Friendlier, more readable sync status and error messages</li>
+</ul>
+<h2>Fixes</h2>
+<ul>
+<li>PiGuard now returns to the background (no Dock icon) after its last window closes, instead of staying in the Dock for the rest of the session</li>
+<li>Settings and credentials are stored in a shared App Group so all build flavors keep server config (from unreleased 3.6.10)</li>
+<li>Menu bar item stays visible and clickable when no icon is shown</li>
+<li>Removed the hide-menu-bar-icon preference and unused icon assets</li>
+</ul>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.6.9 (build 719)</title>
         <pubDate>Thu, 02 Jul 2026 14:20:28 GMT</pubDate>
         <sparkle:version>719</sparkle:version>
