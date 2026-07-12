@@ -42,6 +42,7 @@ struct Preferences {
         static let notifiedDiagnosisMessageIDs = "notifiedDiagnosisMessageIDs"
         static let diagnosisNotificationsEnabled = "diagnosisNotificationsEnabled"
         static let didMigrateToGroupDefaults = "didMigrateToGroupDefaults"
+        static let lastRunBuild = "lastRunBuild"
     }
 
     /// Settings live in the shared App Group store so every build flavor sees
@@ -254,6 +255,16 @@ extension UserDefaults {
 
     func set(notifiedDiagnosisMessageIDs: [String: [Int]]) {
         set(notifiedDiagnosisMessageIDs, for: Preferences.Key.notifiedDiagnosisMessageIDs)
+    }
+
+    /// Build number (CFBundleVersion) of the app the last time it launched.
+    /// Used to detect the first launch after an update.
+    var lastRunBuild: String {
+        return string(forKey: Preferences.Key.lastRunBuild) ?? ""
+    }
+
+    func set(lastRunBuild: String) {
+        set(lastRunBuild, for: Preferences.Key.lastRunBuild)
     }
 
     var diagnosisNotificationsEnabled: Bool {

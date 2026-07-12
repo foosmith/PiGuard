@@ -10,6 +10,7 @@
 //  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import Cocoa
+import WidgetKit
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_: Notification) {
@@ -28,12 +29,64 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Remove legacy v1 plaintext token that may be sitting in UserDefaults
         UserDefaults.standard.removeObject(forKey: "token")
 
+        refreshWidgetProcessAfterUpdateIfNeeded()
+
         #if !APPSTORE
         if Preferences.standard.automaticallyCheckForUpdates {
             UpdateManager.shared.checkForUpdatesInBackground()
         }
         #endif
     }
+
+    // MARK: - Widget Process Refresh After Update
+
+    /// Replacing the app bundle on disk does not restart an already-running
+    /// widget extension process. The orphaned process keeps serving its last
+    /// timeline — and once the app bundle underneath it changed, it can no
+    /// longer read the App Group container, so the widget freezes on
+    /// "App not running · cached" until the process dies. On the first launch
+    /// of a new build, terminate any running PiGuardWidget process (WidgetKit
+    /// respawns it from the new bundle) and ask for a timeline reload.
+    private func refreshWidgetProcessAfterUpdateIfNeeded() {
+        let currentBuild = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""
+        guard !currentBuild.isEmpty, Preferences.standard.lastRunBuild != currentBuild else { return }
+        Log.debug("First launch of build \(currentBuild) (was \(Preferences.standard.lastRunBuild)); refreshing widget process")
+        Preferences.standard.set(lastRunBuild: currentBuild)
+
+        #if !APPSTORE
+        terminateStaleWidgetProcesses()
+        #endif
+
+        // Give a terminated process a moment to exit so chronod doesn't hand
+        // the reload to the dying instance. Harmless if nothing was killed.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            WidgetCenter.shared.reloadAllTimelines()
+        }
+    }
+
+    #if !APPSTORE
+    /// Sends SIGTERM to running PiGuardWidget.appex processes. Only possible
+    /// in the non-sandboxed Developer ID build; the sandboxed App Store build
+    /// compiles this out (signalling other processes is denied there, and App
+    /// Store installs re-register extensions through installd anyway).
+    private func terminateStaleWidgetProcesses() {
+        var pidCount = proc_listallpids(nil, 0)
+        guard pidCount > 0 else { return }
+        var pids = [pid_t](repeating: 0, count: Int(pidCount) * 2)
+        pidCount = proc_listallpids(&pids, Int32(pids.count * MemoryLayout<pid_t>.stride))
+        guard pidCount > 0 else { return }
+
+        for pid in pids.prefix(Int(pidCount)) where pid > 0 {
+            var pathBuffer = [CChar](repeating: 0, count: 4096)
+            guard proc_pidpath(pid, &pathBuffer, UInt32(pathBuffer.count)) > 0 else { continue }
+            let path = String(cString: pathBuffer)
+            if path.contains("/PiGuardWidget.appex/") {
+                Log.debug("Terminating stale widget process \(pid) at \(path)")
+                kill(pid, SIGTERM)
+            }
+        }
+    }
+    #endif
 
     @objc func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent _: NSAppleEventDescriptor) {
         guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
