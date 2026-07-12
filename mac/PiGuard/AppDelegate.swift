@@ -122,7 +122,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     public static func revertToAccessoryPolicyIfNeeded() {
-        let hasVisibleWindows = NSApp.windows.contains { $0.isVisible }
+        // NSApp.windows includes the status item's own NSStatusBarWindow, which is
+        // always visible (level .statusBar) — only user-facing normal-level windows
+        // should keep the app in the Dock.
+        let hasVisibleWindows = NSApp.windows.contains { $0.isVisible && $0.level == .normal }
         if !hasVisibleWindows {
             NSApp.setActivationPolicy(.accessory)
         }
