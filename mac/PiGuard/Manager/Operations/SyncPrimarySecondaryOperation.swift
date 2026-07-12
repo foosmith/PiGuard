@@ -33,37 +33,46 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
             SyncProgress.report("Sync\(modeTag): starting…")
 
             guard Preferences.standard.syncEnabled else {
-                self.record(status: .skipped, message: "Sync disabled.")
-                SyncProgress.report("Sync: skipped (disabled).")
+                self.record(status: .skipped, message: "Sync is turned off.")
+                SyncProgress.report("Sync: skipped — sync is turned off.")
                 return
             }
 
             let primaryId = Preferences.standard.syncPrimaryIdentifier
             let secondaryId = Preferences.standard.syncSecondaryIdentifier
             guard !primaryId.isEmpty, !secondaryId.isEmpty, primaryId != secondaryId else {
-                self.record(status: .skipped, message: "Select distinct Primary and Secondary.")
-                SyncProgress.report("Sync: skipped (select distinct Primary/Secondary).")
+                self.record(status: .skipped, message: "Primary and Secondary must be different Pi-holes.")
+                SyncProgress.report("Sync: skipped — Primary and Secondary must be different Pi-holes.")
                 return
             }
 
-            let connections = Preferences.standard.piholes.filter { $0.backendType.supportsSync }
+            let syncableConnections = Preferences.standard.piholes.filter { $0.backendType.supportsSync }
+            let connections = syncableConnections.filter { $0.isEnabled }
             guard
                 let primaryConnection = connections.first(where: { $0.identifier == primaryId || $0.legacyIdentifier == primaryId }),
                 let secondaryConnection = connections.first(where: { $0.identifier == secondaryId || $0.legacyIdentifier == secondaryId })
             else {
-                self.record(status: .failed, message: "Primary/Secondary connections not found.")
-                SyncProgress.report("Sync: failed (connections not found).")
+                let selectedButDisabled = syncableConnections.contains {
+                    !$0.isEnabled && [$0.identifier, $0.legacyIdentifier].contains(where: { $0 == primaryId || $0 == secondaryId })
+                }
+                if selectedButDisabled {
+                    self.record(status: .skipped, message: "A selected Pi-hole is disabled in Preferences. Re-enable it or choose another server.")
+                    SyncProgress.report("Sync: skipped — a selected Pi-hole is disabled in Preferences. Re-enable it or choose another server.")
+                } else {
+                    self.record(status: .failed, message: "The selected Pi-holes are no longer configured. Re-select them in Sync settings.")
+                    SyncProgress.report("Sync: failed — the selected Pi-holes are no longer configured. Re-select them in Sync settings.")
+                }
                 return
             }
 
             if primaryConnection.passwordProtected, primaryConnection.token.isEmpty {
-                self.record(status: .failed, message: "Primary requires authentication (missing session).")
-                SyncProgress.report("Sync: failed (primary missing session).")
+                self.record(status: .failed, message: "The Primary Pi-hole is signed out. Re-authenticate it in Preferences.")
+                SyncProgress.report("Sync: failed — the Primary Pi-hole is signed out. Re-authenticate it in Preferences.")
                 return
             }
             if secondaryConnection.passwordProtected, secondaryConnection.token.isEmpty {
-                self.record(status: .failed, message: "Secondary requires authentication (missing session).")
-                SyncProgress.report("Sync: failed (secondary missing session).")
+                self.record(status: .failed, message: "The Secondary Pi-hole is signed out. Re-authenticate it in Preferences.")
+                SyncProgress.report("Sync: failed — the Secondary Pi-hole is signed out. Re-authenticate it in Preferences.")
                 return
             }
 
@@ -106,11 +115,16 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                         )
                         bucketResults.append((bucket, created, updated, deleted))
                     }
-                    let domainParts = DomainBucket.allCases.compactMap { bucket -> String? in
-                        guard let r = bucketResults.first(where: { $0.bucket == bucket }) else { return nil }
-                        return "\(bucket.label): +\(r.created) ~\(r.updated) -\(r.deleted)"
+                    let domainParts = bucketResults.compactMap { r -> String? in
+                        let phrase = isDryRun
+                            ? self.changePhrase([(r.created, "to add"), (r.updated, "to update"), (r.deleted, "to remove")])
+                            : self.changePhrase([(r.created, "added"), (r.updated, "updated"), (r.deleted, "removed")])
+                        guard let phrase else { return nil }
+                        return "\(r.bucket.friendlyLabel): \(phrase)"
                     }
-                    domainsSummary = "Domains – \(domainParts.joined(separator: "; "))"
+                    domainsSummary = domainParts.isEmpty
+                        ? "Domains: already in sync"
+                        : "Domains – \(domainParts.joined(separator: "; "))"
                 }
 
                 let fullSummary = "\(groupsSummary) | \(adlistsSummary) | \(domainsSummary)"
@@ -121,20 +135,20 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 let message: String
                 switch apiError {
                 case .forbidden:
-                    message = "Secondary rejected writes (403). Enable Pi-hole v6 app_sudo (webserver.api.app_sudo=true)."
+                    message = "Sync failed: the Secondary Pi-hole rejected changes (403). Enable app_sudo on it (webserver.api.app_sudo=true)."
                 case .unauthorized:
-                    message = "Unauthorized (401). Re-authenticate Primary/Secondary in Preferences."
+                    message = "Sync failed: a Pi-hole session expired (401). Re-authenticate Primary/Secondary in Preferences."
                 case let .invalidResponse(statusCode: code, content: content):
-                    message = "Sync failed (\(code)). \(content)"
+                    message = self.friendlyFailureMessage(statusCode: code, content: content)
                 default:
                     message = "Sync failed: \(apiError)"
                 }
                 self.record(status: .failed, message: message)
-                SyncProgress.report("Sync: \(message)")
+                SyncProgress.report(message)
             } catch {
                 let message = "Sync failed: \(error.localizedDescription)"
                 self.record(status: .failed, message: message)
-                SyncProgress.report("Sync: \(message)")
+                SyncProgress.report(message)
             }
         }
     }
@@ -145,6 +159,53 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         Preferences.standard.set(syncLastStatus: status)
         Preferences.standard.set(syncLastMessage: message)
         Preferences.standard.set(syncLastRunAt: Date())
+    }
+
+    // MARK: - Message Formatting
+
+    private static let countFormatter: NumberFormatter = {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        return formatter
+    }()
+
+    private func formatted(_ count: Int) -> String {
+        Self.countFormatter.string(from: NSNumber(value: count)) ?? "\(count)"
+    }
+
+    private func countPhrase(_ count: Int, _ noun: String) -> String {
+        "\(formatted(count)) \(count == 1 ? noun : noun + "s")"
+    }
+
+    /// Builds "2 added, 1 updated" from labeled counts, dropping zero entries.
+    /// Returns nil when every count is zero so callers can say "already in sync".
+    private func changePhrase(_ items: [(count: Int, label: String)]) -> String? {
+        let parts = items.filter { $0.count > 0 }.map { "\(formatted($0.count)) \($0.label)" }
+        return parts.isEmpty ? nil : parts.joined(separator: ", ")
+    }
+
+    /// Turns a raw Pi-hole error payload like
+    /// {"error":{"key":"database_error","message":"…","hint":"database is locked"}}
+    /// into a readable sentence, with a specific explanation for lock contention.
+    private func friendlyFailureMessage(statusCode: Int, content: String) -> String {
+        var detail = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        var hint: String?
+        if let data = content.data(using: .utf8),
+           let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let error = object["error"] as? [String: Any] {
+            if let msg = error["message"] as? String, !msg.isEmpty { detail = msg }
+            if let h = error["hint"] as? String, !h.isEmpty { hint = h }
+        }
+
+        let combined = "\(detail) \(hint ?? "")"
+        if combined.localizedCaseInsensitiveContains("database is locked") {
+            return "Sync paused: the Secondary Pi-hole's database is busy (it is likely updating its blocklists). Nothing was lost — sync will retry on the next run, or you can run it again in a few minutes."
+        }
+
+        var message = "Sync failed: \(detail)"
+        if let hint { message += " (\(hint))" }
+        message += " [HTTP \(statusCode)]"
+        return message
     }
 
     // MARK: - Models
@@ -237,6 +298,15 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
 
         var path: String { "/domains/\(bucketType)/\(kind)" }
         var label: String { "\(bucketType)/\(kind)" }
+
+        var friendlyLabel: String {
+            switch self {
+            case .allowExact: return "allowed domains"
+            case .denyExact: return "denied domains"
+            case .allowRegex: return "allowed regex filters"
+            case .denyRegex: return "denied regex filters"
+            }
+        }
     }
 
     // MARK: - Group Sync (Phase 5)
@@ -302,11 +372,13 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
 
         let summary: String
         if skip {
-            summary = "Groups: skipped (ID maps built)"
+            summary = "Groups: skipped"
         } else if dryRun {
-            summary = "[Dry run] Groups: would +\(toCreate.count) ~\(toUpdate.count) (\(toDisable.count) extras would be disabled)"
+            let phrase = changePhrase([(toCreate.count, "to add"), (toUpdate.count, "to update"), (toDisable.count, "to disable")])
+            summary = "[Dry run] Groups: \(phrase ?? "already in sync")"
         } else {
-            summary = "Groups: +\(toCreate.count) ~\(toUpdate.count) (\(toDisable.count) extras disabled)"
+            let phrase = changePhrase([(toCreate.count, "added"), (toUpdate.count, "updated"), (toDisable.count, "disabled")])
+            summary = "Groups: \(phrase ?? "already in sync")"
         }
 
         SyncProgress.report("Sync: \(summary)")
@@ -391,12 +463,22 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         let toDelete = Array(secondaryKeys.subtracting(primaryKeys)).sorted()
         let toUpsert = Array(primaryKeys).sorted()
 
-        SyncProgress.report("Sync: \(dryRun ? "[dry run] " : "")\(toUpsert.count) primary adlists; \(toDelete.count) secondary extras to remove.")
+        if toDelete.isEmpty {
+            SyncProgress.report("Sync: \(dryRun ? "[dry run] " : "")Primary has \(countPhrase(toUpsert.count, "adlist")); Secondary has no extras.")
+        } else if dryRun {
+            SyncProgress.report("Sync: [dry run] Primary has \(countPhrase(toUpsert.count, "adlist")); \(countPhrase(toDelete.count, "extra adlist")) would be removed from Secondary.")
+        } else {
+            SyncProgress.report("Sync: Primary has \(countPhrase(toUpsert.count, "adlist")); removing \(countPhrase(toDelete.count, "extra adlist")) from Secondary…")
+        }
 
         var deleted = 0
         var disabled = 0
         for address in toDelete {
             guard let list = secondaryByAddress[address] else { continue }
+            let removedSoFar = deleted + disabled
+            if !dryRun, removedSoFar > 0, removedSoFar % 50 == 0 {
+                SyncProgress.report("Sync: removing extra adlists (\(formatted(removedSoFar)) of \(formatted(toDelete.count)))…")
+            }
             if !dryRun {
                 if let id = list.id {
                     do {
@@ -464,15 +546,16 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
 
             let processed = created + updated
             if processed % 25 == 0 {
-                SyncProgress.report("Sync: adlists processed \(processed)/\(toUpsert.count)…")
+                SyncProgress.report("Sync: updating adlists (\(formatted(processed)) of \(formatted(toUpsert.count)))…")
             }
         }
 
-        let tag = dryRun ? "[Dry run] " : ""
-        if disabled > 0 {
-            return "\(tag)Adlists: +\(created) ~\(updated) -\(deleted) (disabled \(disabled) extras)"
+        if dryRun {
+            let phrase = changePhrase([(created, "to add"), (updated, "to update"), (deleted, "to remove")])
+            return "[Dry run] Adlists: \(phrase ?? "already in sync")"
         }
-        return "\(tag)Adlists: +\(created) ~\(updated) -\(deleted)"
+        let phrase = changePhrase([(created, "added"), (updated, "updated"), (deleted, "removed"), (disabled, "disabled")])
+        return "Adlists: \(phrase ?? "already in sync")"
     }
 
     private func fetchAdlists(api: Pihole6API) async throws -> [Adlist] {
@@ -536,7 +619,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         }
         guard !bad.isEmpty else { return lists }
 
-        SyncProgress.report("Sync: fixing \(bad.count) percent-encoded adlist URLs on secondary…")
+        SyncProgress.report("Sync: repairing \(countPhrase(bad.count, "malformed adlist URL")) on Secondary…")
         var fixedIdToDecoded: [Int: String] = [:]
 
         for list in bad {
@@ -598,10 +681,10 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
     }
 
     private func wipeSecondaryAdlists(secondary: Pihole6API) async throws {
-        SyncProgress.report("Sync: wiping secondary adlists (pre-clean)…")
+        SyncProgress.report("Sync: removing all adlists from Secondary before syncing (wipe option is on)…")
         let lists = try await fetchAdlists(api: secondary)
         guard !lists.isEmpty else {
-            SyncProgress.report("Sync: no adlists to wipe.")
+            SyncProgress.report("Sync: Secondary has no adlists to remove.")
             return
         }
         var wiped = 0
@@ -631,10 +714,10 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
                 }
             }
             if wiped % 50 == 0 {
-                SyncProgress.report("Sync: pre-clean wiped \(wiped)/\(lists.count) adlists…")
+                SyncProgress.report("Sync: wiping adlists (\(formatted(wiped)) of \(formatted(lists.count)))…")
             }
         }
-        SyncProgress.report("Sync: pre-clean complete (\(wiped) adlists wiped).")
+        SyncProgress.report("Sync: wipe complete — \(countPhrase(wiped, "adlist")) removed.")
     }
 
     private func disableAdlist(secondary: Pihole6API, list: Adlist) async throws {
@@ -660,7 +743,7 @@ final class SyncPrimarySecondaryOperation: AsyncOperation, @unchecked Sendable {
         dryRun: Bool
     ) async throws -> (created: Int, updated: Int, deleted: Int) {
 
-        SyncProgress.report("Sync: \(dryRun ? "[dry run] " : "")syncing \(bucket.label)…")
+        SyncProgress.report("Sync: \(dryRun ? "[dry run] " : "")checking \(bucket.friendlyLabel)…")
 
         let primaryDomains = try await fetchDomains(api: primary, bucket: bucket)
         let secondaryDomains = try await fetchDomains(api: secondary, bucket: bucket)

@@ -37,9 +37,10 @@ struct Preferences {
         static let syncLastStatus = "syncLastStatus"
         static let syncLastMessage = "syncLastMessage"
         static let enableLogging = "enableLogging"
-        static let hideMenuBarIcon = "hideMenuBarIcon"
         static let automaticallyCheckForUpdates = "SUEnableAutomaticChecks"
         static let hasShownWelcomeWindow = "hasShownWelcomeWindow"
+        static let notifiedDiagnosisMessageIDs = "notifiedDiagnosisMessageIDs"
+        static let diagnosisNotificationsEnabled = "diagnosisNotificationsEnabled"
         static let didMigrateToGroupDefaults = "didMigrateToGroupDefaults"
     }
 
@@ -76,7 +77,7 @@ struct Preferences {
             Key.syncSkipGroups, Key.syncSkipAdlists, Key.syncSkipDomains,
             Key.syncDryRunEnabled, Key.syncWipeSecondaryBeforeSync,
             Key.syncLastRunAt, Key.syncLastStatus, Key.syncLastMessage,
-            Key.enableLogging, Key.hideMenuBarIcon, Key.hasShownWelcomeWindow,
+            Key.enableLogging, Key.hasShownWelcomeWindow,
         ]
         for key in keys where database.object(forKey: key) == nil {
             if let value = source.object(forKey: key) {
@@ -111,7 +112,7 @@ struct Preferences {
             Key.syncLastStatus: "",
             Key.syncLastMessage: "",
             Key.enableLogging: false,
-            Key.hideMenuBarIcon: false,
+            Key.diagnosisNotificationsEnabled: true,
         ])
         return database
     }
@@ -246,6 +247,23 @@ extension UserDefaults {
         set(array, for: Preferences.Key.piholesV4)
     }
 
+    /// Diagnosis message IDs already notified about, keyed by Pi-hole identifier.
+    var notifiedDiagnosisMessageIDs: [String: [Int]] {
+        dictionary(forKey: Preferences.Key.notifiedDiagnosisMessageIDs) as? [String: [Int]] ?? [:]
+    }
+
+    func set(notifiedDiagnosisMessageIDs: [String: [Int]]) {
+        set(notifiedDiagnosisMessageIDs, for: Preferences.Key.notifiedDiagnosisMessageIDs)
+    }
+
+    var diagnosisNotificationsEnabled: Bool {
+        return bool(forKey: Preferences.Key.diagnosisNotificationsEnabled)
+    }
+
+    func set(diagnosisNotificationsEnabled: Bool) {
+        set(diagnosisNotificationsEnabled, for: Preferences.Key.diagnosisNotificationsEnabled)
+    }
+
     var showBlocked: Bool {
         return bool(forKey: Preferences.Key.showBlocked)
     }
@@ -353,11 +371,6 @@ extension UserDefaults {
 
     var enableLogging: Bool { bool(forKey: Preferences.Key.enableLogging) }
     func set(enableLogging: Bool) { set(enableLogging, for: Preferences.Key.enableLogging) }
-
-    // MARK: - Menu Bar
-
-    var hideMenuBarIcon: Bool { bool(forKey: Preferences.Key.hideMenuBarIcon) }
-    func set(hideMenuBarIcon: Bool) { set(hideMenuBarIcon, for: Preferences.Key.hideMenuBarIcon) }
 
     // MARK: - Updates
 

@@ -22,6 +22,13 @@ protocol PreferencesDelegate: AnyObject {
 class PreferencesViewController: NSViewController {
     weak var delegate: PreferencesDelegate?
 
+    static let serverEnabledToolTip = """
+        Enable or disable this server.
+
+        When disabled, PiGuard stops polling the server — it is excluded from menu bar statistics, blocking controls, and sync. \
+        Its connection settings are kept, so you can re-enable it at any time.
+        """
+
     lazy var piholeSheetController: PiholeSettingsViewController? = {
         guard let controller = self.storyboard!.instantiateController(
             withIdentifier: "piHoleDialog"
@@ -65,9 +72,9 @@ class PreferencesViewController: NSViewController {
     @IBOutlet var enableLoggingCheckbox: NSButton!
     @IBOutlet var showLogFileButton: NSButton!
 
-    private lazy var hideMenuBarIconCheckbox: NSButton = {
-        let cb = NSButton(checkboxWithTitle: "Hide menu bar icon", target: self, action: #selector(checkboxAction(_:)))
-        cb.toolTip = "Removes the PiGuard shield icon from the menu bar, showing only text stats"
+    private lazy var diagnosisNotificationsCheckbox: NSButton = {
+        let cb = NSButton(checkboxWithTitle: "Notify on diagnosis messages", target: self, action: #selector(checkboxAction(_:)))
+        cb.toolTip = "Shows a macOS notification when Pi-hole reports new diagnosis messages (Pi-hole v6 only)"
         return cb
     }()
 
@@ -202,24 +209,27 @@ class PreferencesViewController: NSViewController {
             guard let anchorView = existing?.secondItem as? NSView else { return }
             existing?.isActive = false
 
-            hideMenuBarIconCheckbox.translatesAutoresizingMaskIntoConstraints = false
-            parent.addSubview(hideMenuBarIconCheckbox)
+            diagnosisNotificationsCheckbox.translatesAutoresizingMaskIntoConstraints = false
+            parent.addSubview(diagnosisNotificationsCheckbox)
+            // Keep the label inside the group box; truncate rather than overflow.
+            diagnosisNotificationsCheckbox.trailingAnchor.constraint(lessThanOrEqualTo: parent.trailingAnchor, constant: -10).isActive = true
+            diagnosisNotificationsCheckbox.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
 
             #if !APPSTORE
             automaticallyCheckForUpdatesCheckbox.translatesAutoresizingMaskIntoConstraints = false
             parent.addSubview(automaticallyCheckForUpdatesCheckbox)
             NSLayoutConstraint.activate([
-                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
-                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
+                diagnosisNotificationsCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
+                diagnosisNotificationsCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
                 automaticallyCheckForUpdatesCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
-                automaticallyCheckForUpdatesCheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+                automaticallyCheckForUpdatesCheckbox.topAnchor.constraint(equalTo: diagnosisNotificationsCheckbox.bottomAnchor, constant: 8),
                 launchAtLogincheckbox.topAnchor.constraint(equalTo: automaticallyCheckForUpdatesCheckbox.bottomAnchor, constant: 8),
             ])
             #else
             NSLayoutConstraint.activate([
-                hideMenuBarIconCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
-                hideMenuBarIconCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
-                launchAtLogincheckbox.topAnchor.constraint(equalTo: hideMenuBarIconCheckbox.bottomAnchor, constant: 8),
+                diagnosisNotificationsCheckbox.leadingAnchor.constraint(equalTo: launchAtLogincheckbox.leadingAnchor),
+                diagnosisNotificationsCheckbox.topAnchor.constraint(equalTo: anchorView.bottomAnchor, constant: 8),
+                launchAtLogincheckbox.topAnchor.constraint(equalTo: diagnosisNotificationsCheckbox.bottomAnchor, constant: 8),
             ])
             #endif
         }
@@ -232,6 +242,7 @@ class PreferencesViewController: NSViewController {
 
         let enabledCol = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("enabledColumn"))
         enabledCol.title = ""
+        enabledCol.headerToolTip = Self.serverEnabledToolTip
         enabledCol.width = 24
         enabledCol.minWidth = 24
         enabledCol.maxWidth = 24
@@ -249,7 +260,7 @@ class PreferencesViewController: NSViewController {
 
         showLabelsCheckbox.state = Preferences.standard.showLabels ? .on : .off
         verboseLabelsCheckbox.state = Preferences.standard.verboseLabels ? .on : .off
-        hideMenuBarIconCheckbox.state = Preferences.standard.hideMenuBarIcon ? .on : .off
+        diagnosisNotificationsCheckbox.state = Preferences.standard.diagnosisNotificationsEnabled ? .on : .off
         #if !APPSTORE
         automaticallyCheckForUpdatesCheckbox.state = Preferences.standard.automaticallyCheckForUpdates ? .on : .off
         #endif
@@ -300,7 +311,7 @@ class PreferencesViewController: NSViewController {
 
         Preferences.standard.set(enableLogging: enableLoggingCheckbox.state == .on)
         delegate?.applyLoggingPreference()
-        Preferences.standard.set(hideMenuBarIcon: hideMenuBarIconCheckbox.state == .on)
+        Preferences.standard.set(diagnosisNotificationsEnabled: diagnosisNotificationsCheckbox.state == .on)
         #if !APPSTORE
         Preferences.standard.set(automaticallyCheckForUpdates: automaticallyCheckForUpdatesCheckbox.state == .on)
         #endif
@@ -383,6 +394,7 @@ extension PreferencesViewController: NSTableViewDelegate {
                 checkbox.title = ""
             }
             checkbox.state = pihole.isEnabled ? .on : .off
+            checkbox.toolTip = Self.serverEnabledToolTip
             checkbox.tag = row
             checkbox.target = self
             checkbox.action = #selector(serverEnabledToggled(_:))

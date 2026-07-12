@@ -56,7 +56,7 @@ final class SyncSettingsViewController: NSViewController {
     private let helpPopoverWidth: CGFloat = 280
 
     private var v6Connections: [PiholeConnectionV4] {
-        Preferences.standard.piholes.filter { $0.backendType.supportsSync }
+        Preferences.standard.piholes.filter { $0.backendType.supportsSync && $0.isEnabled }
     }
 
     private var excludedConnectionCount: Int {
@@ -177,7 +177,7 @@ final class SyncSettingsViewController: NSViewController {
         contentStack.spacing = 14
         contentStack.translatesAutoresizingMaskIntoConstraints = false
 
-        let footerLabel = Self.makeHelperLabel("Sync only works between Pi-hole v6 connections. Other backends remain available for monitoring and blocking control.")
+        let footerLabel = Self.makeHelperLabel("Sync only works between enabled Pi-hole v6 connections. Other backends remain available for monitoring and blocking control.")
         footerLabel.maximumNumberOfLines = 2
         footerLabel.translatesAutoresizingMaskIntoConstraints = false
 
@@ -445,12 +445,12 @@ final class SyncSettingsViewController: NSViewController {
             let count = v6Connections.count
             if count == 0 {
                 if excludedConnectionCount > 0 {
-                    return "Add two Pi-hole v6 connections to enable sync. AdGuard Home and Pi-hole v5 connections are not eligible."
+                    return "Add two Pi-hole v6 connections to enable sync. Disabled servers, AdGuard Home, and Pi-hole v5 connections are not eligible."
                 }
                 return "Add two Pi-hole v6 connections to enable sync."
             }
             if excludedConnectionCount > 0 {
-                return "Add one more Pi-hole v6 connection to enable sync. Other configured backends stay available for monitoring and blocking control only."
+                return "Add one more Pi-hole v6 connection to enable sync. Disabled servers and other backends are not eligible."
             }
             return "Add one more Pi-hole v6 connection to enable sync."
         }
@@ -546,7 +546,9 @@ final class SyncSettingsViewController: NSViewController {
                 return compactSyncSection(cleaned, label: "Adlists")
             }
             if cleaned.hasPrefix("Domains") || cleaned.hasPrefix("Dry run Domains") {
-                return cleaned.contains("skipped") ? "Domains skipped" : "Domains updated"
+                if cleaned.contains("skipped") { return "Domains skipped" }
+                if cleaned.contains("already in sync") { return "Domains in sync" }
+                return "Domains updated"
             }
             return shorten(cleaned, maxLength: 40)
         }

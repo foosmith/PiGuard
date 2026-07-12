@@ -32,6 +32,14 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private var queryLogWindowController: QueryLogWindowController?
     private var pendingOpenQueryLog = false
     private var flagWatchSource: DispatchSourceFileSystemObject?
+    private var isFetchingHistory = false
+
+    // MARK: - Activity Graph & Diagnosis Messages
+
+    private let activityGraphView = ActivityGraphView(frame: NSRect(x: 0, y: 0, width: 280, height: 96))
+    private let activityGraphMenuItem = NSMenuItem()
+    private let diagnosisMessagesMenuItem = NSMenuItem()
+    private let diagnosisMessagesMenu = NSMenu()
 
     // MARK: - Internal Views
 
@@ -199,6 +207,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
         #endif
 
+        setupActivityGraphMenuItem()
+        setupDiagnosisMessagesMenuItem()
+
+        NotificationCenter.default.addObserver(self, selector: #selector(handleDiagnosisMessagesUpdated), name: .piGuardDiagnosisMessagesUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
@@ -332,7 +344,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        guard menu == mainMenu, !isFetchingTopItems else { return }
+        guard menu == mainMenu else { return }
+        refreshActivityGraph()
+
+        guard !isFetchingTopItems else { return }
         isFetchingTopItems = true
 
         guard let networkOverview = networkOverview else {
@@ -444,7 +459,9 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
                 statusBarButton.image = image
                 if image == nil {
                     statusBarButton.imagePosition = .noImage
-                    statusBarButton.title = title
+                    // Without an icon, an empty title would leave the status
+                    // item invisible and unclickable.
+                    statusBarButton.title = title.isEmpty ? "PiGuard" : title
                 } else if title.isEmpty {
                     statusBarButton.imagePosition = .imageOnly
                 } else {
@@ -470,13 +487,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             return image
         }
 
-        if Preferences.standard.hideMenuBarIcon {
-            return nil
-        }
-
-        let image = NSImage(named: "icon")
-        image?.isTemplate = false
-        return image
+        return nil
     }
 
     private func refreshMenuBarDisplay() {
@@ -836,6 +847,109 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
                 }
             }
         }
+    }
+
+    // MARK: - Activity Graph
+
+    private func setupActivityGraphMenuItem() {
+        activityGraphMenuItem.view = activityGraphView
+        activityGraphMenuItem.isHidden = true
+        let insertIndex = mainMenu.index(of: mainBlocklistMenuItem) + 1
+        mainMenu.insertItem(activityGraphMenuItem, at: insertIndex)
+    }
+
+    private func refreshActivityGraph() {
+        guard let networkOverview = networkOverview else { return }
+        let v6Apis = networkOverview.piholes.values.compactMap(\.api6)
+
+        activityGraphMenuItem.isHidden = v6Apis.isEmpty
+        guard !v6Apis.isEmpty, !isFetchingHistory else { return }
+        isFetchingHistory = true
+
+        Task {
+            // Buckets are aligned to the same 10-minute boundaries on every
+            // server, so summing by timestamp merges multi-server setups.
+            var combined: [Date: (total: Int, blocked: Int)] = [:]
+            for api in v6Apis {
+                for bucket in await api.fetchHistory() {
+                    combined[bucket.timestamp, default: (0, 0)].total += bucket.total
+                    combined[bucket.timestamp, default: (0, 0)].blocked += bucket.blocked
+                }
+            }
+            let buckets = combined
+                .map { ActivityGraphView.Bucket(timestamp: $0.key, total: $0.value.total, blocked: $0.value.blocked) }
+
+            await MainActor.run {
+                self.activityGraphView.update(buckets: buckets)
+                self.isFetchingHistory = false
+            }
+        }
+    }
+
+    // MARK: - Diagnosis Messages
+
+    private func setupDiagnosisMessagesMenuItem() {
+        diagnosisMessagesMenuItem.title = "Diagnosis Messages"
+        diagnosisMessagesMenuItem.image = NSImage(
+            systemSymbolName: "exclamationmark.triangle",
+            accessibilityDescription: "Diagnosis messages"
+        )
+        diagnosisMessagesMenuItem.isHidden = true
+        mainMenu.setSubmenu(diagnosisMessagesMenu, for: diagnosisMessagesMenuItem)
+        let insertIndex = mainMenu.index(of: activityGraphMenuItem) + 1
+        mainMenu.insertItem(diagnosisMessagesMenuItem, at: insertIndex)
+    }
+
+    @objc private func handleDiagnosisMessagesUpdated() {
+        rebuildDiagnosisMessagesMenu()
+    }
+
+    private func rebuildDiagnosisMessagesMenu() {
+        let servers = manager.diagnosisMessageMonitor.latest.filter { !$0.messages.isEmpty }
+        let count = servers.reduce(0) { $0 + $1.messages.count }
+
+        diagnosisMessagesMenuItem.isHidden = count == 0
+        guard count > 0 else { return }
+
+        diagnosisMessagesMenuItem.title = "Diagnosis Messages (\(count))"
+        diagnosisMessagesMenu.removeAllItems()
+
+        let showServerNames = servers.count > 1
+        let timestampFormatter = RelativeDateTimeFormatter()
+
+        for (index, server) in servers.enumerated() {
+            if showServerNames {
+                if index > 0 { diagnosisMessagesMenu.addItem(NSMenuItem.separator()) }
+                let header = NSMenuItem(title: server.displayName, action: nil, keyEquivalent: "")
+                header.isEnabled = false
+                diagnosisMessagesMenu.addItem(header)
+            }
+
+            for message in server.messages {
+                let age = timestampFormatter.localizedString(for: message.timestamp, relativeTo: Date())
+                var text = message.plain.replacingOccurrences(of: "\n", with: " ")
+                if text.count > 80 {
+                    text = String(text.prefix(79)) + "\u{2026}"
+                }
+                let item = NSMenuItem(title: "\(text)  (\(age))", action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                item.toolTip = message.plain
+                diagnosisMessagesMenu.addItem(item)
+            }
+        }
+
+        diagnosisMessagesMenu.addItem(NSMenuItem.separator())
+        let dismissItem = NSMenuItem(
+            title: "Dismiss All",
+            action: #selector(dismissAllDiagnosisMessagesAction(_:)),
+            keyEquivalent: ""
+        )
+        dismissItem.target = self
+        diagnosisMessagesMenu.addItem(dismissItem)
+    }
+
+    @objc private func dismissAllDiagnosisMessagesAction(_: NSMenuItem) {
+        manager.diagnosisMessageMonitor.dismissAll()
     }
 
     // MARK: - Sync Settings Delegate

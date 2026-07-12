@@ -351,6 +351,73 @@ class Pihole6API: NSObject {
         }
     }
 
+    // MARK: - Activity History
+
+    /// One 10-minute bucket from GET /history.
+    struct HistoryBucket {
+        let timestamp: Date
+        let total: Int
+        let blocked: Int
+    }
+
+    func fetchHistory() async -> [HistoryBucket] {
+        do {
+            let data = try await getData("/history")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let history = json["history"] as? [[String: Any]] else { return [] }
+            return history.compactMap { bucket -> HistoryBucket? in
+                guard let time = bucket["timestamp"] as? Double,
+                      let total = bucket["total"] as? Int,
+                      let blocked = bucket["blocked"] as? Int else { return nil }
+                return HistoryBucket(timestamp: Date(timeIntervalSince1970: time), total: total, blocked: blocked)
+            }
+        } catch {
+            Log.warn("Pi-hole v6 fetchHistory failed on \(identifier): \(error)")
+            return []
+        }
+    }
+
+    // MARK: - Diagnosis Messages
+
+    struct DiagnosisMessage {
+        let id: Int
+        let timestamp: Date
+        let type: String
+        let plain: String
+    }
+
+    func fetchDiagnosisMessages() async -> [DiagnosisMessage]? {
+        do {
+            let data = try await getData("/info/messages")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let messages = json["messages"] as? [[String: Any]] else { return nil }
+            return messages.compactMap { message -> DiagnosisMessage? in
+                guard let id = message["id"] as? Int,
+                      let time = message["timestamp"] as? Double,
+                      let plain = message["plain"] as? String else { return nil }
+                return DiagnosisMessage(
+                    id: id,
+                    timestamp: Date(timeIntervalSince1970: time),
+                    type: message["type"] as? String ?? "UNKNOWN",
+                    plain: plain
+                )
+            }
+        } catch {
+            Log.warn("Pi-hole v6 fetchDiagnosisMessages failed on \(identifier): \(error)")
+            return nil
+        }
+    }
+
+    func deleteDiagnosisMessage(id: Int) async -> Bool {
+        do {
+            _ = try await deleteData("/info/messages/\(id)")
+            return true
+        } catch {
+            Log.warn("Pi-hole v6 deleteDiagnosisMessage(\(id)) failed on \(identifier): \(error)")
+            return false
+        }
+    }
+
     private struct DomainRuleRequest: Encodable {
         let domain: String
         let comment: String
