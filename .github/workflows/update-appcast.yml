@@ -50,9 +50,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download "$RELEASE_TAG" \
-            --repo "${{ github.repository }}" \
-            --pattern "*.dmg"
+          # The release event fires the moment the release is published, which
+          # can be minutes before the DMG asset is uploaded. Poll for up to
+          # 30 minutes instead of failing on the first miss.
+          for attempt in $(seq 1 30); do
+            if gh release download "$RELEASE_TAG" \
+              --repo "${{ github.repository }}" \
+              --pattern "*.dmg"; then
+              break
+            fi
+            echo "No DMG asset yet (attempt $attempt/30); retrying in 60s..."
+            sleep 60
+          done
           DMG_FILE=$(ls *.dmg | head -1)
           echo "DMG_FILE=$DMG_FILE" >> $GITHUB_ENV
 
