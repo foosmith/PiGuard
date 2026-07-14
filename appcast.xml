@@ -5,7 +5,33 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                                    <item>
+                                        <item>
+        <title>PiGuard 3.8.0 (build 722)</title>
+        <pubDate>Tue, 14 Jul 2026 22:53:47 GMT</pubDate>
+        <sparkle:version>722</sparkle:version>
+        <sparkle:shortVersionString>3.8.0</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.8.0/PiGuard-3.8.0-722-macOS.dmg"
+            length="5821772"
+            type="application/octet-stream"
+            sparkle:edSignature="fhpTLirODKIJozEktpmDl0hEJC2NW0LIKvsEv6McoeWVEuT5SEo4RuzLNiY6b9ukswnz5YSLDsCFdWzi6Y84Aw==" />
+        <description><![CDATA[<h3>Activity graph for AdGuard Home</h3>
+<ul>
+<li>The 24-hour activity chart now includes AdGuard Home servers</li>
+<li>Mixed Pi-hole + AdGuard setups merge into one chart at hourly granularity; Pi-hole-only setups keep their 10-minute resolution</li>
+</ul>
+<h3>Smarter Query Log</h3>
+<ul>
+<li>Search now runs server-side on Pi-hole v6 and AdGuard Home — it matches domain, client name, or client IP across the full log, not just the loaded rows</li>
+<li>New status filter: All / Allowed / Blocked</li>
+<li><strong>Load More</strong> pagination to walk back through history</li>
+<li>Refresh keeps your current search and filters</li>
+<li>Pi-hole v5 servers continue to work in the same window with local filtering</li>
+</ul>
+<p><strong>Download:</strong> <a href="https://github.com/foosmith/PiGuard/releases/download/v3.8.0/PiGuard-3.8.0-722-macOS.dmg">PiGuard-3.8.0-722-macOS.dmg</a> — requires macOS 13 or later.</p>]]></description>
+    </item>
+    <item>
         <title>PiGuard v3.7.0 (build 721)</title>
         <pubDate>Sun, 12 Jul 2026 19:53:57 GMT</pubDate>
         <sparkle:version>721</sparkle:version>
