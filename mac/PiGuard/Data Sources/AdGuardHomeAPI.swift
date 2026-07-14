@@ -170,13 +170,35 @@ final class AdGuardHomeAPI {
         return f
     }()
 
-    func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
-        let blockedReasons: Set<String> = [
-            "FilteredBlackList", "FilteredBlockedService",
-            "FilteredParental", "FilteredSafeBrowsing", "FilteredSafeSearch"
-        ]
+    private static let blockedQueryReasons: Set<String> = [
+        "FilteredBlackList", "FilteredBlockedService",
+        "FilteredParental", "FilteredSafeBrowsing", "FilteredSafeSearch"
+    ]
 
-        guard let url = URL(string: "\(baseURL)/control/querylog?limit=\(limit)") else { return [] }
+    /// Fetches one query log page, filtered server-side.
+    ///
+    /// `search` matches domain or client on the server. A blocked-status
+    /// filter is sent as `response_status=filtered`, which is a superset of
+    /// the app's blocked set (it includes whitelisted/rewritten rows) — the
+    /// caller narrows to the exact set. Pages continue from the `oldest`
+    /// timestamp of the previous response.
+    func fetchQueryLogPage(searchText: String?, statusFilter: QueryLogStatusFilter, limit: Int = 100, cursor: QueryLogCursor? = nil) async -> QueryLogPage {
+        let empty = QueryLogPage(entries: [], nextCursor: nil)
+        var components = URLComponents(string: "\(baseURL)/control/querylog")
+        var queryItems = [URLQueryItem(name: "limit", value: "\(limit)")]
+        let trimmed = searchText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmed.isEmpty {
+            queryItems.append(URLQueryItem(name: "search", value: trimmed))
+        }
+        if statusFilter == .blocked {
+            queryItems.append(URLQueryItem(name: "response_status", value: "filtered"))
+        }
+        if case let .adguard(olderThan) = cursor {
+            queryItems.append(URLQueryItem(name: "older_than", value: olderThan))
+        }
+        components?.queryItems = queryItems
+        guard let url = components?.url else { return empty }
+
         var req = URLRequest(url: url)
         req.httpMethod = "GET"
         req.timeoutInterval = 5
@@ -185,11 +207,11 @@ final class AdGuardHomeAPI {
 
         do {
             let (data, response) = try await URLSession.shared.data(for: req)
-            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return [] }
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return empty }
             guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let entries = json["data"] as? [[String: Any]] else { return [] }
+                  let entries = json["data"] as? [[String: Any]] else { return empty }
 
-            return entries.compactMap { entry -> QueryLogEntry? in
+            let parsed = entries.compactMap { entry -> QueryLogEntry? in
                 guard let question = entry["question"] as? [String: Any],
                       let domain = question["name"] as? String,
                       let client = entry["client"] as? String,
@@ -200,12 +222,65 @@ final class AdGuardHomeAPI {
                     timestamp: timestamp,
                     domain: domain,
                     client: client,
-                    status: blockedReasons.contains(reason) ? .blocked : .allowed,
+                    status: Self.blockedQueryReasons.contains(reason) ? .blocked : .allowed,
                     serverIdentifier: identifier,
                     serverDisplayName: connection.endpointDisplayName
                 )
             }
+
+            // A short page means the log is exhausted: the server scans until
+            // it fills `limit` matches or runs out of entries.
+            let oldest = json["oldest"] as? String ?? ""
+            let nextCursor: QueryLogCursor? = (entries.count >= limit && !oldest.isEmpty)
+                ? .adguard(olderThan: oldest)
+                : nil
+            return QueryLogPage(entries: parsed, nextCursor: nextCursor)
         } catch {
+            return empty
+        }
+    }
+
+    // MARK: - Activity History
+
+    /// One hourly bucket derived from GET /control/stats.
+    struct HistoryBucket {
+        let timestamp: Date
+        let total: Int
+        let blocked: Int
+    }
+
+    /// AdGuard Home reports its activity series as bare per-hour counts with
+    /// no timestamps: oldest first, last element covering the current partial
+    /// hour. Buckets are only available when the server reports hourly units
+    /// (stats retention of 7 days or less); otherwise this returns [].
+    func fetchHistory() async -> [HistoryBucket] {
+        guard let url = URL(string: "\(baseURL)/control/stats") else { return [] }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return [] }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  json["time_units"] as? String == "hours",
+                  let queries = json["dns_queries"] as? [Int],
+                  let blocked = json["blocked_filtering"] as? [Int] else { return [] }
+
+            let count = min(queries.count, blocked.count, 24)
+            guard count > 0 else { return [] }
+            let currentHourStart = floor(Date().timeIntervalSince1970 / 3600) * 3600
+            return zip(queries.suffix(count), blocked.suffix(count)).enumerated().map { index, counts in
+                HistoryBucket(
+                    timestamp: Date(timeIntervalSince1970: currentHourStart - Double(count - 1 - index) * 3600),
+                    total: counts.0,
+                    blocked: counts.1
+                )
+            }
+        } catch {
+            Log.warn("AdGuard Home fetchHistory failed on \(identifier): \(error)")
             return []
         }
     }

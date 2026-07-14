@@ -861,21 +861,51 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private func refreshActivityGraph() {
         guard let networkOverview = networkOverview else { return }
         let v6Apis = networkOverview.piholes.values.compactMap(\.api6)
+        let adguardApis = networkOverview.piholes.values.compactMap(\.apiAdguard)
 
-        activityGraphMenuItem.isHidden = v6Apis.isEmpty
-        guard !v6Apis.isEmpty, !isFetchingHistory else { return }
+        activityGraphMenuItem.isHidden = v6Apis.isEmpty && adguardApis.isEmpty
+        guard !activityGraphMenuItem.isHidden, !isFetchingHistory else { return }
         isFetchingHistory = true
 
         Task {
             // Buckets are aligned to the same 10-minute boundaries on every
             // server, so summing by timestamp merges multi-server setups.
-            var combined: [Date: (total: Int, blocked: Int)] = [:]
+            var piholeBuckets: [Date: (total: Int, blocked: Int)] = [:]
             for api in v6Apis {
                 for bucket in await api.fetchHistory() {
-                    combined[bucket.timestamp, default: (0, 0)].total += bucket.total
-                    combined[bucket.timestamp, default: (0, 0)].blocked += bucket.blocked
+                    piholeBuckets[bucket.timestamp, default: (0, 0)].total += bucket.total
+                    piholeBuckets[bucket.timestamp, default: (0, 0)].blocked += bucket.blocked
                 }
             }
+
+            // AdGuard Home buckets are hourly, aligned to the top of the hour.
+            var adguardBuckets: [Date: (total: Int, blocked: Int)] = [:]
+            for api in adguardApis {
+                for bucket in await api.fetchHistory() {
+                    adguardBuckets[bucket.timestamp, default: (0, 0)].total += bucket.total
+                    adguardBuckets[bucket.timestamp, default: (0, 0)].blocked += bucket.blocked
+                }
+            }
+
+            var combined: [Date: (total: Int, blocked: Int)]
+            if adguardBuckets.isEmpty {
+                combined = piholeBuckets
+            } else {
+                // Mixed backends: collapse Pi-hole's 10-minute buckets to the
+                // same hourly boundaries so both merge at equal granularity.
+                combined = adguardBuckets
+                for (timestamp, counts) in piholeBuckets {
+                    let hourStart = floor(timestamp.timeIntervalSince1970 / 3600) * 3600
+                    let hour = Date(timeIntervalSince1970: hourStart)
+                    combined[hour, default: (0, 0)].total += counts.total
+                    combined[hour, default: (0, 0)].blocked += counts.blocked
+                }
+                // Pi-hole history spans slightly more than 24 hours, which
+                // leaves a partial oldest hour; keep the 24 most recent.
+                let kept = Set(combined.keys.sorted().suffix(24))
+                combined = combined.filter { kept.contains($0.key) }
+            }
+
             let buckets = combined
                 .map { ActivityGraphView.Bucket(timestamp: $0.key, total: $0.value.total, blocked: $0.value.blocked) }
 

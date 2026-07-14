@@ -321,34 +321,97 @@ class Pihole6API: NSObject {
         }
     }
 
-    func fetchQueryLog(limit: Int = 100) async -> [QueryLogEntry] {
-        let blockedStatuses: Set<String> = [
-            "GRAVITY", "REGEX", "DENYLIST",
-            "EXTERNAL_BLOCKED_IP", "EXTERNAL_BLOCKED_NULL", "EXTERNAL_BLOCKED_NXRA",
-            "GRAVITY_CNAME", "REGEX_CNAME", "DENYLIST_CNAME", "EXTERNAL_BLOCKED_EDE15"
-        ]
-        do {
-            let data = try await getData("/queries", queryItems: [URLQueryItem(name: "length", value: "\(limit)")])
-            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let queries = json["queries"] as? [[String: Any]] else { return [] }
-            return queries.compactMap { q -> QueryLogEntry? in
-                guard let time = q["time"] as? Double,
-                      let domain = q["domain"] as? String,
-                      let status = q["status"] as? String else { return nil }
-                let clientDict = q["client"] as? [String: Any]
-                let clientName = (clientDict?["name"] as? String).flatMap({ $0.isEmpty ? nil : $0 }) ?? (clientDict?["ip"] as? String) ?? "unknown"
-                return QueryLogEntry(
-                    timestamp: Date(timeIntervalSince1970: time),
-                    domain: domain,
-                    client: clientName,
-                    status: blockedStatuses.contains(status) ? .blocked : .allowed,
-                    serverIdentifier: identifier,
-                    serverDisplayName: connection.endpointDisplayName
-                )
-            }
-        } catch {
-            return []
+    private static let blockedQueryStatuses: Set<String> = [
+        "GRAVITY", "REGEX", "DENYLIST",
+        "EXTERNAL_BLOCKED_IP", "EXTERNAL_BLOCKED_NULL", "EXTERNAL_BLOCKED_NXRA",
+        "GRAVITY_CNAME", "REGEX_CNAME", "DENYLIST_CNAME", "EXTERNAL_BLOCKED_EDE15"
+    ]
+
+    private func queryLogEntry(from q: [String: Any]) -> QueryLogEntry? {
+        guard let time = q["time"] as? Double,
+              let domain = q["domain"] as? String,
+              let status = q["status"] as? String else { return nil }
+        let clientDict = q["client"] as? [String: Any]
+        let clientName = (clientDict?["name"] as? String).flatMap({ $0.isEmpty ? nil : $0 }) ?? (clientDict?["ip"] as? String) ?? "unknown"
+        return QueryLogEntry(
+            timestamp: Date(timeIntervalSince1970: time),
+            domain: domain,
+            client: clientName,
+            status: Self.blockedQueryStatuses.contains(status) ? .blocked : .allowed,
+            serverIdentifier: identifier,
+            serverDisplayName: connection.endpointDisplayName
+        )
+    }
+
+    /// Fetches one query log page, filtered server-side.
+    ///
+    /// FTL's /queries filters domain, client name, and client IP as separate
+    /// ANDed parameters, so a "domain or client" search runs one request per
+    /// field and merges by row id. All sub-requests share one database
+    /// snapshot cursor and row offset, so pages stay stable while paging.
+    /// Status filtering is NOT done here — FTL only accepts a single status
+    /// value, which cannot express the app's blocked set — the caller narrows.
+    func fetchQueryLogPage(searchText: String?, limit: Int = 100, cursor: QueryLogCursor? = nil) async -> QueryLogPage {
+        var dbCursor: Int?
+        var start = 0
+        if case let .pihole6(c, s) = cursor {
+            dbCursor = c
+            start = s
         }
+
+        let trimmed = searchText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var filterSets: [[URLQueryItem]] = [[]]
+        if !trimmed.isEmpty {
+            let wildcard = "*\(trimmed)*"
+            filterSets = [
+                [URLQueryItem(name: "domain", value: wildcard)],
+                [URLQueryItem(name: "client_name", value: wildcard)],
+            ]
+            if trimmed.rangeOfCharacter(from: CharacterSet(charactersIn: "0123456789.:")) != nil {
+                filterSets.append([URLQueryItem(name: "client_ip", value: wildcard)])
+            }
+        }
+
+        var rowsByID: [Int: [String: Any]] = [:]
+        var snapshotCursors: [Int] = []
+        var hasMore = false
+
+        for filters in filterSets {
+            var items = filters
+            items.append(URLQueryItem(name: "length", value: "\(limit)"))
+            if start > 0 { items.append(URLQueryItem(name: "start", value: "\(start)")) }
+            if let dbCursor { items.append(URLQueryItem(name: "cursor", value: "\(dbCursor)")) }
+
+            guard let data = try? await getData("/queries", queryItems: items),
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let queries = json["queries"] as? [[String: Any]] else { continue }
+
+            for q in queries {
+                guard let id = q["id"] as? Int else { continue }
+                rowsByID[id] = q
+            }
+            if let responseCursor = json["cursor"] as? Int {
+                snapshotCursors.append(responseCursor)
+            }
+            if let filtered = json["recordsFiltered"] as? Int, start + limit < filtered {
+                hasMore = true
+            }
+        }
+
+        let entries = rowsByID.values
+            .compactMap(queryLogEntry)
+            .sorted { $0.timestamp > $1.timestamp }
+
+        // The snapshot cursor is fixed on the first page and reused verbatim
+        // afterwards; the minimum across sub-requests keeps later pages from
+        // including rows a slower sub-request has not seen.
+        let nextCursor: QueryLogCursor?
+        if hasMore, let snapshot = dbCursor ?? snapshotCursors.min() {
+            nextCursor = .pihole6(cursor: snapshot, start: start + limit)
+        } else {
+            nextCursor = nil
+        }
+        return QueryLogPage(entries: entries, nextCursor: nextCursor)
     }
 
     // MARK: - Activity History

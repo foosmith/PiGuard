@@ -15,10 +15,19 @@ final class QueryLogViewController: NSViewController {
     private var currentSortDescriptors: [NSSortDescriptor] = []
 
     private let serverFilterPopup = NSPopUpButton()
+    private let statusFilterPopup = NSPopUpButton()
     private let refreshButton = NSButton(title: "Refresh", target: nil, action: nil)
+    private let loadMoreButton = NSButton(title: "Load More", target: nil, action: nil)
     private let tableView = NSTableView()
     private let scrollView = NSScrollView()
     private let statusLabel = NSTextField(labelWithString: "")
+
+    private var statusFilter: QueryLogStatusFilter = .all
+    private var serverCursors: [String: QueryLogCursor] = [:]
+    private var seenEntryKeys = Set<String>()
+    private var searchDebounce: DispatchWorkItem?
+    private var fetchGeneration = 0
+    private let pageSize = 100
     private lazy var contextMenu: NSMenu = {
         let menu = NSMenu()
         menu.delegate = self
@@ -60,13 +69,25 @@ final class QueryLogViewController: NSViewController {
         serverFilterPopup.target = self
         serverFilterPopup.action = #selector(filterChanged)
 
+        statusFilterPopup.removeAllItems()
+        statusFilterPopup.addItem(withTitle: "All Statuses")
+        statusFilterPopup.addItem(withTitle: "Allowed")
+        statusFilterPopup.addItem(withTitle: "Blocked")
+        statusFilterPopup.target = self
+        statusFilterPopup.action = #selector(statusFilterChanged)
+
         refreshButton.target = self
         refreshButton.action = #selector(refreshAction)
         refreshButton.bezelStyle = .rounded
 
+        loadMoreButton.target = self
+        loadMoreButton.action = #selector(loadMoreAction)
+        loadMoreButton.bezelStyle = .rounded
+        loadMoreButton.isEnabled = false
+
         searchField.target = self
         searchField.action = #selector(searchChanged(_:))
-        searchField.placeholderString = "Search"
+        searchField.placeholderString = "Search domain or client"
 
         statusLabel.textColor = .secondaryLabelColor
 
@@ -76,7 +97,7 @@ final class QueryLogViewController: NSViewController {
         // Compress spacer before any other view — it absorbs all slack first.
         // Raw value 50 is the "fitting size" compression level (AppKit has no named constant for it).
         spacer.setContentCompressionResistancePriority(NSLayoutConstraint.Priority(rawValue: 50), for: .horizontal)
-        let toolbar = NSStackView(views: [searchField, serverFilterPopup, spacer, statusLabel, refreshButton])
+        let toolbar = NSStackView(views: [searchField, statusFilterPopup, serverFilterPopup, spacer, statusLabel, loadMoreButton, refreshButton])
         toolbar.orientation = .horizontal
         toolbar.alignment = .centerY
         toolbar.spacing = 8
@@ -149,37 +170,72 @@ final class QueryLogViewController: NSViewController {
 
     // MARK: - Fetching
 
-    private func fetchQueryLog() {
-        guard !isLoading else { return }
+    /// Fetches a page from every visible server. A reset fetch (filters
+    /// changed, refresh) starts over; otherwise servers continue from their
+    /// stored cursor ("Load More"). Stale responses are dropped by generation
+    /// so a fetch kicked off mid-flight (e.g. while typing) always wins.
+    private func fetchQueryLog(reset: Bool = true) {
+        if !reset && isLoading { return }
+        fetchGeneration += 1
+        let generation = fetchGeneration
         isLoading = true
-        statusLabel.stringValue = "Loading..."
+        statusLabel.stringValue = reset ? "Loading..." : "Loading more..."
         refreshButton.isEnabled = false
+        loadMoreButton.isEnabled = false
 
         let selectedIdentifier = serverFilterPopup.selectedItem?.representedObject as? String
+        let search = searchText
+        let status = statusFilter
+        let cursors = reset ? [:] : serverCursors
 
         Task {
-            var allEntries: [QueryLogEntry] = []
+            var pageEntries: [QueryLogEntry] = []
+            var nextCursors: [String: QueryLogCursor] = [:]
             for pihole in piholes.values {
                 if let selectedIdentifier, pihole.identifier != selectedIdentifier { continue }
                 if let api = pihole.api {
-                    allEntries.append(contentsOf: await api.fetchQueryLog())
+                    // v5 has no server-side filtering or pagination: fetch its
+                    // one batch on reset only; applyFilter narrows it locally.
+                    if reset {
+                        pageEntries.append(contentsOf: await api.fetchQueryLog())
+                    }
                 } else if let api6 = pihole.api6 {
-                    allEntries.append(contentsOf: await api6.fetchQueryLog())
+                    if !reset, cursors[pihole.identifier] == nil { continue }
+                    let page = await api6.fetchQueryLogPage(
+                        searchText: search, limit: pageSize, cursor: cursors[pihole.identifier]
+                    )
+                    pageEntries.append(contentsOf: page.entries)
+                    if let next = page.nextCursor { nextCursors[pihole.identifier] = next }
                 } else if let apiAdguard = pihole.apiAdguard {
-                    allEntries.append(contentsOf: await apiAdguard.fetchQueryLog())
+                    if !reset, cursors[pihole.identifier] == nil { continue }
+                    let page = await apiAdguard.fetchQueryLogPage(
+                        searchText: search, statusFilter: status, limit: pageSize, cursor: cursors[pihole.identifier]
+                    )
+                    pageEntries.append(contentsOf: page.entries)
+                    if let next = page.nextCursor { nextCursors[pihole.identifier] = next }
                 }
             }
 
-            allEntries.sort { $0.timestamp > $1.timestamp }
-
             await MainActor.run {
-                self.entries = allEntries
-                self.searchText = ""
-                self.searchField.stringValue = ""
-                self.currentSortDescriptors = []
-                self.tableView.sortDescriptors = []
+                guard generation == self.fetchGeneration else { return }
+                if reset {
+                    self.entries = []
+                    self.seenEntryKeys = []
+                }
+                // Dedupe across pages and across Pi-hole's per-field search
+                // sub-queries, which can surface the same row at different
+                // offsets in different pages.
+                for entry in pageEntries {
+                    let key = "\(entry.serverIdentifier)|\(entry.timestamp.timeIntervalSince1970)|\(entry.domain)|\(entry.client)|\(entry.status.rawValue)"
+                    if self.seenEntryKeys.insert(key).inserted {
+                        self.entries.append(entry)
+                    }
+                }
+                self.entries.sort { $0.timestamp > $1.timestamp }
+                self.serverCursors = nextCursors
                 self.applyFilter()
                 self.refreshButton.isEnabled = true
+                self.loadMoreButton.isEnabled = !nextCursors.isEmpty
                 self.isLoading = false
             }
         }
@@ -196,17 +252,33 @@ final class QueryLogViewController: NSViewController {
             result = entries
         }
 
-        // Step 2: filter by search text
+        // Step 2: filter by status. Always exact and client-side — the server
+        // hints (AdGuard response_status=filtered) are supersets of the app's
+        // blocked set, and Pi-hole cannot express the set at all.
+        switch statusFilter {
+        case .all:
+            break
+        case .allowed:
+            result = result.filter { $0.status == .allowed }
+        case .blocked:
+            result = result.filter { $0.status == .blocked }
+        }
+
+        // Step 3: filter by search text. Rows from v6/AdGuard servers were
+        // already matched server-side — possibly on data not shown here, such
+        // as a client IP behind a displayed hostname — so only v5 rows, which
+        // are fetched unfiltered, are narrowed locally.
         if !searchText.isEmpty {
             result = result.filter { entry in
-                entry.domain.localizedCaseInsensitiveContains(searchText) ||
-                entry.client.localizedCaseInsensitiveContains(searchText) ||
-                entry.status.rawValue.localizedCaseInsensitiveContains(searchText) ||
-                entry.serverDisplayName.localizedCaseInsensitiveContains(searchText)
+                guard piholes[entry.serverIdentifier]?.api != nil else { return true }
+                return entry.domain.localizedCaseInsensitiveContains(searchText) ||
+                    entry.client.localizedCaseInsensitiveContains(searchText) ||
+                    entry.status.rawValue.localizedCaseInsensitiveContains(searchText) ||
+                    entry.serverDisplayName.localizedCaseInsensitiveContains(searchText)
             }
         }
 
-        // Step 3: sort (first descriptor only; switch on key to avoid KVC on Swift struct)
+        // Step 4: sort (first descriptor only; switch on key to avoid KVC on Swift struct)
         if let descriptor = currentSortDescriptors.first {
             result.sort { a, b in
                 let ascending: Bool
@@ -231,10 +303,20 @@ final class QueryLogViewController: NSViewController {
         serverCol?.isHidden = selectedIdentifier != nil
 
         tableView.reloadData()
-        statusLabel.stringValue = "\(filteredEntries.count) queries"
+        let suffix = serverCursors.isEmpty ? "" : " (more available)"
+        statusLabel.stringValue = "\(filteredEntries.count) queries\(suffix)"
     }
 
     @objc private func filterChanged() {
+        fetchQueryLog()
+    }
+
+    @objc private func statusFilterChanged() {
+        switch statusFilterPopup.indexOfSelectedItem {
+        case 1: statusFilter = .allowed
+        case 2: statusFilter = .blocked
+        default: statusFilter = .all
+        }
         fetchQueryLog()
     }
 
@@ -242,9 +324,19 @@ final class QueryLogViewController: NSViewController {
         fetchQueryLog()
     }
 
+    @objc private func loadMoreAction() {
+        fetchQueryLog(reset: false)
+    }
+
     @objc private func searchChanged(_ sender: NSSearchField) {
         searchText = sender.stringValue
+        // Narrows loaded v5 rows immediately; the authoritative server-side
+        // search for v6/AdGuard rows follows once typing pauses.
         applyFilter()
+        searchDebounce?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.fetchQueryLog() }
+        searchDebounce = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35, execute: work)
     }
 
     // MARK: - Allow / Block
