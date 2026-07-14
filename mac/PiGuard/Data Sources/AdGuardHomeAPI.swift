@@ -240,6 +240,168 @@ final class AdGuardHomeAPI {
         }
     }
 
+    // MARK: - Domain Explanation
+
+    private func fetchFilterNames() async -> [Int: String] {
+        guard let url = URL(string: "\(baseURL)/control/filtering/status") else { return [:] }
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return [:] }
+            var names: [Int: String] = [:]
+            for key in ["filters", "whitelist_filters"] {
+                for filter in json[key] as? [[String: Any]] ?? [] {
+                    guard let id = filter["id"] as? Int,
+                          let name = filter["name"] as? String, !name.isEmpty else { continue }
+                    names[id] = name
+                }
+            }
+            return names
+        } catch {
+            return [:]
+        }
+    }
+
+    /// Asks GET /control/filtering/check_host how the server would filter a
+    /// domain: the reason plus the matching rules, with filter-list ids
+    /// resolved to their names (id 0 is the user's custom rules).
+    func explainDomain(_ domain: String) async -> DomainFilterExplanation? {
+        var components = URLComponents(string: "\(baseURL)/control/filtering/check_host")
+        components?.queryItems = [URLQueryItem(name: "name", value: domain)]
+        guard let url = components?.url else { return nil }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "GET"
+        req.timeoutInterval = 5
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode,
+                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let reason = json["reason"] as? String else { return nil }
+
+            let verdict: String
+            switch reason {
+            case "FilteredBlackList":
+                verdict = "Blocked by a filter rule"
+            case "FilteredBlockedService":
+                let service = json["service_name"] as? String ?? "unknown service"
+                verdict = "Blocked service: \(service)"
+            case "FilteredSafeBrowsing":
+                verdict = "Blocked by safe browsing"
+            case "FilteredParental":
+                verdict = "Blocked by parental control"
+            case "FilteredSafeSearch":
+                verdict = "Rewritten to enforce safe search"
+            case "NotFilteredWhiteList":
+                verdict = "Allowed by an allowlist rule"
+            case "NotFilteredNotFound":
+                verdict = "Not blocked — no matching rules"
+            case "Rewritten", "RewrittenAutoHosts", "RewrittenRule":
+                verdict = "Rewritten by a DNS rewrite"
+            default:
+                verdict = reason
+            }
+
+            var details: [String] = []
+            let rules = json["rules"] as? [[String: Any]] ?? []
+            if !rules.isEmpty {
+                let filterNames = await fetchFilterNames()
+                for rule in rules {
+                    guard let text = rule["text"] as? String, !text.isEmpty else { continue }
+                    if let listID = rule["filter_list_id"] as? Int {
+                        let listName = listID == 0 ? "User rules" : (filterNames[listID] ?? "list #\(listID)")
+                        details.append("\(text) — \(listName)")
+                    } else {
+                        details.append(text)
+                    }
+                }
+            }
+            return DomainFilterExplanation(verdict: verdict, details: details)
+        } catch {
+            Log.warn("AdGuard Home explainDomain failed on \(identifier): \(error)")
+            return nil
+        }
+    }
+
+    // MARK: - Version Info
+
+    struct UpdateAvailability {
+        let updates: [String]
+        let canSelfUpdate: Bool
+    }
+
+    /// Checks POST /control/version.json against the running version from
+    /// GET /control/status. `recheck_now: false` lets the server serve its
+    /// cached answer (it refreshes on its own every few hours). nil = fetch
+    /// failed; empty updates = up to date or update checks disabled.
+    func fetchAvailableUpdates() async -> UpdateAvailability? {
+        let upToDate = UpdateAvailability(updates: [], canSelfUpdate: false)
+        guard let status = try? await fetchStatus() else { return nil }
+        guard let url = URL(string: "\(baseURL)/control/version.json") else { return nil }
+
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 10
+        req.setValue("application/json", forHTTPHeaderField: "Accept")
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["recheck_now": false])
+
+        do {
+            let (data, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else { return nil }
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return nil }
+            if json["disabled"] as? Bool == true { return upToDate }
+
+            func normalized(_ version: String) -> String {
+                version.hasPrefix("v") ? String(version.dropFirst()) : version
+            }
+            let newVersion = json["new_version"] as? String ?? ""
+            guard !newVersion.isEmpty, normalized(newVersion) != normalized(status.version) else {
+                return upToDate
+            }
+            return UpdateAvailability(
+                updates: ["AdGuard Home \(status.version) → \(newVersion)"],
+                canSelfUpdate: json["can_autoupdate"] as? Bool ?? false
+            )
+        } catch {
+            Log.warn("AdGuard Home fetchAvailableUpdates failed on \(identifier): \(error)")
+            return nil
+        }
+    }
+
+    /// Starts the server's own upgrade procedure (POST /control/update).
+    /// The server restarts itself when the update finishes.
+    func beginUpdate() async -> Bool {
+        guard let url = URL(string: "\(baseURL)/control/update") else { return false }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.timeoutInterval = 30
+        req.setValue(basicAuthHeader, forHTTPHeaderField: "Authorization")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: req)
+            guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+                Log.warn("AdGuard Home beginUpdate failed on \(identifier): HTTP \((response as? HTTPURLResponse)?.statusCode ?? -1)")
+                return false
+            }
+            Log.info("AdGuard Home beginUpdate accepted on \(identifier)")
+            return true
+        } catch {
+            Log.warn("AdGuard Home beginUpdate failed on \(identifier): \(error)")
+            return false
+        }
+    }
+
     // MARK: - Activity History
 
     /// One hourly bucket derived from GET /control/stats.

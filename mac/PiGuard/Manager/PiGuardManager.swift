@@ -94,6 +94,8 @@ class PiGuardManager: NSObject {
 
     let diagnosisMessageMonitor = DiagnosisMessageMonitor()
 
+    let serverUpdateMonitor = ServerUpdateMonitor()
+
     func loadConnections(_ connections: [PiholeConnectionV4]? = nil) {
         createPiholes(connections ?? Preferences.standard.piholes)
     }
@@ -386,6 +388,7 @@ class PiGuardManager: NSObject {
         publishSnapshot(for: newOverview)
         refreshTopListsSnapshot(for: Array(newOverview.piholes.values))
         diagnosisMessageMonitor.checkIfDue(piholes: Array(newOverview.piholes.values))
+        serverUpdateMonitor.checkIfDue(piholes: Array(newOverview.piholes.values))
     }
 
     private func publishSnapshot(for overview: PiholeNetworkOverview) {

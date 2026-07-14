@@ -37,3 +37,10 @@ struct QueryLogPage {
     let entries: [QueryLogEntry]
     let nextCursor: QueryLogCursor?
 }
+
+/// Answer to "why is this domain blocked (or not)?" — a one-line verdict plus
+/// the matching rules/lists, shaped the same for both backends.
+struct DomainFilterExplanation {
+    let verdict: String
+    let details: [String]
+}

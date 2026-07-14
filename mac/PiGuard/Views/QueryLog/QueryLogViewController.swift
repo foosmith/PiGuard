@@ -28,11 +28,15 @@ final class QueryLogViewController: NSViewController {
     private var searchDebounce: DispatchWorkItem?
     private var fetchGeneration = 0
     private let pageSize = 100
+    private let explainMenuItem = NSMenuItem(title: "Why Is This Blocked?", action: #selector(explainDomainAction(_:)), keyEquivalent: "")
     private lazy var contextMenu: NSMenu = {
         let menu = NSMenu()
         menu.delegate = self
+        menu.autoenablesItems = false
         menu.addItem(NSMenuItem(title: "Allow Domain", action: #selector(allowDomainAction(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Block Domain", action: #selector(blockDomainAction(_:)), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(explainMenuItem)
         return menu
     }()
 
@@ -404,6 +408,41 @@ final class QueryLogViewController: NSViewController {
         }
     }
 
+    // MARK: - Why Is This Blocked?
+
+    @objc private func explainDomainAction(_ sender: NSMenuItem) {
+        guard let entry = selectedEntryForRuleAction(sender: sender),
+              let pihole = piholes[entry.serverIdentifier] else { return }
+        statusLabel.stringValue = "Checking \(entry.domain)..."
+
+        Task {
+            var explanation: DomainFilterExplanation?
+            if let api6 = pihole.api6 {
+                explanation = await api6.explainDomain(entry.domain)
+            } else if let apiAdguard = pihole.apiAdguard {
+                explanation = await apiAdguard.explainDomain(entry.domain)
+            }
+
+            await MainActor.run {
+                let alert = NSAlert()
+                alert.messageText = entry.domain
+                if let explanation {
+                    var text = explanation.verdict
+                    if !explanation.details.isEmpty {
+                        text += "\n\n" + explanation.details.joined(separator: "\n")
+                    }
+                    text += "\n\nAnswered by \(entry.serverDisplayName)."
+                    alert.informativeText = text
+                } else {
+                    alert.alertStyle = .warning
+                    alert.informativeText = "Could not get an answer from \(entry.serverDisplayName)."
+                }
+                alert.runModal()
+                self.applyFilter() // restores the row-count status label
+            }
+        }
+    }
+
     private func normalizedRuleDomain(from rawDomain: String) -> String? {
         let trimmed = rawDomain
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -525,6 +564,13 @@ extension QueryLogViewController: NSMenuDelegate {
             item.target = self
             item.isEnabled = isEnabled
             item.representedObject = contextMenuEntry
+        }
+
+        // Only v6 and AdGuard servers can answer "why is this blocked?".
+        if let entry = contextMenuEntry, let pihole = piholes[entry.serverIdentifier] {
+            explainMenuItem.isEnabled = pihole.api6 != nil || pihole.apiAdguard != nil
+        } else {
+            explainMenuItem.isEnabled = false
         }
     }
 

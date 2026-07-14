@@ -40,6 +40,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private let activityGraphMenuItem = NSMenuItem()
     private let diagnosisMessagesMenuItem = NSMenuItem()
     private let diagnosisMessagesMenu = NSMenu()
+    private let serverUpdatesMenuItem = NSMenuItem()
+    private let serverUpdatesMenu = NSMenu()
 
     // MARK: - Internal Views
 
@@ -209,8 +211,10 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
         setupActivityGraphMenuItem()
         setupDiagnosisMessagesMenuItem()
+        setupServerUpdatesMenuItem()
 
         NotificationCenter.default.addObserver(self, selector: #selector(handleDiagnosisMessagesUpdated), name: .piGuardDiagnosisMessagesUpdated, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(handleServerUpdatesUpdated), name: .piGuardServerUpdatesUpdated, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncBegan), name: .piGuardSyncBegan, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleSyncEnded), name: .piGuardSyncEnded, object: nil)
         NotificationCenter.default.addObserver(self, selector: #selector(handleGravityBegan), name: .piGuardGravityBegan, object: nil)
@@ -980,6 +984,93 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     @objc private func dismissAllDiagnosisMessagesAction(_: NSMenuItem) {
         manager.diagnosisMessageMonitor.dismissAll()
+    }
+
+    // MARK: - Server Updates
+
+    private func setupServerUpdatesMenuItem() {
+        serverUpdatesMenuItem.title = "Server Updates"
+        serverUpdatesMenuItem.image = NSImage(
+            systemSymbolName: "arrow.down.circle",
+            accessibilityDescription: "Server updates available"
+        )
+        serverUpdatesMenuItem.isHidden = true
+        mainMenu.setSubmenu(serverUpdatesMenu, for: serverUpdatesMenuItem)
+        let insertIndex = mainMenu.index(of: diagnosisMessagesMenuItem) + 1
+        mainMenu.insertItem(serverUpdatesMenuItem, at: insertIndex)
+    }
+
+    @objc private func handleServerUpdatesUpdated() {
+        rebuildServerUpdatesMenu()
+    }
+
+    private func rebuildServerUpdatesMenu() {
+        let servers = manager.serverUpdateMonitor.serversWithUpdates
+
+        serverUpdatesMenuItem.isHidden = servers.isEmpty
+        guard !servers.isEmpty else { return }
+
+        serverUpdatesMenuItem.title = "Server Updates (\(servers.count))"
+        serverUpdatesMenu.removeAllItems()
+
+        for (index, server) in servers.enumerated() {
+            if index > 0 { serverUpdatesMenu.addItem(NSMenuItem.separator()) }
+            let header = NSMenuItem(title: server.displayName, action: nil, keyEquivalent: "")
+            header.isEnabled = false
+            serverUpdatesMenu.addItem(header)
+
+            for update in server.updates {
+                let item = NSMenuItem(title: update, action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                serverUpdatesMenu.addItem(item)
+            }
+
+            // AdGuard Home installs its own update via the API; Pi-hole has no
+            // update endpoint, so the action opens its web admin instead.
+            let action: NSMenuItem
+            if server.canSelfUpdate {
+                action = NSMenuItem(
+                    title: "Update Now",
+                    action: #selector(updateServerAction(_:)),
+                    keyEquivalent: ""
+                )
+            } else {
+                action = NSMenuItem(
+                    title: "Open Web Admin\u{2026}",
+                    action: #selector(openWebAdminForUpdateAction(_:)),
+                    keyEquivalent: ""
+                )
+            }
+            action.target = self
+            action.representedObject = server.identifier
+            serverUpdatesMenu.addItem(action)
+        }
+    }
+
+    @objc private func updateServerAction(_ sender: NSMenuItem) {
+        guard let identifier = sender.representedObject as? String else { return }
+        let monitor = manager.serverUpdateMonitor
+        let displayName = monitor.serversWithUpdates
+            .first { $0.identifier == identifier }?.displayName ?? identifier
+
+        Task { @MainActor in
+            let success = await monitor.beginSelfUpdate(identifier: identifier)
+            let alert = NSAlert()
+            if success {
+                alert.messageText = "Updating \(displayName)"
+                alert.informativeText = "AdGuard Home is downloading and installing the update. The server restarts itself when it finishes; it may be briefly unreachable."
+            } else {
+                alert.alertStyle = .warning
+                alert.messageText = "Update Failed to Start"
+                alert.informativeText = "\(displayName) did not accept the update request. Check the server's log, or update it from its web admin console."
+            }
+            alert.runModal()
+        }
+    }
+
+    @objc private func openWebAdminForUpdateAction(_ sender: NSMenuItem) {
+        guard let identifier = sender.representedObject as? String else { return }
+        launchWebAdmin(for: identifier)
     }
 
     // MARK: - Sync Settings Delegate

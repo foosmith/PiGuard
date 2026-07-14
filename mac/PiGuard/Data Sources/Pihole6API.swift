@@ -440,6 +440,90 @@ class Pihole6API: NSObject {
         }
     }
 
+    // MARK: - Domain Explanation
+
+    /// Asks GET /search/{domain} which rules and gravity lists match a
+    /// domain. Allow rules take precedence over deny rules and gravity, so
+    /// the verdict follows the same order Pi-hole applies them.
+    func explainDomain(_ domain: String) async -> DomainFilterExplanation? {
+        let encoded = domain.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? domain
+        do {
+            let data = try await getData("/search/\(encoded)")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let search = json["search"] as? [String: Any] else { return nil }
+
+            let domains = search["domains"] as? [[String: Any]] ?? []
+            let gravity = search["gravity"] as? [[String: Any]] ?? []
+
+            var details: [String] = []
+            var hasEnabledAllow = false
+            var hasEnabledDeny = false
+            var hasEnabledGravityBlock = false
+
+            for rule in domains {
+                guard let text = rule["domain"] as? String,
+                      let type = rule["type"] as? String else { continue }
+                let kind = rule["kind"] as? String ?? "exact"
+                let enabled = rule["enabled"] as? Bool ?? true
+                if enabled {
+                    if type == "allow" { hasEnabledAllow = true } else { hasEnabledDeny = true }
+                }
+                let label = type == "allow" ? "Allow" : "Deny"
+                details.append("\(label) \(kind) rule: \(text)\(enabled ? "" : " (disabled)")")
+            }
+
+            for list in gravity {
+                guard let address = list["address"] as? String,
+                      let type = list["type"] as? String else { continue }
+                let enabled = list["enabled"] as? Bool ?? true
+                if enabled && type == "block" { hasEnabledGravityBlock = true }
+                let label = type == "block" ? "Blocklist" : "Allowlist"
+                details.append("\(label): \(address)\(enabled ? "" : " (disabled)")")
+            }
+
+            let verdict: String
+            if hasEnabledAllow {
+                verdict = "Allowed — an allow rule matches, which overrides deny rules and blocklists"
+            } else if hasEnabledDeny {
+                verdict = "Blocked by a deny rule"
+            } else if hasEnabledGravityBlock {
+                verdict = "Blocked by a gravity blocklist"
+            } else {
+                verdict = "Not blocked — no matching rules or lists"
+            }
+            return DomainFilterExplanation(verdict: verdict, details: details)
+        } catch {
+            Log.warn("Pi-hole v6 explainDomain failed on \(identifier): \(error)")
+            return nil
+        }
+    }
+
+    // MARK: - Version Info
+
+    /// Human-readable component updates ("Core v6.0 → v6.1") from
+    /// GET /info/version. Empty array = everything up to date; nil = fetch
+    /// failed. Components on custom branches report a nil remote version and
+    /// are skipped.
+    func fetchAvailableUpdates() async -> [String]? {
+        do {
+            let data = try await getData("/info/version")
+            guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  let version = json["version"] as? [String: Any] else { return nil }
+            var updates: [String] = []
+            for (label, key) in [("Core", "core"), ("Web", "web"), ("FTL", "ftl")] {
+                guard let component = version[key] as? [String: Any],
+                      let local = (component["local"] as? [String: Any])?["version"] as? String,
+                      let remote = (component["remote"] as? [String: Any])?["version"] as? String,
+                      !local.isEmpty, !remote.isEmpty, local != remote else { continue }
+                updates.append("\(label) \(local) → \(remote)")
+            }
+            return updates
+        } catch {
+            Log.warn("Pi-hole v6 fetchAvailableUpdates failed on \(identifier): \(error)")
+            return nil
+        }
+    }
+
     // MARK: - Diagnosis Messages
 
     struct DiagnosisMessage {

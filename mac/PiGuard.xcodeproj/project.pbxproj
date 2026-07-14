@@ -25,6 +25,7 @@
 		449395E82471AC9D00FA0C34 /* MainMenuController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449395E72471AC9D00FA0C34 /* MainMenuController.swift */; };
 		AGV0000002AGV0000002AGV2 /* ActivityGraphView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AGV0000001AGV0000001AGV1 /* ActivityGraphView.swift */; };
 		DMM0000002DMM0000002DMM2 /* DiagnosisMessageMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = DMM0000001DMM0000001DMM1 /* DiagnosisMessageMonitor.swift */; };
+		SUM0000002SUM0000002SUM2 /* ServerUpdateMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = SUM0000001SUM0000001SUM1 /* ServerUpdateMonitor.swift */; };
 		449395EC2471B1EB00FA0C34 /* PreferencesWindowController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449395EB2471B1EB00FA0C34 /* PreferencesWindowController.swift */; };
 		449395EE2471C47F00FA0C34 /* PiholeAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 449395ED2471C47F00FA0C34 /* PiholeAPI.swift */; };
 		44B6DAF2247C70F500D364EC /* PiholeSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44B6DAF1247C70F500D364EC /* PiholeSettingsViewController.swift */; };
@@ -127,6 +128,7 @@
 		449395E72471AC9D00FA0C34 /* MainMenuController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainMenuController.swift; sourceTree = "<group>"; };
 		AGV0000001AGV0000001AGV1 /* ActivityGraphView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityGraphView.swift; sourceTree = "<group>"; };
 		DMM0000001DMM0000001DMM1 /* DiagnosisMessageMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosisMessageMonitor.swift; sourceTree = "<group>"; };
+		SUM0000001SUM0000001SUM1 /* ServerUpdateMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServerUpdateMonitor.swift; sourceTree = "<group>"; };
 		449395EB2471B1EB00FA0C34 /* PreferencesWindowController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesWindowController.swift; sourceTree = "<group>"; };
 		449395ED2471C47F00FA0C34 /* PiholeAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiholeAPI.swift; sourceTree = "<group>"; };
 		44B6DAF1247C70F500D364EC /* PiholeSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PiholeSettingsViewController.swift; sourceTree = "<group>"; };
@@ -226,6 +228,7 @@
 				441E78B1247E3ECB00FBC7A0 /* Operations */,
 				44FFB091247627B100DCEDEC /* PiGuardManager.swift */,
 				DMM0000001DMM0000001DMM1 /* DiagnosisMessageMonitor.swift */,
+				SUM0000001SUM0000001SUM1 /* ServerUpdateMonitor.swift */,
 				UM000001UM000001UM000001 /* UpdateManager.swift */,
 				FBAA0003FBAA0003FBAA0003 /* SyncProgress.swift */,
 			);
@@ -523,6 +526,7 @@
 				FBAA0017FBAA0017FBAA0017 /* AdGuardHomeSettingsViewController.swift in Sources */,
 				44FFB092247627B100DCEDEC /* PiGuardManager.swift in Sources */,
 				DMM0000002DMM0000002DMM2 /* DiagnosisMessageMonitor.swift in Sources */,
+				SUM0000002SUM0000002SUM2 /* ServerUpdateMonitor.swift in Sources */,
 				UM000002UM000002UM000002 /* UpdateManager.swift in Sources */,
 				442F6F8B24721523008F1101 /* PreferencesViewController.swift in Sources */,
 				4415D73624747331009E0B31 /* Logging.swift in Sources */,
