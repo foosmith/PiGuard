@@ -5,7 +5,33 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                                        <item>
+                                            <item>
+        <title>PiGuard 3.8.1 (build 723)</title>
+        <pubDate>Wed, 15 Jul 2026 04:11:42 GMT</pubDate>
+        <sparkle:version>723</sparkle:version>
+        <sparkle:shortVersionString>3.8.1</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.8.1/PiGuard-3.8.1-723-macOS.dmg"
+            length="5908848"
+            type="application/octet-stream"
+            sparkle:edSignature="/8UkziKisScdmfSlynnYKtOnH+OGJ/MfIfUYehrMHhPWtoqGomGg+bfJPmWH3wg/ep6jIlmosnocRi5srfBsAA==" />
+        <description><![CDATA[<h3>Reorganized menu</h3>
+<ul>
+<li>The menu is now grouped by purpose: status at a glance, the blocking toggle right below it, investigation tools (Top Clients, Top Blocked, Query Log), server management, and app items last</li>
+<li>Queries and Blocked lines have per-server breakdowns; blocklist size lives in the Queries submenu</li>
+<li>Sync Now and Sync Settings are consolidated into a single <strong>Sync</strong> submenu</li>
+<li>"Refresh Filters / Update Gravity" is now simply <strong>Update Blocklists</strong></li>
+<li>All menu items are cleanly left-aligned</li>
+</ul>
+<h3>Disable countdown</h3>
+<ul>
+<li>When blocking is disabled with a timer, the menu bar shows a live countdown ("Disabled (4:32)") that ticks every second — also shown per server in the Status submenu</li>
+<li>Works with pauses started from PiGuard or the server's own web UI (Pi-hole v6 and AdGuard Home)</li>
+</ul>
+<p><strong>Download:</strong> <a href="https://github.com/foosmith/PiGuard/releases/download/v3.8.1/PiGuard-3.8.1-723-macOS.dmg">PiGuard-3.8.1-723-macOS.dmg</a> — requires macOS 13 or later.</p>]]></description>
+    </item>
+    <item>
         <title>PiGuard 3.8.0 (build 722)</title>
         <pubDate>Tue, 14 Jul 2026 22:53:47 GMT</pubDate>
         <sparkle:version>722</sparkle:version>
