@@ -48,6 +48,14 @@ final class UpdateAdGuardHomeOperation: AsyncOperation, @unchecked Sendable {
                     status: statusResult.protectionEnabled ? "enabled" : "disabled"
                 )
 
+                // protection_disabled_duration is milliseconds remaining; 0
+                // means no timer is running.
+                var disabledSecondsRemaining: Double?
+                if !statusResult.protectionEnabled,
+                   let milliseconds = statusResult.protectionDisabledDuration, milliseconds > 0 {
+                    disabledSecondsRemaining = milliseconds / 1000
+                }
+
                 self.pihole = Pihole(
                     api: nil,
                     api6: nil,
@@ -57,7 +65,8 @@ final class UpdateAdGuardHomeOperation: AsyncOperation, @unchecked Sendable {
                     summary: summary,
                     canBeManaged: true,
                     enabled: statusResult.protectionEnabled,
-                    backendType: .adguardHome
+                    backendType: .adguardHome,
+                    disabledSecondsRemaining: disabledSecondsRemaining
                 )
             } catch {
                 Log.error(error)

@@ -79,19 +79,16 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     @IBOutlet var mainNetworkStatusMenuItem: NSMenuItem!
     @IBOutlet var mainTotalQueriesMenuItem: NSMenuItem!
     @IBOutlet var mainTotalBlockedMenuItem: NSMenuItem!
-    @IBOutlet var mainBlocklistMenuItem: NSMenuItem!
     @IBOutlet var disableNetworkMenuItem: NSMenuItem!
     @IBOutlet var enableNetworkMenuItem: NSMenuItem!
     @IBOutlet var webAdminMenuItem: NSMenuItem!
+    @IBOutlet var syncParentMenuItem: NSMenuItem!
     @IBOutlet var syncSettingsMenuItem: NSMenuItem!
     @IBOutlet var syncNowMenuItem: NSMenuItem!
     @IBOutlet var updateGravityMenuItem: NSMenuItem!
     @IBOutlet var topBlockedMenuItem: NSMenuItem!
     @IBOutlet var topClientsMenuItem: NSMenuItem!
     @IBOutlet var queryLogMenuItem: NSMenuItem!
-    #if !APPSTORE
-    private var checkForUpdatesMenuItem: NSMenuItem?
-    #endif
 
 
     // MARK: - Sub-menus for Multi-hole Setups
@@ -99,14 +96,18 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     private var networkStatusMenu = NSMenu()
     private var networkStatusMenuItems: [String: NSMenuItem] = [:]
 
+    // MARK: - Timed-disable Countdown
+
+    /// Per-server moments when a timed disable re-enables blocking, derived
+    /// from each poll. Drives the "(4:32)" suffix on the status lines.
+    private var disabledDeadlines: [String: Date] = [:]
+    private var countdownTimer: Timer?
+
     private var totalQueriesMenu = NSMenu()
     private var totalQueriesMenuItems: [String: NSMenuItem] = [:]
 
     private var totalBlockedMenu = NSMenu()
     private var totalBlockedMenuItems: [String: NSMenuItem] = [:]
-
-    private var blocklistMenu = NSMenu()
-    private var blocklistMenuItems: [String: NSMenuItem] = [:]
 
     private var webAdminMenu = NSMenu()
     private var webAdminMenuItems: [String: NSMenuItem] = [:]
@@ -134,12 +135,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     @IBAction func aboutAction(_: NSMenuItem) {
         aboutWindowController?.showWindow(self)
     }
-
-    #if !APPSTORE
-    @objc func checkForUpdatesAction(_ sender: NSMenuItem) {
-        UpdateManager.shared.checkForUpdates()
-    }
-    #endif
 
     @IBAction func syncSettingsAction(_: NSMenuItem) {
         NSApp.setActivationPolicy(.regular)
@@ -194,20 +189,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         }
         statusBarItem.menu = mainMenu
         mainMenu.delegate = self
-
-        #if !APPSTORE
-        // Insert "Check for Updates…" after the "About PiGuard" menu item
-        if let aboutIndex = mainMenu.items.firstIndex(where: { $0.title.hasPrefix("About") }) {
-            let item = NSMenuItem(
-                title: "Check for Updates\u{2026}",
-                action: #selector(checkForUpdatesAction(_:)),
-                keyEquivalent: ""
-            )
-            item.target = self
-            mainMenu.insertItem(item, at: aboutIndex + 1)
-            checkForUpdatesMenuItem = item
-        }
-        #endif
 
         setupActivityGraphMenuItem()
         setupDiagnosisMessagesMenuItem()
@@ -337,6 +318,7 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     internal func updateNetwork(_ network: PiholeNetworkOverview) {
         networkOverview = network
+        updateDisabledDeadlines(from: network)
         updateInterface()
         DispatchQueue.main.async {
             self.setupWebAdminMenus()
@@ -601,7 +583,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
                 }
             }
         } else {
-            titleElements = [currentStatus.rawValue]
+            var title = currentStatus.rawValue
+            if currentStatus == .disabled {
+                title += countdownSuffix(deadline: disabledDeadlines.values.max())
+            }
+            titleElements = [title]
         }
 
         return titleElements.joined(separator: " ")
@@ -631,14 +617,57 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         updateMenuButtons()
     }
 
+    private func updateDisabledDeadlines(from network: PiholeNetworkOverview) {
+        let now = Date()
+        disabledDeadlines = network.piholes.values.reduce(into: [:]) { deadlines, pihole in
+            if let remaining = pihole.disabledSecondsRemaining, remaining > 0 {
+                deadlines[pihole.identifier] = now.addingTimeInterval(remaining)
+            }
+        }
+
+        DispatchQueue.main.async {
+            if self.disabledDeadlines.isEmpty {
+                self.countdownTimer?.invalidate()
+                self.countdownTimer = nil
+            } else if self.countdownTimer == nil {
+                let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
+                    self?.updateStatusButtons()
+                    self?.updateMenuBarTitle()
+                }
+                // .common keeps the timer firing while the menu is open
+                // (menu tracking runs the run loop in event-tracking mode).
+                RunLoop.main.add(timer, forMode: .common)
+                self.countdownTimer = timer
+            }
+        }
+    }
+
+    /// " (4:32)" while a timed disable is counting down, otherwise "".
+    private func countdownSuffix(deadline: Date?) -> String {
+        guard let deadline else { return "" }
+        let remaining = Int(deadline.timeIntervalSinceNow.rounded(.up))
+        guard remaining > 0 else { return "" }
+        let hours = remaining / 3600
+        let minutes = (remaining % 3600) / 60
+        let seconds = remaining % 60
+        let clock = hours > 0
+            ? String(format: "%d:%02d:%02d", hours, minutes, seconds)
+            : String(format: "%d:%02d", minutes, seconds)
+        return " (\(clock))"
+    }
+
     private func updateStatusButtons() {
         guard let networkOverview = networkOverview else { return }
-        mainNetworkStatusMenuItem.title = "Status: \(networkOverview.networkStatus.rawValue)"
+        // The network line counts down to the last server coming back.
+        let networkDeadline = disabledDeadlines.values.max()
+        let networkSuffix = networkOverview.networkStatus == .disabled
+            ? countdownSuffix(deadline: networkDeadline)
+            : ""
+        mainNetworkStatusMenuItem.title = "Status: \(networkOverview.networkStatus.rawValue)\(networkSuffix)"
         mainTotalQueriesMenuItem.title = "Queries: \(networkOverview.totalQueriesToday.string)"
         mainTotalBlockedMenuItem.title = "Blocked: " +
             "\(networkOverview.adsBlockedToday.string) " +
             "(\(networkOverview.adsPercentageToday.string))"
-        mainBlocklistMenuItem.title = "Blocklist: \(networkOverview.averageBlocklist.string)"
 
         updateStatusSubmenus()
     }
@@ -648,14 +677,14 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
         guard let mainMenu = mainNetworkStatusMenuItem.menu else { return }
 
         let piholes = networkOverview.piholes
-        if piholes.count > 1 {
-            let sortedPiholes = piholes.values.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+        let sortedPiholes = piholes.values.sorted { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
 
-            for pihole in sortedPiholes {
-                let identifier = pihole.identifier
-                let displayName = pihole.displayName
+        for pihole in sortedPiholes {
+            let identifier = pihole.identifier
+            let displayName = pihole.displayName
 
-                // Status Submenu
+            // Status Submenu (only useful with more than one server)
+            if piholes.count > 1 {
                 if networkStatusMenuItems[identifier] == nil {
                     let menuItem = NSMenuItem(
                         title: "\(displayName): Initializing",
@@ -672,70 +701,55 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
                 }
 
                 if let menuItem = networkStatusMenuItems[identifier] {
-                    menuItem.title = "\(displayName): \(pihole.status.rawValue)"
+                    let suffix = countdownSuffix(deadline: disabledDeadlines[identifier])
+                    menuItem.title = "\(displayName): \(pihole.status.rawValue)\(suffix)"
                 }
+            }
 
-                // Total Queries Submenu
-                if totalQueriesMenuItems[identifier] == nil {
-                    let menuItem = NSMenuItem(
-                        title: "\(displayName): 0",
-                        action: nil,
-                        keyEquivalent: ""
-                    )
-                    totalQueriesMenuItems[identifier] = menuItem
-                    totalQueriesMenu.addItem(menuItem)
-                }
+            // Queries submenu: per-server count plus the blocklist size,
+            // which no longer has its own top-level row. Shown for
+            // single-server setups too, for the blocklist detail.
+            if totalQueriesMenuItems[identifier] == nil {
+                let menuItem = NSMenuItem(
+                    title: "\(displayName): 0",
+                    action: nil,
+                    keyEquivalent: ""
+                )
+                totalQueriesMenuItems[identifier] = menuItem
+                totalQueriesMenu.addItem(menuItem)
+            }
 
-                if !mainTotalQueriesMenuItem.hasSubmenu {
-                    mainMenu.setSubmenu(totalQueriesMenu, for: mainTotalQueriesMenuItem)
-                    mainTotalQueriesMenuItem.isEnabled = true
-                }
+            if !mainTotalQueriesMenuItem.hasSubmenu {
+                mainMenu.setSubmenu(totalQueriesMenu, for: mainTotalQueriesMenuItem)
+                mainTotalQueriesMenuItem.isEnabled = true
+            }
 
-                if let menuItem = totalQueriesMenuItems[identifier] {
-                    menuItem.title = "\(displayName): \((pihole.summary?.dnsQueriesToday ?? 0).string)"
-                }
+            if let menuItem = totalQueriesMenuItems[identifier] {
+                menuItem.title = "\(displayName): " +
+                    "\((pihole.summary?.dnsQueriesToday ?? 0).string) queries · " +
+                    "\((pihole.summary?.domainsBeingBlocked ?? 0).string) blocklist"
+            }
 
-                // Total Blocked Submenu
-                if totalBlockedMenuItems[identifier] == nil {
-                    let menuItem = NSMenuItem(
-                        title: "\(displayName): 0 (100%)",
-                        action: nil,
-                        keyEquivalent: ""
-                    )
-                    totalBlockedMenuItems[identifier] = menuItem
-                    totalBlockedMenu.addItem(menuItem)
-                }
+            // Blocked submenu, per server.
+            if totalBlockedMenuItems[identifier] == nil {
+                let menuItem = NSMenuItem(
+                    title: "\(displayName): 0 (100%)",
+                    action: nil,
+                    keyEquivalent: ""
+                )
+                totalBlockedMenuItems[identifier] = menuItem
+                totalBlockedMenu.addItem(menuItem)
+            }
 
-                if !mainTotalBlockedMenuItem.hasSubmenu {
-                    mainMenu.setSubmenu(totalBlockedMenu, for: mainTotalBlockedMenuItem)
-                    mainTotalBlockedMenuItem.isEnabled = true
-                }
+            if !mainTotalBlockedMenuItem.hasSubmenu {
+                mainMenu.setSubmenu(totalBlockedMenu, for: mainTotalBlockedMenuItem)
+                mainTotalBlockedMenuItem.isEnabled = true
+            }
 
-                if let menuItem = totalBlockedMenuItems[identifier] {
-                    menuItem.title = "\(displayName): " +
-                        "\((pihole.summary?.adsBlockedToday ?? 0).string) " +
-                        "(\((pihole.summary?.adsPercentageToday ?? 100.0).string))"
-                }
-
-                // Blocklist Submenu
-                if blocklistMenuItems[identifier] == nil {
-                    let menuItem = NSMenuItem(
-                        title: "\(displayName): 0",
-                        action: nil,
-                        keyEquivalent: ""
-                    )
-                    blocklistMenuItems[identifier] = menuItem
-                    blocklistMenu.addItem(menuItem)
-                }
-
-                if !mainBlocklistMenuItem.hasSubmenu {
-                    mainMenu.setSubmenu(blocklistMenu, for: mainBlocklistMenuItem)
-                    mainBlocklistMenuItem.isEnabled = true
-                }
-
-                if let menuItem = blocklistMenuItems[identifier] {
-                    menuItem.title = "\(displayName): \((pihole.summary?.domainsBeingBlocked ?? 0).string)"
-                }
+            if let menuItem = totalBlockedMenuItems[identifier] {
+                menuItem.title = "\(displayName): " +
+                    "\((pihole.summary?.adsBlockedToday ?? 0).string) " +
+                    "(\((pihole.summary?.adsPercentageToday ?? 0.0).string))"
             }
         }
     }
@@ -856,9 +870,11 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
     // MARK: - Activity Graph
 
     private func setupActivityGraphMenuItem() {
+        // Track the menu's width, which longer sibling items may stretch.
+        activityGraphView.autoresizingMask = [.width]
         activityGraphMenuItem.view = activityGraphView
         activityGraphMenuItem.isHidden = true
-        let insertIndex = mainMenu.index(of: mainBlocklistMenuItem) + 1
+        let insertIndex = mainMenu.index(of: mainTotalBlockedMenuItem) + 1
         mainMenu.insertItem(activityGraphMenuItem, at: insertIndex)
     }
 
@@ -924,10 +940,8 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     private func setupDiagnosisMessagesMenuItem() {
         diagnosisMessagesMenuItem.title = "Diagnosis Messages"
-        diagnosisMessagesMenuItem.image = NSImage(
-            systemSymbolName: "exclamationmark.triangle",
-            accessibilityDescription: "Diagnosis messages"
-        )
+        // No image: an icon would indent every title in this menu section
+        // (macOS aligns titles per separator-delimited group).
         diagnosisMessagesMenuItem.isHidden = true
         mainMenu.setSubmenu(diagnosisMessagesMenu, for: diagnosisMessagesMenuItem)
         let insertIndex = mainMenu.index(of: activityGraphMenuItem) + 1
@@ -990,13 +1004,12 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
 
     private func setupServerUpdatesMenuItem() {
         serverUpdatesMenuItem.title = "Server Updates"
-        serverUpdatesMenuItem.image = NSImage(
-            systemSymbolName: "arrow.down.circle",
-            accessibilityDescription: "Server updates available"
-        )
+        // No image: an icon would indent every title in this menu section
+        // (macOS aligns titles per separator-delimited group).
         serverUpdatesMenuItem.isHidden = true
         mainMenu.setSubmenu(serverUpdatesMenu, for: serverUpdatesMenuItem)
-        let insertIndex = mainMenu.index(of: diagnosisMessagesMenuItem) + 1
+        // Lives in the manage-servers section, directly above Admin Console.
+        let insertIndex = mainMenu.index(of: webAdminMenuItem)
         mainMenu.insertItem(serverUpdatesMenuItem, at: insertIndex)
     }
 
@@ -1095,12 +1108,6 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             totalBlockedMenuItems.removeAll()
         }
 
-        if mainBlocklistMenuItem.hasSubmenu {
-            mainMenu.setSubmenu(nil, for: mainBlocklistMenuItem)
-            blocklistMenu.removeAllItems()
-            blocklistMenuItems.removeAll()
-        }
-
         if webAdminMenuItem.hasSubmenu {
             mainMenu.setSubmenu(nil, for: webAdminMenuItem)
             webAdminMenu.removeAllItems()
@@ -1152,21 +1159,13 @@ class MainMenuController: NSObject, NSMenuDelegate, PreferencesDelegate, PiGuard
             enableNetworkMenuItem.title = "Enable Pi-hole"
         }
 
-        if hasAdGuard && hasV6 {
-            updateGravityMenuItem.title = "Refresh Filters / Update Gravity"
-        } else if hasAdGuard {
-            updateGravityMenuItem.title = "Refresh Filters"
-        } else {
-            updateGravityMenuItem.title = "Update Gravity"
-        }
-
         let hasRefreshableBackend = hasV6 || hasAdGuard
         let canSync = v6Count >= 2
         updateGravityMenuItem.isHidden = !hasRefreshableBackend
         updateGravityMenuItem.isEnabled = hasRefreshableBackend && networkOverview.canBeManaged && !isBusy
 
-        syncSettingsMenuItem.isHidden = !canSync
-        syncNowMenuItem.isHidden = !canSync
+        syncParentMenuItem.isHidden = !canSync
+        syncParentMenuItem.isEnabled = canSync
         syncNowMenuItem.isEnabled = canSync && Preferences.standard.syncEnabled && !isBusy
     }
 }

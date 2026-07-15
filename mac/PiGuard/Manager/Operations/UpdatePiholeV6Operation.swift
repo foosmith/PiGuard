@@ -50,7 +50,8 @@ final class UpdatePiholeV6Operation: AsyncOperation, @unchecked Sendable {
                     summary: newSummary,
                     canBeManaged: canBeManaged,
                     enabled: enabled,
-                    backendType: .piholeV6
+                    backendType: .piholeV6,
+                    disabledSecondsRemaining: enabled == false ? blockingResult.timer : nil
                 )
                 self.pihole = updatedPihole
             } catch {

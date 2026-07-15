@@ -136,6 +136,8 @@ This project is not affiliated with either company.</string>
                     </view>
                     <connections>
                         <outlet property="sda" destination="TtV-qo-CDH" id="ouZ-uE-lkf"/>
+                        <outlet property="copyrightLabel" destination="59Q-Jm-Cbr" id="PGD-CR-OUT"/>
+                        <outlet property="githubButton" destination="TtV-qo-CDH" id="PGD-GH-OUT"/>
                         <outlet property="versionLabel" destination="gPz-LR-6t6" id="cYy-f2-2Bq"/>
                     </connections>
                 </viewController>

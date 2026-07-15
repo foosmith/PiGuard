@@ -17,13 +17,13 @@
             <connections>
                 <outlet property="disableNetworkMenuItem" destination="kZY-sQ-RsG" id="phQ-zg-2b9"/>
                 <outlet property="enableNetworkMenuItem" destination="BI6-Ri-lBb" id="Gye-Na-1Ks"/>
-                <outlet property="mainBlocklistMenuItem" destination="6lr-WP-jec" id="gfK-1e-FmL"/>
                 <outlet property="mainMenu" destination="aKJ-Vr-amD" id="W3G-ke-MuW"/>
                 <outlet property="mainNetworkStatusMenuItem" destination="p0e-fZ-XzR" id="ihg-ID-5O7"/>
-                <outlet property="mainTotalBlockedMenuItem" destination="yIe-yf-Thr" id="Z4H-md-6lA"/>
                 <outlet property="mainTotalQueriesMenuItem" destination="WSh-qS-r63" id="aJQ-ta-NS1"/>
+                <outlet property="mainTotalBlockedMenuItem" destination="yIe-yf-Thr" id="Z4H-md-6lA"/>
                 <outlet property="queryLogMenuItem" destination="FBM-QL-001" id="FBM-QL-OUT"/>
                 <outlet property="syncNowMenuItem" destination="FBM-S1-NOW" id="FBM-S1-OUT"/>
+                <outlet property="syncParentMenuItem" destination="PGD-SY-NC1" id="PGD-SY-OUT"/>
                 <outlet property="syncSettingsMenuItem" destination="sYn-c1-SET" id="sYn-c1-OUT"/>
                 <outlet property="topBlockedMenuItem" destination="FBM-TB-001" id="FBM-TB-OUT"/>
                 <outlet property="topClientsMenuItem" destination="FBM-TC-001" id="FBM-TC-OUT"/>
@@ -310,38 +310,7 @@
                 <menuItem title="Blocked: 0" id="yIe-yf-Thr" userLabel="Blocked: Initializing...">
                     <modifierMask key="keyEquivalentModifierMask"/>
                 </menuItem>
-                <menuItem title="Blocklist: 0" id="6lr-WP-jec">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                </menuItem>
-                <menuItem title="Top Blocked" id="FBM-TB-001">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Top Blocked" id="FBM-TB-MNU">
-                        <items>
-                            <menuItem title="Loading..." enabled="NO" id="FBM-TB-LDG">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                            </menuItem>
-                        </items>
-                    </menu>
-                </menuItem>
-                <menuItem title="Top Clients" id="FBM-TC-001">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <menu key="submenu" title="Top Clients" id="FBM-TC-MNU">
-                        <items>
-                            <menuItem title="Loading..." enabled="NO" id="FBM-TC-LDG">
-                                <modifierMask key="keyEquivalentModifierMask"/>
-                            </menuItem>
-                        </items>
-                    </menu>
-                </menuItem>
-                <menuItem isSeparatorItem="YES" id="FBM-SP-001"/>
-                <menuItem title="Query Log..." id="FBM-QL-001">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="queryLogAction:" target="Ufk-kp-3MV" id="FBM-QL-ACT"/>
-                    </connections>
-                </menuItem>
-                <menuItem isSeparatorItem="YES" id="FBM-SP-002"/>
-                <menuItem isSeparatorItem="YES" id="gzf-LJ-6hp"/>
+                <menuItem isSeparatorItem="YES" id="PGD-SP-ACT"/>
                 <menuItem title="Enable Blocking" hidden="YES" enabled="NO" id="BI6-Ri-lBb">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
@@ -386,35 +355,69 @@
                         </items>
                     </menu>
                 </menuItem>
+                <menuItem isSeparatorItem="YES" id="gzf-LJ-6hp"/>
+                <menuItem title="Top Clients" id="FBM-TC-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Top Clients" id="FBM-TC-MNU">
+                        <items>
+                            <menuItem title="Loading..." enabled="NO" id="FBM-TC-LDG">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Top Blocked" id="FBM-TB-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Top Blocked" id="FBM-TB-MNU">
+                        <items>
+                            <menuItem title="Loading..." enabled="NO" id="FBM-TB-LDG">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
+                <menuItem title="Query Log..." id="FBM-QL-001">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="queryLogAction:" target="Ufk-kp-3MV" id="FBM-QL-ACT"/>
+                    </connections>
+                </menuItem>
+                <menuItem isSeparatorItem="YES" id="eIX-16-hgV"/>
                 <menuItem title="Admin Console" enabled="NO" id="3md-Pe-xgY">
                     <modifierMask key="keyEquivalentModifierMask"/>
                 </menuItem>
-                <menuItem isSeparatorItem="YES" id="eIX-16-hgV"/>
-                <menuItem title="Preferences" id="A0X-KF-WHH">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="configureMenuBarAction:" target="Ufk-kp-3MV" id="vGa-8p-QNC"/>
-                    </connections>
-                </menuItem>
-                <menuItem title="Sync Settings" id="sYn-c1-SET">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="syncSettingsAction:" target="Ufk-kp-3MV" id="sYn-c2-ACT"/>
-                    </connections>
-                </menuItem>
-                <menuItem title="Sync Now" enabled="NO" id="FBM-S1-NOW">
-                    <modifierMask key="keyEquivalentModifierMask"/>
-                    <connections>
-                        <action selector="syncNowAction:" target="Ufk-kp-3MV" id="FBM-S1-ACT"/>
-                    </connections>
-                </menuItem>
-                <menuItem title="Refresh Filters / Update Gravity" enabled="NO" id="FBM-G1-UPD">
+                <menuItem title="Update Blocklists" enabled="NO" id="FBM-G1-UPD">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
                         <action selector="updateGravityAction:" target="Ufk-kp-3MV" id="FBM-G1-ACT"/>
                     </connections>
                 </menuItem>
+                <menuItem title="Sync" enabled="NO" id="PGD-SY-NC1">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="Sync" id="PGD-SY-MNU">
+                        <items>
+                            <menuItem title="Sync Now" enabled="NO" id="FBM-S1-NOW">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="syncNowAction:" target="Ufk-kp-3MV" id="FBM-S1-ACT"/>
+                                </connections>
+                            </menuItem>
+                            <menuItem title="Sync Settings…" id="sYn-c1-SET">
+                                <modifierMask key="keyEquivalentModifierMask"/>
+                                <connections>
+                                    <action selector="syncSettingsAction:" target="Ufk-kp-3MV" id="sYn-c2-ACT"/>
+                                </connections>
+                            </menuItem>
+                        </items>
+                    </menu>
+                </menuItem>
                 <menuItem isSeparatorItem="YES" id="Jp9-vn-utI"/>
+                <menuItem title="Preferences…" id="A0X-KF-WHH">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="configureMenuBarAction:" target="Ufk-kp-3MV" id="vGa-8p-QNC"/>
+                    </connections>
+                </menuItem>
                 <menuItem title="About PiGuard" id="YMn-9f-Uru">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>

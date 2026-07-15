@@ -250,6 +250,9 @@ struct Pihole {
     let canBeManaged: Bool?
     let enabled: Bool?
     let backendType: BackendType
+    /// Seconds until a timed disable re-enables blocking. nil when blocking
+    /// is enabled, disabled permanently, or the backend can't report it (v5).
+    var disabledSecondsRemaining: Double? = nil
 
     var isV6: Bool { backendType == .piholeV6 }
     var isAdGuardHome: Bool { backendType == .adguardHome }

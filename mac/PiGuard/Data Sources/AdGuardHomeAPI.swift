@@ -10,9 +10,13 @@ import Foundation
 struct AdGuardHomeStatusResponse: Decodable {
     let protectionEnabled: Bool
     let version: String
+    /// Milliseconds until a timed pause re-enables protection; 0 or absent
+    /// when protection is enabled or disabled without a timer.
+    let protectionDisabledDuration: Double?
 
     enum CodingKeys: String, CodingKey {
         case protectionEnabled = "protection_enabled"
+        case protectionDisabledDuration = "protection_disabled_duration"
         case version
     }
 }
