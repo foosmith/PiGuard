@@ -121,3 +121,10 @@ desktop.ini
 # ~/.appstoreconnect/private_keys/, not in the repo.
 *.p8
 AuthKey_*
+
+# Agent tooling scratch state (local working files, not project source)
+SCRATCHPAD.md
+TASK-QUEUE.md
+WORKING.md
+hipocampus.config.json
+memory/
