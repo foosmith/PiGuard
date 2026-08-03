@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Mac App Store distribution. Used by the flow in docs/app-store-submission.md.
+	     Do NOT use this for the Developer ID / GitHub DMG path — that uses
+	     build-release-dmg.sh and notarytool instead. -->
+	<key>method</key>
+	<string>app-store-connect</string>
+
+	<!-- Upload straight to App Store Connect instead of writing a .pkg to disk. -->
+	<key>destination</key>
+	<string>upload</string>
+
+	<key>teamID</key>
+	<string>GB7Z2TZ8LT</string>
+
+	<key>signingStyle</key>
+	<string>automatic</string>
+
+	<key>uploadSymbols</key>
+	<true/>
+</dict>
+</plist>

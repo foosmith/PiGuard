@@ -96,6 +96,15 @@ The following are required for App Store Connect submission but are outside the 
 
 ## App Store Connect Metadata (Guideline 4.1 compliant)
 
+> **SUPERSEDED — do not submit from this copy.**
+> The live listing metadata now lives in `docs/app-store-submission.md`, which is the single
+> source of truth. The copy below is retained as the historical record of the post-rejection
+> rewrite (2026-06-23).
+>
+> Known defect in the copy below: the feature list advertises **keyboard shortcuts**, which
+> were removed in v3.6.5 (commit `0483338`, 2026-06-09). Submitting it as written would be a
+> Guideline 2.3.1 accurate-metadata risk. The corrected list is in `docs/app-store-submission.md`.
+
 Apple rejected the listing twice under Guideline 4.1 (copycat/impersonation) because the
 **subtitle** led with the third-party trademarks "Pi-hole" and "AdGuard," creating a
 misleading association with those developers' apps. The brand names must not lead in the

@@ -115,3 +115,9 @@ Thumbs.db
 *.suo
 *.user
 desktop.ini
+
+# App Store Connect API keys — never commit. A .p8 plus the Key ID and Issuer ID
+# is full API access to the developer account. Keys belong in
+# ~/.appstoreconnect/private_keys/, not in the repo.
+*.p8
+AuthKey_*
