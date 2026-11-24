@@ -36,6 +36,9 @@ class PiGuardManager: NSObject {
     private var cachedTopQueries: [String] = []
     private var snapshotRequestObserver: Any?
     private let operationQueue: OperationQueue = OperationQueue()
+    /// Bumped whenever connections are rebuilt so in-flight polls started
+    /// against the previous server set can't write stale servers back.
+    private var connectionGeneration: Int = 0
     private let syncQueue: OperationQueue = {
         let q = OperationQueue()
         q.maxConcurrentOperationCount = 1
@@ -261,6 +264,8 @@ class PiGuardManager: NSObject {
         Log.debug("Manager: Updating Connections")
 
         stopTimer()
+        connectionGeneration += 1
+        operationQueue.cancelAllOperations()
         piholes.removeAll()
         createNewNetwork()
 
@@ -339,17 +344,21 @@ class PiGuardManager: NSObject {
             }
         }
 
+        let generation = connectionGeneration
         let completionOperation = BlockOperation { [weak self, legacyOperations, v6Operations, adguardOperations] in
             guard let self else { return }
+            // Connections were edited while this poll was running — its
+            // results belong to the old server set, so discard them.
+            guard generation == self.connectionGeneration else {
+                Log.debug("Manager: Discarding poll results from stale connection set")
+                return
+            }
 
-            for operation in legacyOperations {
-                self.piholes[operation.pihole.identifier] = operation.pihole
-            }
-            for operation in v6Operations {
-                self.piholes[operation.pihole.identifier] = operation.pihole
-            }
-            for operation in adguardOperations {
-                self.piholes[operation.pihole.identifier] = operation.pihole
+            let updated: [Pihole] = legacyOperations.map(\.pihole)
+                + v6Operations.map(\.pihole)
+                + adguardOperations.map(\.pihole)
+            for pihole in updated where self.piholes[pihole.identifier] != nil {
+                self.piholes[pihole.identifier] = pihole
             }
 
             self.updateNetworkOverview()
