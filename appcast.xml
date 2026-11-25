@@ -5,7 +5,27 @@
         <link>https://foosmith.github.io/PiGuard/appcast.xml</link>
         <description>PiGuard Changelog</description>
         <language>en</language>
-                                            <item>
+                                                <item>
+        <title>PiGuard 3.8.2 (build 724)</title>
+        <pubDate>Wed, 25 Nov 2026 14:30:10 GMT</pubDate>
+        <sparkle:version>724</sparkle:version>
+        <sparkle:shortVersionString>3.8.2</sparkle:shortVersionString>
+        <sparkle:minimumSystemVersion>11.0</sparkle:minimumSystemVersion>
+        <enclosure
+            url="https://github.com/foosmith/PiGuard/releases/download/v3.8.2/PiGuard-3.8.2-724-macOS.dmg"
+            length="5485908"
+            type="application/octet-stream"
+            sparkle:edSignature="8qa2qFnJluda1HdbC0tqn6i2pParpRyk60JQ2v+0jRkiBcYA/nQgpxdDQ85lFM8yolLIoXMa6KiIWxu3uXBoBA==" />
+        <description><![CDATA[<h2>Fixed</h2>
+<ul>
+<li>Editing, disabling or removing a server in Preferences now updates the menu right away. Previously, the old servers could keep showing until PiGuard was restarted. (#6)</li>
+</ul>
+<h2>Changed</h2>
+<ul>
+<li>PiGuard now requires macOS 13 Ventura or later. The previous builds' declared minimum was macOS 11. The README already listed 13.</li>
+</ul>]]></description>
+    </item>
+    <item>
         <title>PiGuard 3.8.1 (build 723)</title>
         <pubDate>Wed, 15 Jul 2026 04:11:42 GMT</pubDate>
         <sparkle:version>723</sparkle:version>
